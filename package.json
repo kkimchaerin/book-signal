@@ -3,12 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-<<<<<<< Updated upstream
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "react": "^18.3.1",
-=======
     "@react-pdf-viewer/core": "^3.12.0",
     "@react-pdf-viewer/default-layout": "^3.12.0",
     "@react-pdf-viewer/page-navigation": "^3.12.0",
@@ -21,13 +19,7 @@
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-<<<<<<< Updated upstream
-    "dotenv": "^16.4.5",
-    "epub.js": "^0.2.15",
-    "epubjs": "^0.3.93",
-=======
     "epub.js": "^0.3.93",   
->>>>>>> Stashed changes
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "helmet": "^7.1.0",
@@ -38,7 +30,6 @@
     "pdfjs-dist": "^3.11.174",
     "pdfobject": "^2.3.0",
     "react": ">=17.0.1",
->>>>>>> Stashed changes
     "react-bootstrap": "^2.10.4",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
@@ -46,9 +37,6 @@
     "react-router-dom": "^6.26.1",
     "react-scripts": "5.0.1",
     "swiper": "^11.1.9",
-<<<<<<< Updated upstream
-    "web-vitals": "^2.1.4"
-=======
     "typescript": "^4.2.3",
     "web-vitals": "^4.2.3",
     "@types/localforage": "0.0.34",
@@ -60,15 +48,11 @@
     "lodash": "^4.17.21",
     "marks-pane": "^1.0.9",
     "path-webpack": "0.0.3"
->>>>>>> Stashed changes
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-<<<<<<< Updated upstream
-    "eject": "react-scripts eject"
-=======
     "eject": "react-scripts eject",
     "prebuild": "react-scripts test --watchAll=false --passWithNoTests",
     "predeploy": "yarn build",
@@ -89,7 +73,6 @@
     "compile": "babel -d lib/ src/",
     "watch:babel": "babel --watch -d lib/ src/",  
     "prepare": "npm run compile && npm run build && npm run minify && npm run legacy && npm run productionLegacy"
->>>>>>> Stashed changes
   },
   "eslintConfig": {
     "extends": [
@@ -108,8 +91,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-<<<<<<< Updated upstream
-=======
   },
   "devDependencies": {
     "@babel/cli": "^7.15.7",
@@ -151,6 +132,5 @@
   },
   "peerDependencies": {
     "react": ">=17.0.1"
->>>>>>> Stashed changes
   }
 }

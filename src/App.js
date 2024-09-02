@@ -1,7 +1,5 @@
 import './App.css';
 import Chatbot from './components/Chatbot';
-<<<<<<< Updated upstream
-=======
 import Login from './pages/Login';
 import Join from './pages/Join';
 import BookViewTest from './pages/BookViewPDF';
@@ -37,16 +35,9 @@ window.addEventListener('error', (e) => {
 
 // 로그인 상태를 관리하기 위한 Context 생성
 export const AuthContext = createContext();
->>>>>>> Stashed changes
 
 function App() {
   return (
-<<<<<<< Updated upstream
-    <div className="App">
-      <div>프로젝트 시작</div>
-      <Chatbot></Chatbot>
-    </div>
-=======
     <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, user, setUser }}>
       <ErrorBoundary>
         <Routes>
@@ -86,7 +77,6 @@ function App() {
         </Routes>
       </ErrorBoundary>
     </AuthContext.Provider>
->>>>>>> Stashed changes
   );
 }
 
