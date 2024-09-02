@@ -21,6 +21,7 @@ import Modal from './components/Modal';
 import ReaderWrapper from '../src/containers/Reader';
 import Reader from 'components/Reader';
 import SummarizePage from 'components/SummarizePage';
+import Epubjs from 'components/Epubjs';
 
 // ResizeObserver loop limit exceeded 오류 해결
 window.addEventListener('error', (e) => {
@@ -66,6 +67,7 @@ function App() {
             <Route path="/modal" element={<Modal />} />
             <Route path="/reader" element={<Reader />} />
             <Route path="/summarizepage" element={<SummarizePage />} />
+            <Route path="/epubjs" element={<Epubjs />} />
 
           </Route>
 

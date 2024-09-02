@@ -21,9 +21,13 @@
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
+<<<<<<< Updated upstream
     "dotenv": "^16.4.5",
     "epub.js": "^0.2.15",
     "epubjs": "^0.3.93",
+=======
+    "epub.js": "^0.3.93",   
+>>>>>>> Stashed changes
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "helmet": "^7.1.0",
@@ -42,13 +46,50 @@
     "react-router-dom": "^6.26.1",
     "react-scripts": "5.0.1",
     "swiper": "^11.1.9",
+<<<<<<< Updated upstream
     "web-vitals": "^2.1.4"
+=======
+    "typescript": "^4.2.3",
+    "web-vitals": "^4.2.3",
+    "@types/localforage": "0.0.34",
+    "@xmldom/xmldom": "^0.7.5",
+    "core-js": "^3.18.3",
+    "event-emitter": "^0.3.5",
+    "jszip": "^3.7.1",
+    "localforage": "^1.10.0",
+    "lodash": "^4.17.21",
+    "marks-pane": "^1.0.9",
+    "path-webpack": "0.0.3"
+>>>>>>> Stashed changes
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+<<<<<<< Updated upstream
     "eject": "react-scripts eject"
+=======
+    "eject": "react-scripts eject",
+    "prebuild": "react-scripts test --watchAll=false --passWithNoTests",
+    "predeploy": "yarn build",
+    "deploy": "gh-pages -d build",
+    "clean": "rimraf lib",
+    "precompile": "react-scripts test --watchAll=false --passWithNoTests && yarn clean",
+    "compile": "babel src --out-dir lib --extensions .ts,.tsx",
+    "postcompile": "cp -r ./src/types ./lib/types",
+    "docs": "documentation build src/epub.js -f html -o documentation/html/",
+    "docs:html": "documentation build src/epub.js -f html -o documentation/html/",
+    "docs:md": "documentation build src/epub.js -f md -o documentation/md/API.md",
+    "lint": "eslint -c .eslintrc.js src; exit 0",
+    "start:dev": "webpack-dev-server --inline --d",  
+    "build:prod": "NODE_ENV=production webpack --progress",  
+    "minify": "NODE_ENV=production MINIMIZE=true webpack --progress",
+    "legacy": "NODE_ENV=production LEGACY=true webpack --progress",
+    "productionLegacy": "NODE_ENV=production MINIMIZE=true LEGACY=true webpack --progress",
+    "compile": "babel -d lib/ src/",
+    "watch:babel": "babel --watch -d lib/ src/",  
+    "prepare": "npm run compile && npm run build && npm run minify && npm run legacy && npm run productionLegacy"
+>>>>>>> Stashed changes
   },
   "eslintConfig": {
     "extends": [
@@ -67,5 +108,49 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+<<<<<<< Updated upstream
+=======
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.15.7",
+    "@babel/core": "^7.15.8",
+    "@babel/plugin-proposal-class-properties": "^7.13.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.13.8",
+    "@babel/plugin-proposal-optional-chaining": "^7.13.12",
+    "@babel/plugin-proposal-export-default-from": "^7.14.5",
+    "@babel/plugin-proposal-export-namespace-from": "^7.14.5",
+    "@babel/preset-env": "^7.15.8",
+    "@babel/preset-react": "^7.13.13",
+    "@babel/preset-typescript": "^7.13.0",
+    "@babel/runtime": "^7.15.4",
+    "babel-loader": "^8.2.3",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "babel-plugin-styled-components": "^1.12.0",
+    "documentation": "^13.2.5",
+    "eslint": "^8.0.1",
+    "gh-pages": "^3.1.0",
+    "jsdoc": "^3.6.7",
+    "karma": "^5.0.9",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-mocha": "^2.0.1",
+    "karma-mocha-reporter": "^2.2.5",
+    "karma-phantomjs-launcher": "^1.0.4",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^4.0.2",
+    "mocha": "^7.2.0",
+    "mocha-loader": "^5.0.0",
+    "npm-run-all": "^4.1.5",
+    "raw-loader": "^4.0.2",
+    "tailwindcss": "^3.4.10",
+    "terser-webpack-plugin": "^3.0.3",
+    "tsd-jsdoc": "^2.5.0",
+    "webpack": "^4.47.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-middleware": "^3.7.2",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.1"
+>>>>>>> Stashed changes
   }
 }
