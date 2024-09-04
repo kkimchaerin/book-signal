@@ -23,11 +23,11 @@ class ErrorBoundary extends Component {
         <div className="flex flex-col items-center justify-center h-screen">
           <h1 className="text-4xl font-bold mb-4">문제가 발생했습니다.</h1>
           <p className="text-lg">죄송합니다. 예기치 않은 오류가 발생했습니다.</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.href = '/'}  // 메인 페이지로 리다이렉트
             className="mt-5 bg-primary text-white py-2 px-4 rounded"
           >
-            새로고침
+            메인 페이지로 이동
           </button>
         </div>
       );

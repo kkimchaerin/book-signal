@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
+import Modal from 'react-modal';
+import GetReview from './GetReview'; // GetReview 컴포넌트를 import
 import '../css/bookDetail.css';
 import { IoMdHeartEmpty } from "react-icons/io";
 import { TiStarFullOutline } from "react-icons/ti";
@@ -12,24 +14,22 @@ const BookDetail = () => {
   const { book } = location.state || {};
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [memId, setMemId] = useState(null); // 사용자 ID 상태 추가
-  const [sameBooks, setSameBooks] = useState([]); //관련 도서 상태 추가
+  const [memId, setMemId] = useState(null);
+  const [sameBooks, setSameBooks] = useState([]);
+  const [modalIsOpen, setModalIsOpen] = useState(false); // 모달 상태 추가
 
   useEffect(() => {
-
     if (!book) {
       console.error("책 정보가 전달되지 않았습니다.");
       navigate('/');  // 책 정보가 없으면 홈으로 리다이렉트
       return;
     }
 
-    // 컴포넌트가 마운트될 때 로그인 상태 확인
     axios.get('http://localhost:3001/check-session', { withCredentials: true })
       .then(response => {
         if (response.status === 200) {
           setIsLoggedIn(true);
-          setMemId(response.data.user.mem_id); // 사용자 ID 설정
-          // 찜한 상태 확인
+          setMemId(response.data.user.mem_id);
           checkWishlistStatus(response.data.user.mem_id, book.book_idx);
         } else {
           setIsLoggedIn(false);
@@ -41,8 +41,6 @@ const BookDetail = () => {
       });
   }, [book, navigate]);
 
-
-  // 관련 도서 가져오기
   useEffect(() => {
     axios.get('http://localhost:3001/sameBook', {
       params: { genre: book.book_genre, idx: book.book_idx }
@@ -56,9 +54,6 @@ const BookDetail = () => {
       });
   }, [book.book_genre, book.book_idx]);
 
-
-
-  // 사용자가 이미 찜한 도서인지 확인
   const checkWishlistStatus = async (memId, bookIdx) => {
     try {
       const response = await axios.post('http://localhost:3001/wishlist/check', { mem_id: memId, book_idx: bookIdx });
@@ -97,10 +92,8 @@ const BookDetail = () => {
     }
 
     try {
-      // 독서 기록을 데이터베이스에 추가
       await axios.post('http://localhost:3001/addReadingRecord', { mem_id: memId, book_name: book.book_name });
 
-      // 책의 경로를 가져와서 리더 페이지로 이동
       const bookNameWithoutSpaces = book.book_name.replace(/\s+/g, '');
 
       const response = await axios.post('http://localhost:3001/getBookPath', {
@@ -108,15 +101,21 @@ const BookDetail = () => {
       });
 
       const bookPath = response.data.book_path;
-      navigate('/reader', { state: { bookPath } });
+
+      navigate('/reader', { state: { book: { ...book, bookPath } } });
+
+      // 책 읽기 완료 후 모달을 여는 코드
+      setModalIsOpen(true);
     } catch (error) {
       console.error('책 읽기 처리 중 에러:', error);
       alert('책을 읽는 중에 문제가 발생했습니다.');
     }
-
-
   };
 
+  const handleModalClose = () => {
+    setModalIsOpen(false);
+    // 페이지를 다시 로드하거나, 다른 로직 추가 가능
+  };
 
   return (
     <div className='book-info-wrapper flex flex-col gap-10 max-w-screen-xl m-auto'>
@@ -175,7 +174,6 @@ const BookDetail = () => {
               </div>
               <div className="main-book-info w-[180px]">
                 <p className="main-book-title">{sameBook.book_name}</p>
-                <p className="main-book-author">{sameBook.book_writer}</p>
               </div>
             </div>
           ))}

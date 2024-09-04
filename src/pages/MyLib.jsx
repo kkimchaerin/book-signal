@@ -36,7 +36,7 @@ const MyLib = () => {
           alert('로그인이 필요합니다.');
           navigate('/login');
         } else {
-          console.error('세션 정보를 가져오는데 실패했습니다.', error);
+          console.error('', error);
         }
       });
   }, [navigate]);

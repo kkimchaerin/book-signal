@@ -2,8 +2,9 @@ import {  useDispatch } from "react-redux";
 import React, { useState, useRef, useEffect,useCallback } from "react";
 import Header from "containers/Header";
 import { Provider } from "react-redux";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import ePub from "epubjs";
+import axios from "axios";
 // containers
 import Footer from "containers/Footer";
 import Nav from "containers/menu/Nav";
@@ -13,15 +14,16 @@ import ViewerWrapper from "components/commons/ViewerWrapper";
 // slices
 import store from "slices";
 import { updateCurrentPage } from "slices/book";
+import { handleSummarize } from "./SummarizePage"; // handleSummarize 함수 import
 
 // styles
 import "lib/styles/readerStyle.css";
-import viewerLayout from "lib/styles/viewerLayout";
 import LoadingView from "LoadingView";
 import EyeGaze from "pages/EyeGaze";
 
-const EpubReader = ({ url }) => {
+const EpubReader = ({ url, book }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const viewerRef = useRef(null);
   const saveGazeTimeRef = useRef(null);
   const bookRef = useRef(null);
@@ -56,16 +58,35 @@ const EpubReader = ({ url }) => {
   const [lineHeight, setLineHeight] = useState("1.5");
   const [margin, setMargin] = useState("0");
   const [fontFamily, setFontFamily] = useState("Arial");
-  const [loading, setLoading] = useState(true); // 로딩 상태 관리
+  const [loading, setLoading] = useState(true);
   const [firstVisibleCfi, setFirstVisibleCfi] = useState(null);
   const [shouldSaveCfi, setShouldSaveCfi] = useState(true);
-  const [currentBookText, setCurrentBookText] = useState('');
+  const [currentBookText, setCurrentBookText] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
+
+  // 사용자 정보를 상태로 관리
+  useEffect(() => {
+    axios
+      .get("http://localhost:3001/check-session", { withCredentials: true })
+      .then((response) => {
+        setUserInfo(response.data.user);
+      })
+      .catch((error) => {
+        if (error.response && error.response.status === 401) {
+          alert("로그인이 필요합니다.");
+          navigate("/login");
+        } else {
+          console.error("세션 정보 확인 중 오류 발생:", error);
+        }
+      });
+  }, [navigate]);
 
   useEffect(() => {
     if (viewerRef.current) {
-      setLoading(true); // 로딩 시작
+      setLoading(true);
       const book = ePub(url);
       bookRef.current = book;
+
       const rendition = book.renderTo(viewerRef.current, {
         width: "100%",
         height: "100%",
@@ -75,7 +96,6 @@ const EpubReader = ({ url }) => {
 
    renditionRef.current = rendition;
 
-      // 페이지 정보 업데이트 함수
       const updatePageInfo = () => {
         const location = renditionRef.current.currentLocation();
         if (location && location.start && location.start.displayed) {
@@ -85,7 +105,12 @@ const EpubReader = ({ url }) => {
           if (page !== currentPage || total !== totalPages) {
             setCurrentPage(page || 1);
             setTotalPages(total || 1);
-            dispatch(updateCurrentPage({ currentPage: page || 1, totalPages: total || 1 }));
+            dispatch(
+              updateCurrentPage({
+                currentPage: page || 1,
+                totalPages: total || 1,
+              })
+            );
           }
           logCurrentPageText(); // 페이지 정보 업데이트 후 텍스트 가져오기
           setLoading(false); // 로딩 완료
@@ -97,9 +122,8 @@ const EpubReader = ({ url }) => {
 
       rendition.display().then(() => updatePageInfo());
 
-      // Cleanup 함수에서 TTS 중지 및 이벤트 핸들러 제거
       return () => {
-        stopTTS();  // 컴포넌트가 언마운트될 때 TTS를 중지
+        stopTTS();
         book.destroy();
         rendition.off("rendered", updatePageInfo);
         rendition.off("relocated", updatePageInfo);
@@ -122,48 +146,58 @@ const EpubReader = ({ url }) => {
       if (bookRef.current) {
         bookRef.current.ready
           .then(() => bookRef.current.locations.generate())
-          .catch((err) => console.error("스타일 업데이트 또는 위치 생성 중 오류:", err));
+          .catch((err) =>
+            console.error("스타일 업데이트 또는 위치 생성 중 오류:", err)
+          );
       }
     }
   }, [fontSize, lineHeight, margin, fontFamily]);
 
   // 페이지 이동 핸들러
-  const onPageMove = useCallback((type) => {
-    if (saveGazeTimeRef.current) {
-      saveGazeTimeRef.current(); // 페이지 이동 전 시선 추적 시간 저장
-    }
-    
-    setShouldSaveCfi(false);
-    if (renditionRef.current) {
-      setLoading(true); // 페이지 이동 시 로딩 상태로 변경
-      const updateAfterMove = () => {
-        const location = renditionRef.current.currentLocation();
-        if (location) {
-          const page = location.start.displayed.page;
-          const total = location.start.displayed.total;
-
-          setCurrentPage(page || 1);
-          setTotalPages(total || 1);
-
-          dispatch(updateCurrentPage({ currentPage: page || 1, totalPages: total || 1 }));
-          setLoading(false); // 페이지 이동 후 로딩 완료
-        }
-      };
-
-      renditionRef.current.off("relocated", updateAfterMove);
-      renditionRef.current.on("relocated", updateAfterMove);
-
-      if (type === "PREV") {
-        renditionRef.current.prev().then(() => {
-          logCurrentPageText();
-        });
-      } else if (type === "NEXT") {
-        renditionRef.current.next().then(() => {
-          logCurrentPageText();
-        });
+  const onPageMove = useCallback(
+    (type) => {
+      if (saveGazeTimeRef.current) {
+        saveGazeTimeRef.current();
       }
-    }
-  }, [dispatch]);
+
+      setShouldSaveCfi(false);
+      if (renditionRef.current) {
+        setLoading(true);
+        const updateAfterMove = () => {
+          const location = renditionRef.current.currentLocation();
+          if (location) {
+            const page = location.start.displayed.page;
+            const total = location.start.displayed.total;
+
+            setCurrentPage(page || 1);
+            setTotalPages(total || 1);
+
+            dispatch(
+              updateCurrentPage({
+                currentPage: page || 1,
+                totalPages: total || 1,
+              })
+            );
+            setLoading(false);
+          }
+        };
+
+        renditionRef.current.off("relocated", updateAfterMove);
+        renditionRef.current.on("relocated", updateAfterMove);
+
+        if (type === "PREV") {
+          renditionRef.current.prev().then(() => {
+            logCurrentPageText();
+          });
+        } else if (type === "NEXT") {
+          renditionRef.current.next().then(() => {
+            logCurrentPageText();
+          });
+        }
+      }
+    },
+    [dispatch]
+  );
 
   // 페이지에 보이는 텍스트를 배열로 수집하는 함수
 const logCurrentPageText = () => {
@@ -206,12 +240,27 @@ const logCurrentPageText = () => {
   }
 };
 
-  const addBookmark = () => {
+  const addBookmark = async () => {
     const currentLocation = renditionRef.current.currentLocation();
     if (currentLocation && currentLocation.start) {
-      const newBookmarks = [...bookmarks, currentLocation.start.cfi];
+      const cfi = currentLocation.start.cfi;
+      const pageText = pageTextArray.join(" ");
+      const newBookmarks = [...bookmarks, { cfi, pageText }];
       setBookmarks(newBookmarks);
       localStorage.setItem("bookmarks", JSON.stringify(newBookmarks));
+
+      try {
+        await axios.post("http://localhost:3001/getBookPath/saveBookmark", {
+          book_name: book.book_name,
+          book_idx: book.book_idx,
+          mem_id: userInfo.mem_id,
+          cfi,
+          page_text: pageText,
+        });
+        console.log("북마크가 DB에 저장되었습니다.");
+      } catch (error) {
+        console.error("북마크 저장 중 오류:", error);
+      }
     }
   };
 
@@ -220,7 +269,6 @@ const logCurrentPageText = () => {
     updateStyles();
   };
 
-  // 북마크로 이동
   const goToBookmark = (cfi) => {
     if (renditionRef.current) {
       renditionRef.current.display(cfi).catch((err) => {
@@ -229,7 +277,6 @@ const logCurrentPageText = () => {
     }
   };
 
-  // 북마크 제거
   const removeBookmark = (cfi) => {
     const newBookmarks = bookmarks.filter((bookmark) => bookmark !== cfi);
     setBookmarks(newBookmarks);
@@ -247,7 +294,46 @@ const logCurrentPageText = () => {
     if (totalPages > 0 && currentPage > 0) {
       return ((currentPage / totalPages) * 100).toFixed(2);
     }
-    return "0.00"; // 페이지 수가 0일 때는 0%로 표시
+    return "0.00";
+  };
+
+  // 독서 완료 처리
+  const handleReadingComplete = async () => {
+    console.log('독서 완료 처리 시작'); // 함수 호출 시작 로그
+    
+    if (userInfo && book) {
+      const { mem_id } = userInfo;
+      const { book_idx } = book;
+  
+      console.log('사용자 정보:', { mem_id }); // 사용자 ID 로그
+      console.log('책 정보:', { book_idx }); // 책 인덱스 로그
+  
+      // 요약 생성 요청
+      console.log('요약 생성 요청 중...'); // 요약 요청 시작 로그
+      const summarizeResult = await handleSummarize(mem_id, book_idx);
+  
+      if (summarizeResult.success) {
+        console.log("요약 생성 및 저장 성공:", summarizeResult.summary); // 성공 로그
+      } else {
+        console.error("요약 생성 실패:", summarizeResult.error); // 실패 로그
+      }
+  
+      console.log('상세 페이지로 네비게이션 중...'); // 페이지 이동 로그
+      navigate('/detail', { 
+        state: { 
+          book,
+          showReviewModal: true // 모달을 띄우기 위한 플래그
+        } 
+      });
+    } else {
+      console.warn('사용자 정보 또는 책 정보가 없습니다.'); // 사용자 또는 책 정보가 없을 때 경고 로그
+    }
+  };
+  
+  const handleReadingQuit = () => {
+    console.log('독서 중단 처리'); // 함수 호출 시작 로그
+    console.log('상세 페이지로 네비게이션 중...', { book }); // 페이지 이동 로그
+    navigate('/detail', { state: { book } });
   };
 
   
@@ -418,16 +504,20 @@ const moveToNextPage = async () => {
     <div className="max-w-screen-xl m-auto">
       <ViewerWrapper className="m-auto">
         <Header
+          rate={rate}
+          gender={gender}
           onTTSResume={resumeTTS}
           onTTSToggle={handleTTS}
           onTTSPause={pauseTTS}
           onTTSStop={stopTTS}
           onRateChange={setRate}
           onVoiceChange={setGender}
-          onBookmarkAdd={addBookmark} // 북마크 추가 핸들러 전달
-          onFontChange={handleFontChange} // 폰트 변경 핸들러 전달
-          rate={rate}
-          gender={gender}
+          onBookmarkAdd={addBookmark}
+          onFontChange={handleFontChange}
+          onReadingComplete={handleReadingComplete}
+          onReadingQuit={handleReadingQuit}
+          book={book}
+          userInfo={userInfo} // userInfo를 추가
         />
 
         <div
@@ -440,6 +530,7 @@ const moveToNextPage = async () => {
           nowPage={currentPage}
           totalPage={totalPages}
           onPageMove={onPageMove}
+          loading={loading}
         />
       </ViewerWrapper>
 
@@ -451,26 +542,33 @@ const moveToNextPage = async () => {
       />
 
       <Snackbar />
-      <EyeGaze 
-        viewerRef={viewerRef} 
+      <EyeGaze
+        viewerRef={viewerRef}
         onSaveGazeTime={(saveGazeTime) => {
-        saveGazeTimeRef.current = saveGazeTime;}}
+          saveGazeTimeRef.current = saveGazeTime;
+        }}
+        book={book} // book 객체 전달
         bookText={currentBookText}
-        />
+      />
     </div>
   );
 };
 
 const Reader = () => {
   const location = useLocation();
-  const { bookPath } = location.state || {};
+  const { bookPath, book } = location.state || {};
 
-  const epubUrl = `book_file/${bookPath}.epub`;
+  if (!book) {
+    console.error("Book object is undefined.");
+    return <div>Error: Book data is missing.</div>;
+  }
+
+  const epubUrl = `book_file/${book.book_path}.epub`;
   console.log(epubUrl);
 
   return (
     <Provider store={store}>
-      <EpubReader url={epubUrl} />
+      <EpubReader url={epubUrl} book={book} />
     </Provider>
   );
 };
