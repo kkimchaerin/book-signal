@@ -332,12 +332,12 @@ useEffect(() => {
 // 성별 변경 시 효과 적용
 useEffect(() => {
   if (isPlaying) {
-    // 성별이 변경될 때 TTS를 중단하고 새로 시작
-    stopTTS();  // 기존 재생 중단
-    handleTTS(rate, gender);  // 새로운 성별에 따라 TTS 다시 시작
+    stopTTS();
+    setTimeout(() => {
+      handleTTS(); // 새로운 성별 설정으로 TTS 재생 시작
+    }, 500); // 오디오가 멈추고 새로운 설정으로 로드할 시간을 주기 위해 딜레이 추가
   }
 }, [gender]); // gender가 변경될 때마다 실행
-
 
 // 오디오 소스가 변경될 때만 실행
 useEffect(() => {
@@ -366,40 +366,12 @@ const moveToNextPage = async () => {
   }
 };
 
- // 배속 변경에 따른 효과 적용
-useEffect(() => {
-  if (audioRef.current) {
-    audioRef.current.playbackRate = rate; // 배속 변경 시 항상 최신 배속을 적용
-    if (!audioRef.current.paused) {
-      audioRef.current.play(); // 현재 재생 중이면 재생 상태를 유지하면서 배속 변경
-    }
-  }
-}, [rate]); // 배속이 변경될 때마다 실행
-
-   // 성별 변경 시 효과 적용
-   useEffect(() => {
-    if (isPlaying) {
-      // 성별 변경 시 현재 재생 중인 오디오를 멈추고, 새로운 설정으로 재생
-      stopTTS();
-      resumeTTS();
-    }
-  }, [gender]); // gender가 변경될 때마다 실행
-
-  useEffect(() => {
-    if (audioSource && audioRef.current) {
-      audioRef.current.src = audioSource;
-      audioRef.current.play();
-      audioRef.current.playbackRate = rate; // 배속 반영
-      setIsPlaying(true);
-      setIsPaused(false);
-    }
-  }, [audioSource]); // 오디오 소스가 변경될 때만 실행
-
 
   const stopTTS = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.src = ""; // 오디오 소스 리셋
       console.log("tts 정지");
     }
     setIsPlaying(false);
