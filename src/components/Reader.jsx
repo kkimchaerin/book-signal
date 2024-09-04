@@ -415,15 +415,6 @@ useEffect(() => {
   }
 }, [rate]); // 배속이 변경될 때마다 실행
 
-// 성별 변경 시 효과 적용
-useEffect(() => {
-  if (isPlaying) {
-    stopTTS();
-    setTimeout(() => {
-      handleTTS(); // 새로운 성별 설정으로 TTS 재생 시작
-    }, 500); // 오디오가 멈추고 새로운 설정으로 로드할 시간을 주기 위해 딜레이 추가
-  }
-}, [gender]); // gender가 변경될 때마다 실행
 
 // 오디오 소스가 변경될 때만 실행
 useEffect(() => {
