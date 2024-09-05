@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getBookPath, saveBookmark } = require('../models/bookDB');
+const { getBookPath, saveBookmark, getBookmarks, saveEndReading, getUserBookmarkForBook } = require('../models/bookDB');
 
 
 router.post('/', async (req, res) => {
@@ -28,5 +28,44 @@ router.post('/saveBookmark', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// 북마크 가져오기 API
+router.get('/getBookmarks', async (req, res) => {
+    const { book_idx, mem_id } = req.query;
+
+    try {
+        const bookmarks = await getBookmarks(book_idx, mem_id);
+        res.status(200).json(bookmarks); // 북마크가 없으면 빈 배열을 반환
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to retrieve bookmarks.' });
+    }
+});
+
+router.get('/getUserBookmark', async (req, res) => {
+    const { book_idx, mem_id } = req.query;
+
+    try {
+        const bookmark = await getUserBookmarkForBook(book_idx, mem_id);
+        if (bookmark) {
+            res.status(200).json({ bookmark });
+        } else {
+            res.status(404).json({ message: '북마크가 존재하지 않습니다.' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: '북마크를 가져오는 중 오류가 발생했습니다.' });
+    }
+});
+
+// 독서 종료 API
+router.post('/endReading', async (req, res) => {
+    const { book_idx, mem_id, cfi } = req.body;
+
+    try {
+        const result = await saveEndReading(book_idx, mem_id, cfi);
+        res.status(201).json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+})
 
 module.exports = router;

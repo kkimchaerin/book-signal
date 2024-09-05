@@ -1,64 +1,85 @@
 const conn = require('../config/database');
 
+
 // 도서 정보 검색 함수
-exports.searchBooks = async (searchQuery) => {
-  try {
+exports.searchBooks = (searchQuery) => {
+  return new Promise((resolve, reject) => {
     const sql = `SELECT * FROM book_db WHERE book_name LIKE ?`;
     const formattedQuery = `%${searchQuery}%`;
-    const [results] = await conn.query(sql, [formattedQuery]);
 
-    const updatedResults = results.map(book => {
-      book.book_cover = decodeURIComponent(book.book_cover);
-      book.book_cover = book.book_cover ? `images/${book.book_cover}` : './files/default.jpg';
-      return book;
+    conn.query(sql, [formattedQuery], (err, results) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      const updatedResults = results.map(book => {
+        book.book_cover = decodeURIComponent(book.book_cover);
+        if (book.book_cover) {
+          book.book_cover = `images/${book.book_cover}`;
+        } else {
+          book.book_cover = './files/default.jpg'; // 기본 이미지 경로 설정
+        }
+        return book;
+      });
+
+      resolve(updatedResults);
     });
-
-    return updatedResults;
-  } catch (err) {
-    console.error('도서 검색 중 오류 발생:', err);
-    throw err;
-  }
+  });
 };
+
 
 // book_path를 가져오는 함수
-exports.getBookPath = async (bookName) => {
-  try {
+exports.getBookPath = (bookName) => {
+  return new Promise((resolve, reject) => {
     const sql = `SELECT book_path FROM book_db WHERE book_path = ?`;
-    const [results] = await conn.query(sql, [bookName]);
 
-    if (results.length > 0) {
-      return results[0].book_path;
-    } else {
-      throw new Error('책을 찾을 수 없습니다.');
-    }
-  } catch (err) {
-    console.error('book_path를 가져오는 중 오류 발생:', err);
-    throw err;
-  }
+    conn.query(sql, [bookName], (err, results) => {
+      if (err) {
+        console.error('book_path를 가져오는 중 오류 발생:', err);
+        reject(new Error('book_path를 가져오지 못했습니다.'));
+        return;
+      }
+
+      if (results.length > 0) {
+        resolve(results[0].book_path);
+      } else {
+        reject(new Error('책을 찾을 수 없습니다.'));
+      }
+    });
+  });
 };
 
+
 /******************** 랭킹 도서 목록 ********************/
-const getBooks = async (orderBy, limit = 12) => {
-  try {
+const getBooks = (orderBy, limit = 12) => {
+  return new Promise((resolve, reject) => {
     const sql = `
         SELECT *
         FROM book_db
         ORDER BY ${orderBy}
         LIMIT ${limit}
       `;
-    const [results] = await conn.query(sql);
 
-    const updatedResults = results.map(book => {
-      book.book_cover = decodeURIComponent(book.book_cover);
-      book.book_cover = book.book_cover ? `/images/${book.book_cover}` : '/images/default.jpg';
-      return book;
+    conn.query(sql, (err, results) => {
+      if (err) {
+        console.error('DB 쿼리 실행 중 오류 발생:', err);
+        reject(err);
+        return;
+      }
+      resolve(results);
+      const updatedResults = results.map(book => {
+        book.book_cover = decodeURIComponent(book.book_cover);
+        if (book.book_cover) {
+          book.book_cover = `/images/${book.book_cover}`;
+        } else {
+          book.book_cover = '/images/default.jpg';
+        }
+        return book;
+      });
+      resolve(updatedResults);
     });
-
-    return updatedResults;
-  } catch (err) {
-    console.error('DB 쿼리 실행 중 오류 발생:', err);
-    throw err;
-  }
+  });
 };
 
 // 메인 인기 top6
@@ -92,8 +113,8 @@ exports.newBooks = () => {
 };
 
 // 관련 도서 목록을 가져오는 함수
-exports.sameBooksDetail = async (book_genre, book_idx) => {
-  try {
+exports.sameBooksDetail = (book_genre, book_idx) => {
+  return new Promise((resolve, reject) => {
     const sql = `
       SELECT *
       FROM book_db 
@@ -102,107 +123,210 @@ exports.sameBooksDetail = async (book_genre, book_idx) => {
       ORDER BY RAND() 
       LIMIT 4
     `;
-    const [results] = await conn.query(sql, [book_genre, book_idx]);
+    conn.query(sql, [book_genre, book_idx], (err, results) => {
+      if (err) {
+        console.error('관련 도서 목록을 가져오는 중 오류 발생:', err);
+        reject(new Error('관련 도서 목록을 가져오는 중 오류가 발생했습니다.'));
+        return;
+      }
 
-    const updatedResults = results.map(book => {
-      book.book_cover = decodeURIComponent(book.book_cover);
-      book.book_cover = book.book_cover ? `/images/${book.book_cover}` : '/images/default.jpg';
-      return book;
+      const updatedResults = results.map(book => {
+        book.book_cover = decodeURIComponent(book.book_cover);
+        if (book.book_cover) {
+          book.book_cover = `/images/${book.book_cover}`;
+        } else {
+          book.book_cover = '/images/default.jpg';
+        }
+        return book;
+      });
+
+      resolve(updatedResults);
     });
-
-    return updatedResults;
-  } catch (err) {
-    console.error('관련 도서 목록을 가져오는 중 오류 발생:', err);
-    throw err;
-  }
+  });
 };
 
 /******************** 찜하기 ********************/
 // 사용자가 이미 찜한 도서인지 확인
-exports.checkWishlist = async (mem_id, book_idx) => {
-  try {
+exports.checkWishlist = (mem_id, book_idx) => {
+  return new Promise((resolve, reject) => {
     const sql = `SELECT COUNT(*) AS count FROM book_wishlist WHERE mem_id = ? AND book_idx = ?`;
-    const [results] = await conn.query(sql, [mem_id, book_idx]);
 
-    return results[0].count > 0;
-  } catch (err) {
-    console.error('찜한 도서 여부 확인 에러:', err);
-    throw err;
-  }
+    conn.query(sql, [mem_id, book_idx], (err, results) => {
+      if (err) {
+        console.error('찜한 도서 여부 확인 에러:', err);
+        reject(new Error('찜한 도서 여부 확인에 실패했습니다.'));
+        return;
+      }
+
+      resolve(results[0].count > 0);
+    });
+  });
 };
 
 // 도서 찜하기 추가
-exports.addWishlist = async (mem_id, book_idx) => {
-  try {
+exports.addWishlist = (mem_id, book_idx) => {
+  return new Promise((resolve, reject) => {
     const sql = `INSERT INTO book_wishlist (mem_id, book_idx) VALUES (?, ?)`;
-    await conn.query(sql, [mem_id, book_idx]);
 
-    return { message: '도서가 찜 목록에 추가되었습니다.' };
-  } catch (err) {
-    console.error('도서 찜하기 에러:', err);
-    throw err;
-  }
+    conn.query(sql, [mem_id, book_idx], (err, result) => {
+      if (err) {
+        console.error('도서 찜하기 에러:', err);
+        reject(new Error('도서 찜하기에 실패했습니다.'));
+        return;
+      }
+
+      resolve({ message: '도서가 찜 목록에 추가되었습니다.' });
+    });
+  });
 };
 
 // 찜한 도서 제거
-exports.removeWishlist = async (mem_id, book_idx) => {
-  try {
+exports.removeWishlist = (mem_id, book_idx) => {
+  return new Promise((resolve, reject) => {
     const sql = `DELETE FROM book_wishlist WHERE mem_id = ? AND book_idx = ?`;
-    await conn.query(sql, [mem_id, book_idx]);
 
-    return { message: '도서가 찜 목록에서 제거되었습니다.' };
-  } catch (err) {
-    console.error('찜한 도서 제거 에러:', err);
-    throw err;
-  }
+    conn.query(sql, [mem_id, book_idx], (err, result) => {
+      if (err) {
+        console.error('찜한 도서 제거 에러:', err);
+        reject(new Error('찜한 도서 제거에 실패했습니다.'));
+        return;
+      }
+
+      resolve({ message: '도서가 찜 목록에서 제거되었습니다.' });
+    });
+  });
 };
 
 /******************** 시선 추적 시간 저장 ********************/
-exports.saveGazeTime = async (book_idx, mem_id, book_text, gaze_duration) => {
-  try {
+exports.saveGazeTime = (book_idx, mem_id, book_text, gaze_duration) => {
+  return new Promise((resolve, reject) => {
     const sql = `
       INSERT INTO book_eyegaze (book_idx, mem_id, book_text, gaze_duration, gaze_recorded_at)
       VALUES (?, ?, ?, ?, NOW())
     `;
-    await conn.query(sql, [book_idx, mem_id, book_text, gaze_duration]);
 
-    return { message: '시선 추적 시간이 저장되었습니다.' };
-  } catch (err) {
-    console.error('Error saving gaze time:', err);
-    throw err;
-  }
+    conn.query(sql, [book_idx, mem_id, book_text, gaze_duration], (err, result) => {
+      if (err) {
+        console.error('Error saving gaze time:', err);
+        reject(err);
+        return;
+      }
+
+      resolve(result);
+    });
+  });
 };
 
-// 북마크 저장 함수
-exports.saveBookmark = async (book_name, book_idx, mem_id, cfi, page_text) => {
-  try {
-    const sql = `
-      INSERT INTO book_reading (book_name, book_idx, mem_id,book_mark, book_text)
-      VALUES (?, ?, ?, ?, ?)
-    `;
-    const [result] = await conn.query(sql, [book_name, book_idx, mem_id, cfi, page_text]);
 
-    return { message: '북마크가 저장되었습니다.', bookmarkId: result.insertId };
-  } catch (err) {
-    console.error('북마크 저장 중 오류 발생:', err);
-    throw err;
-  }
+// 북마크 저장 함수
+exports.saveBookmark = (book_name, book_idx, mem_id, cfi, page_text) => {
+  return new Promise((resolve, reject) => {
+    const sql = `
+      INSERT INTO book_reading (book_name, book_idx, mem_id, book_mark, book_text, book_latest)
+      VALUES (?, ?, ?, ?, ?, NOW())
+    `;
+
+    conn.query(sql, [book_name, book_idx, mem_id, cfi, page_text], (err, result) => {
+      if (err) {
+        console.error('북마크 저장 중 오류 발생:', err);
+        reject(new Error('북마크를 저장하는 중 오류가 발생했습니다.'));
+        return;
+      }
+
+      resolve({ message: '북마크가 저장되었습니다.', bookmarkId: result.insertId });
+    });
+  });
 };
 
 // 사용자의 북마크를 가져오는 함수
-exports.getBookmarks = async (book_idx, mem_id) => {
-  try {
-    const sql = `
-      SELECT book_mark, book_text
-      FROM book_reading
-      WHERE book_idx = ? AND mem_id = ?
-      ORDER BY created_at DESC
-    `;
-    const [results] = await conn.query(sql, [book_idx, mem_id]);
+exports.getBookmarks = (book_idx, mem_id) => {
 
-    return results;
-  } catch (err) {
-    console.error('북마크를 가져오는 중 오류 발생:', err);
-    throw err;
-  }
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT book_mark
+      FROM book_reading
+      WHERE book_idx = ? AND mem_id = ? AND book_text IS NOT NULL
+      ORDER BY book_latest ASC
+    `;
+
+    conn.query(sql, [book_idx, mem_id], (err, results) => {
+      if (err) {
+        console.error('북마크를 가져오는 중 오류 발생:', err);
+        reject(new Error('북마크를 가져오는 중 오류가 발생했습니다.'));
+        return;
+      }
+
+      resolve(results.length > 0 ? results : []); // 결과가 비어 있는 경우 빈 배열 반환F
+    });
+  });
+};
+
+// 특정 사용자와 책의 북마크를 가져오는 함수
+exports.getUserBookmarkForBook = (book_idx, mem_id) => {
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT book_mark
+      FROM book_reading
+      WHERE book_idx = ? 
+        AND mem_id = ?
+        AND book_text IS NULL
+        AND book_mark LIKE 'epubcfi%'
+      ORDER BY book_latest DESC
+      LIMIT 1
+    `;
+
+    conn.query(sql, [book_idx, mem_id], (err, results) => {
+      if (err) {
+        console.error('북마크를 가져오는 중 오류 발생:', err);
+        reject(new Error('북마크를 가져오는 중 오류가 발생했습니다.'));
+        return;
+      }
+
+      resolve(results.length > 0 ? results[0].book_mark : null);
+    });
+  });
+};
+
+// 독서 종료 시 북마크 저장 함수
+exports.saveEndReading = (book_idx, mem_id, cfi) => {
+  return new Promise((resolve, reject) => {
+    // Step 1: book_idx에 해당하는 book_name 가져오기
+    const getBookNameSql = `
+      SELECT book_name 
+      FROM book_reading 
+      WHERE book_idx = ?
+      LIMIT 1
+    `;
+
+    conn.query(getBookNameSql, [book_idx], (err, results) => {
+      if (err) {
+        console.error('book_name 조회 중 오류 발생:', err);
+        reject(new Error('book_name 조회에 실패했습니다.'));
+        return;
+      }
+
+      if (results.length === 0) {
+        reject(new Error('해당 book_idx에 대한 책을 찾을 수 없습니다.'));
+        return;
+      }
+
+      const book_name = results[0].book_name;
+
+      // Step 2: 가져온 book_name을 사용해 북마크 저장
+      const saveBookmarkSql = `
+        INSERT INTO book_reading (book_idx, mem_id, book_mark, book_name, book_latest)
+        VALUES (?, ?, ?, ?, NOW())
+      `;
+
+      conn.query(saveBookmarkSql, [book_idx, mem_id, cfi, book_name], (err, result) => {
+        if (err) {
+          console.error('독서 종료 중 북마크 저장 오류 발생:', err);
+          reject(new Error('독서 종료 중 북마크 저장에 실패했습니다.'));
+          return;
+        }
+
+        resolve({ message: '북마크가 저장되었습니다.', bookmarkId: result.insertId });
+      });
+    });
+  });
 };

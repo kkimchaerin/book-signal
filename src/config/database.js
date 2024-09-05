@@ -1,4 +1,4 @@
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
 
 // MySQL 연결 풀 설정
 const pool = mysql.createPool({
@@ -8,7 +8,7 @@ const pool = mysql.createPool({
     port: 3307,
     database: 'book',
     waitForConnections: true,
-    connectionLimit: 30, // 최대 연결 수
+    connectionLimit: 20, // 최대 연결 수
     queueLimit: 0        // 대기열의 최대 길이 (0은 무제한)
 });
 
