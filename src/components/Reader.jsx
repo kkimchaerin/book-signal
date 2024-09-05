@@ -64,6 +64,7 @@ const EpubReader = ({ url, book, location }) => {
   const [shouldSaveCfi, setShouldSaveCfi] = useState(true);
   const [currentBookText, setCurrentBookText] = useState('');
   const [userInfo, setUserInfo] = useState(null);
+  const [bookmarkMessage, setBookmarkMessage] = useState('');  // 추가된 부분
 
   useEffect(() => {
     axios.get('http://localhost:3001/check-session', { withCredentials: true })
@@ -92,6 +93,44 @@ const EpubReader = ({ url, book, location }) => {
       return [];
     }
   };
+
+  const handleBookmarkRemove = async (book_mark) => {
+    const book_idx = book?.book_idx;
+    try {
+      // 서버에 북마크 삭제 요청 보내기
+      const response = await axios.post('http://localhost:3001/getBookPath/removeBookmark', {
+        book_idx,
+        mem_id: userInfo.mem_id,
+        book_mark
+      });
+
+
+      if (response.status === 200) {
+        // 북마크 삭제 후 상태 업데이트
+        const updatedBookmarks = bookmarks.filter((bookmark) => bookmark.book_mark !== book_mark);
+        setBookmarks(updatedBookmarks);
+
+        // 로컬 스토리지 업데이트
+        localStorage.setItem("bookmarks", JSON.stringify(updatedBookmarks));
+
+        // 사용자에게 알림 메시지 표시
+        setBookmarkMessage('북마크가 삭제되었습니다.');
+        setTimeout(() => {
+          setBookmarkMessage('');
+        }, 2000);
+      } else {
+        throw new Error('북마크 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      setBookmarkMessage('북마크 삭제 중 오류가 발생했습니다.');
+      setTimeout(() => {
+        setBookmarkMessage('');
+      }, 2000);
+    }
+  };
+
+
+
 
   useEffect(() => {
     const loadBookmarkAndNavigate = async () => {
@@ -584,6 +623,7 @@ const moveToNextPage = async () => {
           onReadingQuit={handleReadingQuit}
           book={book}
           userInfo={userInfo} // userInfo를 추가
+          onBookmarkRemove={handleBookmarkRemove}
         />
 
         <div

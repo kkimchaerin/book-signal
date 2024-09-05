@@ -218,7 +218,7 @@ exports.saveGazeTime = (book_idx, mem_id, book_text, gaze_duration) => {
 };
 
 
-// 북마크 저장 함수
+// 요약용 수동 북마크 저장 함수
 exports.saveBookmark = (book_name, book_idx, mem_id, cfi, page_text) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -238,14 +238,15 @@ exports.saveBookmark = (book_name, book_idx, mem_id, cfi, page_text) => {
   });
 };
 
-// 사용자의 북마크를 가져오는 함수
+// 요약용 수동 사용자의 북마크를 가져오는 함수
 exports.getBookmarks = (book_idx, mem_id) => {
 
   return new Promise((resolve, reject) => {
     const sql = `
       SELECT book_mark
       FROM book_reading
-      WHERE book_idx = ? AND mem_id = ? AND book_text IS NOT NULL
+      WHERE book_idx = ? AND mem_id = ? 
+      AND book_text IS NOT NULL
       ORDER BY book_latest ASC
     `;
 
@@ -261,7 +262,7 @@ exports.getBookmarks = (book_idx, mem_id) => {
   });
 };
 
-// 특정 사용자와 책의 북마크를 가져오는 함수
+// 최근 도서 읽기 특정 사용자와 책의 북마크를 가져오는 함수
 exports.getUserBookmarkForBook = (book_idx, mem_id) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -287,7 +288,7 @@ exports.getUserBookmarkForBook = (book_idx, mem_id) => {
   });
 };
 
-// 독서 종료 시 북마크 저장 함수
+// 최근 읽은 도서 용 독서 종료 시 북마크 저장 함수
 exports.saveEndReading = (book_idx, mem_id, cfi) => {
   return new Promise((resolve, reject) => {
     // Step 1: book_idx에 해당하는 book_name 가져오기
@@ -327,6 +328,34 @@ exports.saveEndReading = (book_idx, mem_id, cfi) => {
 
         resolve({ message: '북마크가 저장되었습니다.', bookmarkId: result.insertId });
       });
+    });
+  });
+};
+
+// 북마크 삭제 함수
+exports.removeBookmark = (book_idx, mem_id, book_mark) => {
+  return new Promise((resolve, reject) => {
+    const sql = `DELETE FROM book_reading 
+    WHERE book_idx = ? 
+    AND mem_id = ? 
+    AND book_mark = ?
+    `;
+
+    conn.query(sql, [book_idx, mem_id, book_mark], (err, result) => {
+      console.log(book_idx, mem_id, book_mark);
+      
+      if (err) {
+        console.error('북마크 삭제 중 오류 발생:', err);
+        reject(new Error('북마크 삭제에 실패했습니다.'));
+        return;
+      }
+
+      console.log('삭제된 행 수:', result.affectedRows);
+      if (result.affectedRows > 0) {
+        resolve({ message: '북마크가 삭제되었습니다.' });
+      } else {
+        reject(new Error('삭제할 북마크를 찾지 못했습니다.'));
+      }
     });
   });
 };
