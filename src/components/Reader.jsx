@@ -202,11 +202,11 @@ const EpubReader = ({ url, book, location }) => {
           logCurrentPageText();
           setLoading(false);
         }
-                // cfi 값을 업데이트
-                if (location && location.start) {
-                  setCfi(location.start.cfi);
-                  console.log('현재 CFI 값:', location.start.cfi);
-                }
+        // cfi 값을 업데이트
+        if (location && location.start) {
+          setCfi(location.start.cfi);
+          console.log('현재 CFI 값:', location.start.cfi);
+        }
       };
 
       rendition.on("rendered", updatePageInfo);
@@ -227,26 +227,57 @@ const EpubReader = ({ url, book, location }) => {
   }, [url, dispatch, userInfo, location.state]);
 
   const updateStyles = useCallback(() => {
-    setShouldSaveCfi(true);
+    console.log('font');
+    
     if (renditionRef.current) {
-      renditionRef.current.themes.default({
+      // EPUB 내부 폰트 파일 경로 설정
+      const fontFaceCSS = `
+        @font-face {
+          font-family: 'FreeSerif';
+          src: url('OPS/fonts/FreeSerif.ttf');  // EPUB 내 실제 폴더 경로 반영
+        }
+        @font-face {
+          font-family: 'FreeSerifBold';
+          src: url('OPS/fonts/FreeSerifBold.ttf');  // EPUB 내 실제 폴더 경로 반영
+        }
+        @font-face {
+          font-family: 'FreeSerifItalic';
+          src: url('OPS/fonts/FreeSerifItalic.ttf');  // EPUB 내 실제 폴더 경로 반영
+        }
+        @font-face {
+          font-family: 'FreeSerifBoldItalic';
+          src: url('OPS/fonts/FreeSerifBoldItalic.ttf');  // EPUB 내 실제 폴더 경로 반영
+        }
+      `;
+
+      // 폰트 CSS 적용 및 선택
+      renditionRef.current.themes.register("customTheme", {
         body: {
-          "font-size": fontSize,
-          "line-height": lineHeight,
-          margin: margin,
-          "font-family": fontFamily,
+          "font-family": fontFamily || "FreeSerif", // 선택된 폰트를 반영
+          "font-size": `${fontSize} !important`,
+          "line-height": `${lineHeight} !important`,
+          margin: `${margin} !important`,
         },
       });
 
-      if (bookRef.current) {
-        bookRef.current.ready
-          .then(() => bookRef.current.locations.generate())
-          .catch((err) =>
-            console.error("스타일 업데이트 또는 위치 생성 중 오류:", err)
-          );
-      }
+      // 폰트 CSS를 적용
+      renditionRef.current.themes.fontFace(fontFaceCSS);
+
+      // 테마 적용
+      renditionRef.current.themes.select("customTheme");
+
+      console.log("새로운 폰트가 적용되었습니다:", fontFamily);
     }
-  }, [fontSize, lineHeight, margin, fontFamily]);
+  }, [fontFamily, fontSize, lineHeight, margin]);
+
+  // 폰트 변경 시마다 스타일 업데이트
+  const handleFontChange = (font) => {
+    setFontFamily(font); // 폰트를 상태로 설정
+    updateStyles(); // 업데이트된 스타일을 반영
+    console.log(`폰트 변경됨: ${font}`);
+  };
+
+
 
   const onPageMove = useCallback((type) => {
     if (saveGazeTimeRef.current) {
@@ -268,20 +299,20 @@ const EpubReader = ({ url, book, location }) => {
           dispatch(updateCurrentPage({ currentPage: page || 1, totalPages: total || 1 }));
           setLoading(false);
 
-        // 페이지 이동 후에 canvas 사이즈와 위치만 업데이트
-        // if (EyeGazeRef.current) {
-        //   EyeGazeRef.current.resizeCanvas(); // canvas 크기만 조정
-        // }
+          // 페이지 이동 후에 canvas 사이즈와 위치만 업데이트
+          // if (EyeGazeRef.current) {
+          //   EyeGazeRef.current.resizeCanvas(); // canvas 크기만 조정
+          // }
 
-        // if (seesoRef.current) {
-        //   seesoRef.current.stopTracking();
-        //   seesoRef.current.startTracking(onGaze, onDebug);
-        // }
-                  // 페이지 이동 후 cfi 값 업데이트
-                  if (location && location.start) {
-                    setCfi(location.start.cfi);
-                    console.log('페이지 이동 후 CFI 값:', location.start.cfi);
-                  }
+          // if (seesoRef.current) {
+          //   seesoRef.current.stopTracking();
+          //   seesoRef.current.startTracking(onGaze, onDebug);
+          // }
+          // 페이지 이동 후 cfi 값 업데이트
+          if (location && location.start) {
+            setCfi(location.start.cfi);
+            console.log('페이지 이동 후 CFI 값:', location.start.cfi);
+          }
         }
       };
 
@@ -347,7 +378,7 @@ const EpubReader = ({ url, book, location }) => {
     if (currentLocation && currentLocation.start) {
       const cfi = currentLocation.start.cfi;
       console.log('cfi!!!!!!!!!!!', cfi);
-      
+
       const pageText = pageTextArray.join(" ");
       const newBookmarks = [...bookmarks, { cfi, pageText }];
       setBookmarks(newBookmarks);
@@ -366,11 +397,6 @@ const EpubReader = ({ url, book, location }) => {
         console.error("북마크 저장 중 오류:", error);
       }
     }
-  };
-
-  const handleFontChange = (font) => {
-    setFontFamily(font);
-    updateStyles();
   };
 
   const goToBookmark = (cfi) => {
@@ -650,7 +676,7 @@ const EpubReader = ({ url, book, location }) => {
           onRateChange={setRate}
           onVoiceChange={setGender}
           onBookmarkAdd={addBookmark}
-          onFontChange={handleFontChange}
+          onFontChange={setFontFamily}
           onReadingComplete={handleReadingComplete}
           goToBookmark={goToBookmark}  // 전달
           fetchBookmarks={fetchBookmarks}  // 전달
@@ -661,7 +687,7 @@ const EpubReader = ({ url, book, location }) => {
         />
 
         <div
-          ref={viewerRef}
+          ref={viewerRef} className="viewer"
           style={{ width: "100%", height: "100%", border: "1px solid #ccc" }}
         />
 
@@ -700,9 +726,9 @@ const EpubReader = ({ url, book, location }) => {
         bookText={currentBookText}
         currentPage={currentPage}
         cfi={cfi}
-        // onStopGazeTracking={(stopGazeTracking) => {
-        //   stopGazeTrackingRef.current = stopGazeTracking;
-        // }}
+      // onStopGazeTracking={(stopGazeTracking) => {
+      //   stopGazeTrackingRef.current = stopGazeTracking;
+      // }}
       />
     </div>
   );
