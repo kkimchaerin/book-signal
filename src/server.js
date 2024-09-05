@@ -1,9 +1,7 @@
 require('dotenv').config({ path: './src/tts.env' });
+console.log('GOOGLE_APPLICATION_CREDENTIALS:', process.env.GOOGLE_APPLICATION_CREDENTIALS); // 환경 변수 출력 확인
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2/promise');
-const session = require('express-session');
-const axios = require('axios'); // Axios 추가
 const userRoutes = require('./routes/userRoutes');
 const gazeRoutes = require('./routes/gazeRoutes');
 const searchRoutes = require('./routes/searchRoutes');
@@ -14,37 +12,43 @@ const mainRoutes = require('./routes/mainRoutes');
 const path = require('path');
 const helmet = require('helmet');
 const reviewRoutes = require('./routes/reviewRoutes');
-const fs = require('fs');
-const tts = require('./tts');
+const fs = require('fs'); // 파일 시스템 접근을 위한 모듈 추가
+const tts = require('./tts'); // TTS 기능 추가
 const textToSpeech = require('@google-cloud/text-to-speech');
+const client = new textToSpeech.TextToSpeechClient();
 const sameBookRoutes = require('./routes/sameBookRoutes');
+const session = require('express-session');
 const app = express();
 const pool = require('./config/database');
+const axios = require('axios')
 
-const client = new textToSpeech.TextToSpeechClient();
 
 
 // 세션 설정 (기본 설정)
 app.use(session({
+  secret: process.env.SESSION_SECRET || 'MyKey',
   secret: process.env.SESSION_SECRET || 'MyKey',
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
     secure: false,
-    maxAge: null
+    maxAge: null,
   }
 }));
 
 app.use(express.json());
-
 app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
   origin: 'http://localhost:3000',
   credentials: true,
 }));
 
-app.use('/images', express.static(path.join(__dirname, '../public/images')));
+// 정적 파일 제공을 위한 경로 설정
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
+// 세션 상태 확인을 위한 엔드포인트
 app.get('/check-session', (req, res) => {
   if (req.session.user) {
     res.status(200).json({ user: req.session.user });
@@ -60,10 +64,9 @@ app.use('/ranking', rankingRoutes);
 app.use('/wishlist', wishListRoutes);
 app.use('/getBookPath', bookRoutes);
 app.use('/main', mainRoutes);
-app.use('/review', reviewRoutes);
+app.use('/review', reviewRoutes)
 app.use('/sameBook', sameBookRoutes);
 
-// TTS 엔드포인트
 app.post('/tts', async (req, res) => {
   const { text, rate, gender } = req.body;
 
@@ -195,6 +198,7 @@ app.post('/summarize', async (req, res) => {
       console.log('이미지 생성 및 저장 성공:', dalleImagePath);
 
       imagePaths.push(`/dalle/${bookIdx}_${summaries.length}.png`);
+
 
       // book_extract_data 테이블에 데이터 저장
       await connection.query('INSERT INTO book_extract_data (mem_id, book_idx, book_name, book_extract, dalle_path) VALUES (?, ?, ?, ?, ?)', [memId, bookIdx, bookName, summary, imagePaths[imagePaths.length - 1]]);

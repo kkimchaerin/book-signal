@@ -1,13 +1,13 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // useNavigate import 추가
-import Wrapper from "components/header/Wrapper";
-import Layout, { AutoLayout } from "components/header/Layout";
-import ControlBtn from "components/header/ControlBtn";
-import TTSManager from "components/tts/TTSManager";
-import TTSWrapper from "components/tts/TTSWrapper";
-import { handleSummarize } from "../components/SummarizePage"; // handleSummarize 함수 import 추가
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Wrapper from 'components/header/Wrapper';
+import Layout, { AutoLayout } from 'components/header/Layout';
+import ControlBtn from 'components/header/ControlBtn';
+import TTSManager from 'components/tts/TTSManager';
+import TTSWrapper from 'components/tts/TTSWrapper';
+import '../css/ReaderHeader.css';
 
-const Header = ({
+const Header: React.FC<Props> = ({
   rate,
   gender,
   onRateChange,
@@ -16,8 +16,8 @@ const Header = ({
   onTTSPause,
   onTTSStop,
   onTTSResume,
-  onBookmarkAdd = () => {},
-  onFontChange = () => {},
+  onBookmarkAdd = () => { },
+  onFontChange = () => { },
   setAudioSource,
   book,
   userInfo, // userInfo를 props로 받아야 합니다.
@@ -41,23 +41,38 @@ const Header = ({
   const [showTTSSettings, setShowTTSSettings] = useState(false);
   const [showBookmarkSettings, setShowBookmarkSettings] = useState(false);
   const [showFontSettings, setShowFontSettings] = useState(false);
-  const [bookmarkMessage, setBookmarkMessage] = useState(""); // 북마크 메시지 상태 추가
+  const [bookmarkMessage, setBookmarkMessage] = useState('');
+  const [bookmarks, setBookmarks] = useState<{ book_mark: string; book_text: string }[]>([]);
+  const [showBookmarksList, setShowBookmarksList] = useState(false); // 북마크 리스트 보여주기 상태 추가
 
-  const navigate = useNavigate(); // useNavigate 훅 초기화
+  const navigate = useNavigate();
 
   const handleSoundClick = () => {
     setShowTTSSettings(true);
+    setShowBookmarkSettings(false);
+    setShowFontSettings(false);
   };
 
-  const handleTTSSettingsClose = () => {
+  const handleBookmarkToggle = () => {
+    setShowBookmarkSettings(true);
     setShowTTSSettings(false);
-  };
-
-  const handleBookmarkClick = () => {
-    setShowBookmarkSettings(!showBookmarkSettings);
+    setShowFontSettings(false);
   };
 
   const handleFontClick = () => {
+    setShowFontSettings(true);
+    setShowTTSSettings(false);
+    setShowBookmarkSettings(false);
+  };
+
+  const handleClose = () => {
+    setShowTTSSettings(false);
+    setShowBookmarkSettings(false);
+    setShowFontSettings(false);
+  };
+
+  const handleFinishReading = () => {
+    navigate('/detail', { state: { book } });
     setShowFontSettings(!showFontSettings);
   };
 
@@ -100,35 +115,70 @@ const Header = ({
   const handleBookmarkAdd = async () => {
     try {
       await onBookmarkAdd();
-      setBookmarkMessage("북마크가 성공적으로 추가되었습니다."); // 북마크 성공 메시지 설정
+      setBookmarkMessage('북마크가 성공적으로 추가되었습니다.');
+
+      // 일정 시간 후에 메시지를 지우기 위해 setTimeout 사용
+      setTimeout(() => {
+        setBookmarkMessage('');
+      }, 2000); // 2000ms (2초) 후에 메시지 사라짐
     } catch (error) {
-      setBookmarkMessage("북마크 추가 중 오류가 발생했습니다."); // 실패 메시지 설정
+      setBookmarkMessage('북마크 추가 중 오류가 발생했습니다.');
+
+      // 오류 메시지도 일정 시간 후에 사라지도록 설정
+      setTimeout(() => {
+        setBookmarkMessage('');
+      }, 2000); // 2000ms (2초) 후에 메시지 사라짐
     }
   };
+
+  const handleBookmarkClick = (book_mark: string) => {
+    if (goToBookmark) {
+      goToBookmark(book_mark);
+    }
+  };
+
+  const handleFetchBookmarks = async () => {
+    if (fetchBookmarks) {
+      try {
+        const bookmarks = await fetchBookmarks();
+        setBookmarks(bookmarks);
+        setShowBookmarksList((prev) => !prev); // 리스트 보여주기 상태를 토글
+      } catch (error) {
+        setBookmarkMessage('북마크를 가져오는 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
+  const handleBookmarkRemove = (book_mark: string) => {
+    if (onBookmarkRemove) {
+      onBookmarkRemove(book_mark);  // 여기서 props로 전달된 onBookmarkRemove를 호출
+    }
+    setBookmarks((prevBookmarks) =>
+      prevBookmarks.filter((bookmark) => bookmark.book_mark !== book_mark)
+    );
+    setBookmarkMessage('북마크가 삭제되었습니다.');
+
+    setTimeout(() => {
+      setBookmarkMessage('');
+    }, 2000); // 2000ms (2초) 후에 메시지 사라짐
+  };
+
 
   return (
     <Wrapper>
       <Layout>
         <AutoLayout>
           <div>
-            {/* Sound 버튼 */}
             <ControlBtn message="Sound" onClick={handleSoundClick} />
-
-            {/* Bookmark 버튼, Sound 버튼과 동일한 스타일로 적용 */}
-            <ControlBtn message="Bookmark" onClick={handleBookmarkClick} />
-
-            {/* Font Settings 버튼 */}
+            <ControlBtn message="Bookmark" onClick={handleBookmarkToggle} />
             <ControlBtn message="Font Settings" onClick={handleFontClick} />
-
-            {/* 독서 완료 및 종료 버튼 */}
-            <ControlBtn message="독서 완료" onClick={handleReadingComplete} />
+            <ControlBtn message="독서 완료" onClick={handleFinishReading} />
             <ControlBtn message="독서 종료" onClick={handleReadingQuit} />
           </div>
         </AutoLayout>
       </Layout>
 
-      {/* TTS 설정 창 */}
-      <TTSWrapper show={showTTSSettings} onClose={handleTTSSettingsClose}>
+      <TTSWrapper show={showTTSSettings} onClose={handleClose} title="Sound">
         <TTSManager
           onTTSToggle={onTTSToggle}
           onTTSStop={onTTSStop}
@@ -142,30 +192,39 @@ const Header = ({
         />
       </TTSWrapper>
 
-      {/* Bookmark 설정을 위한 모달 또는 드롭다운을 설정할 수 있습니다. */}
-      {showBookmarkSettings && (
-        <div className="bookmark-settings">
-          <button onClick={handleBookmarkAdd}>
-            Add Current Page to Bookmarks
+      <TTSWrapper show={showBookmarkSettings} onClose={handleClose} title="Bookmark">
+        <div className="Header-bookmark-settings">
+          <button className="Header-custom-button" onClick={handleBookmarkAdd}>Add Current Page to Bookmarks</button>
+          <br />
+          <button className="Header-custom-button" onClick={handleFetchBookmarks}>
+            {showBookmarksList ? 'Hide Bookmarks' : 'View Bookmarks'}
           </button>
-          {bookmarkMessage && <p>{bookmarkMessage}</p>}{" "}
-          {/* 북마크 메시지 표시 */}
+          {bookmarkMessage && <p>{bookmarkMessage}</p>}
+          {showBookmarksList && (
+            <div className="Header-bookmark-list">
+              {bookmarks.map((bookmark, index) => (
+                <div key={index} className="Header-bookmark-item">
+                  <button className="Header-custom-button" onClick={() => handleBookmarkClick(bookmark.book_mark)}>
+                    {`Bookmark ${index + 1}`}
+                  </button>
+                  <button className="Header-remove-button" onClick={() => handleBookmarkRemove(bookmark.book_mark)}>  {/* 여기 수정 */}
+                    -
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </TTSWrapper>
 
-      {/* Font 설정 창 */}
-      {showFontSettings && (
-        <div className="font-settings">
-          <button onClick={() => onFontChange("Arial")}>Arial</button>
-          <button onClick={() => onFontChange("Georgia")}>Georgia</button>
-          <button onClick={() => onFontChange("Times New Roman")}>
-            Times New Roman
-          </button>
-          <button onClick={() => onFontChange("Courier New")}>
-            Courier New
-          </button>
+      <TTSWrapper show={showFontSettings} onClose={handleClose} title="Font Settings">
+        <div className="Header-font-settings">
+          <button onClick={() => onFontChange('Arial')}>Arial</button>
+          <button onClick={() => onFontChange('Georgia')}>Georgia</button>
+          <button onClick={() => onFontChange('Times New Roman')}>Times New Roman</button>
+          <button onClick={() => onFontChange('Courier New')}>Courier New</button>
         </div>
-      )}
+      </TTSWrapper>
     </Wrapper>
   );
 };
@@ -185,8 +244,12 @@ interface Props {
   onRateChange: (rate: number) => void;
   onVoiceChange: (gender: "MALE" | "FEMALE") => void;
   setAudioSource: (audioUrl: string) => void;
-  book?: { [key: string]: any }; // book 객체의 타입 추가 (적절한 타입으로 수정 가능)
-  userInfo?: { mem_id: string }; // userInfo 객체의 타입 추가 (적절한 타입으로 수정 가능)
+  book?: { [key: string]: any };
+  fetchBookmarks?: () => Promise<{ book_mark: string; book_text: string }[]>;
+  goToBookmark?: (cfi: string) => void;
+  onReadingComplete?: () => void;
+  onReadingQuit?: () => void;
+  onBookmarkRemove?: (book_mark: string) => void;
 }
 
 export default Header;

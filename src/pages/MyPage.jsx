@@ -6,6 +6,7 @@ import { BsPersonCircle } from "react-icons/bs";
 import { MdEmail } from "react-icons/md";
 import { PiHandCoinsDuotone } from "react-icons/pi";
 import axios from 'axios';
+import CalibrationButton from '../components/book/CalibrationButton';
 
 const MyPage = () => {
   const [userInfo, setUserInfo] = useState(null);
@@ -90,6 +91,7 @@ const MyPage = () => {
           <PiHandCoinsDuotone className='icon' />
           <p>포인트: <span className="points">{userInfo.mem_point}</span>점</p>
         </div>
+        <CalibrationButton/>
         <br />
         <button onClick={handleDeleteUser}>회원탈퇴</button>
       </div>
