@@ -3,6 +3,7 @@ import Modal from 'react-modal';
 import Rating from 'react-rating-stars-component';
 import axios from 'axios';
 import '../css/getreview.css';
+import { alertMessage } from "../../src/utils/alertMessage";
 
 const GetReview = ({ book, onReviewSubmit }) => {
   const [rating, setRating] = useState(0);
@@ -40,12 +41,11 @@ const GetReview = ({ book, onReviewSubmit }) => {
         book_score,
         book_review,
       });
-
-      alert('리뷰가 성공적으로 등록되었습니다.');
+      alertMessage('리뷰가 등록되었습니다.');
       closeModal(); // 리뷰 등록 후 모달 닫기
     } catch (error) {
       console.error('리뷰 등록 실패:', error);
-      alert('리뷰 등록에 실패했습니다.');
+      alertMessage('리뷰 등록에 실패했습니다.','❗');
     }
   };
 

@@ -5,6 +5,7 @@ import axios from 'axios';
 import Modal from '../components/Modal';
 import GetReview from './GetReview'; // GetReview 컴포넌트 import
 import html2canvas from 'html2canvas';
+import { alertMessage } from "../../src/utils/alertMessage";
 
 const MyLib = () => {
   const [activeTab, setActiveTab] = useState('recent'); // 기본 활성 탭
@@ -36,7 +37,7 @@ const MyLib = () => {
       .catch(error => {
         if (error.response && error.response.status === 401) {
           // 로그인이 필요하면 로그인 페이지로 이동
-          alert('로그인이 필요합니다.');
+          alertMessage('로그인이 필요합니다.','❗');
           navigate('/login');
         } else {
           console.error('', error);

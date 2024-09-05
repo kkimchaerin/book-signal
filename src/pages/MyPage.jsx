@@ -7,6 +7,7 @@ import { MdEmail } from "react-icons/md";
 import { PiHandCoinsDuotone } from "react-icons/pi";
 import axios from 'axios';
 import CalibrationButton from '../components/book/CalibrationButton';
+import { alertMessage } from "../../src/utils/alertMessage";
 
 const MyPage = () => {
   const [userInfo, setUserInfo] = useState(null);
@@ -29,7 +30,7 @@ const MyPage = () => {
         }
       } catch (error) {
         if (error.response && error.response.status === 401) {
-          alert('로그인이 필요합니다.');
+          alertMessage('로그인이 필요합니다.','❗');
           navigate('/login');
         } else if (error.response && error.response.status === 404) {
           console.log('리뷰가 존재하지 않습니다.');
@@ -61,7 +62,7 @@ const MyPage = () => {
       if (updatedUserInfo.data) {
         setUserInfo(updatedUserInfo.data); // 최신 포인트 반영
       }
-      alert('리뷰가 성공적으로 삭제되었습니다.');
+      alertMessage('리뷰가 성공적으로 삭제되었습니다.');
     } catch (error) {
       console.error('리뷰 삭제에 실패했습니다.', error);
     }
