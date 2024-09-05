@@ -157,19 +157,24 @@ exports.removeWishlist = async (mem_id, book_idx) => {
 };
 
 /******************** 시선 추적 시간 저장 ********************/
-exports.saveGazeTime = async (book_idx, mem_id, book_text, gaze_duration) => {
-  try {
+exports.saveGazeTime = (book_idx, mem_id, book_text, book_mark, gaze_duration) => {
+  return new Promise((resolve, reject) => {
     const sql = `
-      INSERT INTO book_eyegaze (book_idx, mem_id, book_text, gaze_duration, gaze_recorded_at)
-      VALUES (?, ?, ?, ?, NOW())
+      INSERT INTO book_eyegaze (book_idx, mem_id, book_text, book_mark, gaze_duration, gaze_recorded_at)
+      VALUES (?, ?, ?, ?, ?, NOW())
     `;
-    const [result] = await conn.query(sql, [book_idx, mem_id, book_text, gaze_duration]);
+    // const [result] = await conn.query(sql, [book_idx, mem_id, book_text, gaze_duration]);
 
-    return result;
-  } catch (err) {
-    console.error('Error saving gaze time:', err);
-    throw err;
-  }
+    conn.query(sql, [book_idx, mem_id, book_text, book_mark, gaze_duration], (err, result) => {
+      if (err) {
+        console.error('Error saving gaze time:', err);
+        reject(err);
+        return;
+      }
+
+      resolve(result);
+    });
+  });
 };
 
 // 북마크 저장 함수

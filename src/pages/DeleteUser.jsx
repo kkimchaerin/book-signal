@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../css/deleteuser.css';
 import { AuthContext } from '../App'; // AuthContext 가져오기
+import { alertMessage } from "../../src/utils/alertMessage";
+
 
 const DeleteUser = () => {
   const [memId, setMemId] = useState('');
@@ -16,7 +18,7 @@ const DeleteUser = () => {
 
     // 폼 검증: 아이디와 비밀번호가 입력되었는지 확인
     if (!memId || !memPw) {
-      alert('아이디와 비밀번호를 입력해주세요.');
+      alertMessage('아이디와 비밀번호를 입력해주세요.','❗');
       return;
     }
 
@@ -29,7 +31,7 @@ const DeleteUser = () => {
       }, { withCredentials: true });
 
       if (response.status === 200) {
-        alert('회원탈퇴가 완료되었습니다.');
+        alertMessage('회원탈퇴가 완료되었습니다.');
         setIsAuthenticated(false); // 로그인 상태를 false로 설정
         setUser(null); // 사용자 정보를 null로 설정
         setMemId(''); // 아이디 필드 초기화
@@ -38,10 +40,10 @@ const DeleteUser = () => {
       }
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        alert('아이디 또는 비밀번호가 잘못되었습니다.');
+        alertMessage('아이디 또는 비밀번호가 잘못되었습니다.','❗');
       } else {
         console.error('회원탈퇴 실패:', error);
-        alert('서버 오류로 인해 회원탈퇴에 실패했습니다.');
+        alertMessage('서버 오류로 인해 회원탈퇴에 실패했습니다.','❗');
       }
     } finally {
       setLoading(false); // 로딩 상태 종료
