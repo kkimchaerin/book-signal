@@ -6,6 +6,7 @@ import ControlBtn from 'components/header/ControlBtn';
 import TTSManager from 'components/tts/TTSManager';
 import TTSWrapper from 'components/tts/TTSWrapper';
 import '../css/ReaderHeader.css';
+import { handleSummarize } from 'components/SummarizePage';
 
 const Header: React.FC<Props> = ({
   rate,
@@ -20,24 +21,13 @@ const Header: React.FC<Props> = ({
   onFontChange = () => { },
   setAudioSource,
   book,
+  fetchBookmarks,
+  goToBookmark,
+  onReadingComplete,
+  onReadingQuit,
+  onBookmarkRemove,
   userInfo, // userInfo를 props로 받아야 합니다.
 }: Props) => {
-  // Props 확인 로그
-  console.log("Header Props:", {
-    rate,
-    gender,
-    onRateChange,
-    onVoiceChange,
-    onTTSToggle,
-    onTTSPause,
-    onTTSStop,
-    onTTSResume,
-    onBookmarkAdd,
-    onFontChange,
-    setAudioSource,
-    book,
-    userInfo,
-  });
   const [showTTSSettings, setShowTTSSettings] = useState(false);
   const [showBookmarkSettings, setShowBookmarkSettings] = useState(false);
   const [showFontSettings, setShowFontSettings] = useState(false);
@@ -73,8 +63,8 @@ const Header: React.FC<Props> = ({
 
   const handleFinishReading = () => {
     navigate('/detail', { state: { book } });
-    setShowFontSettings(!showFontSettings);
   };
+
 
   // 독서 완료 처리 함수
   // api 호출
@@ -149,6 +139,7 @@ const Header: React.FC<Props> = ({
     }
   };
 
+
   const handleBookmarkRemove = (book_mark: string) => {
     if (onBookmarkRemove) {
       onBookmarkRemove(book_mark);  // 여기서 props로 전달된 onBookmarkRemove를 호출
@@ -162,6 +153,7 @@ const Header: React.FC<Props> = ({
       setBookmarkMessage('');
     }, 2000); // 2000ms (2초) 후에 메시지 사라짐
   };
+
 
 
   return (
