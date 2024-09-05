@@ -62,6 +62,7 @@ const Header = ({
   };
 
   // 독서 완료 처리 함수
+  // api 호출
   const handleReadingComplete = async () => {
     console.log("독서 완료 처리 시작"); // 함수 호출 시작 로그
 

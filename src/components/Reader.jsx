@@ -296,6 +296,7 @@ const EpubReader = ({ url, book }) => {
   };
 
   // 독서 완료 처리
+  // 페이지 이동 후 api호출
   const handleReadingComplete = async () => {
     console.log("독서 완료 처리 시작");
   
