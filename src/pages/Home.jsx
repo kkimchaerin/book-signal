@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import SlideShow from '../components/SlideShow';
 import SLIDES from '../data/slides';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
 import '../css/fonts.css';
 import '../css/main.css';
+import { AuthContext } from '../App'; // AuthContext import
 
 const signal = [
   { title: '봄·봄', gpt: '지피티추천', image: '../images/cover(21).jpg' },
@@ -14,13 +14,32 @@ const signal = [
 ];
 
 const Home = () => {
+  const { isAuthenticated } = useContext(AuthContext); // 로그인 상태 가져오기
   const [newBooks, setNewBooks] = useState([]);
   const [bestBooks, setBestBooks] = useState([]);
   const [popularBooks, setPopularBooks] = useState([]);
+  const [userInfo, setUserInfo] = useState(null); // 사용자 정보를 저장할 상태
   const navigate = useNavigate();
 
+  // 세션 정보를 가져오는 useEffect (로그인된 상태일 때만)
   useEffect(() => {
-    axios.get(`http://localhost:3001/main`)
+    if (isAuthenticated) {
+      axios.get('http://localhost:3001/check-session', { withCredentials: true })
+        .then(response => {
+          if (response.data && response.data.user) {
+            setUserInfo(response.data.user); // 로그인된 유저 정보를 설정
+          }
+        })
+        .catch(error => {
+          console.error('세션 정보를 가져오는 중 오류 발생:', error);
+          setUserInfo(null); // 오류 시 userInfo를 null로 설정
+        });
+    }
+  }, [isAuthenticated]); // isAuthenticated 상태가 변경될 때마다 실행
+
+  // 메인 데이터 (신작, 인기작, 베스트) 가져오는 useEffect
+  useEffect(() => {
+    axios.get('http://localhost:3001/main')
       .then(response => {
         const { newBooks, bestBooks, popularBooks } = response.data;
         setNewBooks(newBooks);
@@ -33,14 +52,13 @@ const Home = () => {
   }, []);
 
   const handleBookClick = (book) => {
-    navigate(`/detail`, { state: { book } }); // 선택한 책을 상태로 전달하여 이동
+    navigate(`/detail`, { state: { book } });
   };
 
   return (
     <div className='main-div'>
       <SlideShow slides={SLIDES} />
       <br />
-      
       <br />
       <br />
       <br />
@@ -58,7 +76,7 @@ const Home = () => {
           <div
             key={index}
             className="main-book-card"
-            onClick={() => handleBookClick(book)} // 클릭 시 navigate 호출
+            onClick={() => handleBookClick(book)}
           >
             <div className="main-book-cover">
               <img src={book.book_cover} alt={`${book.book_name} Cover`} className="h-full w-full rounded-md shadow-lg" />
@@ -85,7 +103,7 @@ const Home = () => {
           <div
             key={index}
             className="main-book-card"
-            onClick={() => handleBookClick(book)} // 클릭 시 navigate 호출
+            onClick={() => handleBookClick(book)}
           >
             <div className="main-book-cover">
               <img src={book.book_cover} alt={`${book.book_name} Cover`} className="h-full w-full rounded-md shadow-lg" />
@@ -112,7 +130,7 @@ const Home = () => {
           <div
             key={index}
             className="main-book-card"
-            onClick={() => handleBookClick(book)} // 클릭 시 navigate 호출
+            onClick={() => handleBookClick(book)}
           >
             <div className="main-book-cover">
               <img src={book.book_cover} alt={`${book.book_name} Cover`} className="h-full w-full rounded-md shadow-lg" />
@@ -126,36 +144,40 @@ const Home = () => {
       </div>
       <br /><br /><br />
 
-      {/* 추천시그널 */}
-      <h2 className='main-title'>
-        닉네임 님에게 보내는 추천 시그널
-      </h2>
-      <br />
-      <div className="bg-[#FFEEE4] h-auto pt-3 pb-5 rounded-xl">
-        <br />
-        <div className='flex justify-center gap-4 max-w-5xl mx-auto'>
-          {signal.map((book, index) => (
-            <div
-              key={index}
-              className="relative flex flex-col items-center hover:transform hover:-translate-y-2 transition-transform duration-300"
-              style={{ width: '380px' }}
-              onClick={() => handleBookClick(book)} // 클릭 시 navigate 호출
-            >
-              <img
-                src={book.image}
-                alt={`${book.title} Cover`}
-                className="z-20 rounded-lg shadow-lg"
-                style={{ width: '230px', height: '310px' }}
-              />
-              <div className="opacity-75 relative z-10 -mt-7 w-[300px] h-auto min-h-44 max-h-48 bg-white p-4 rounded-lg shadow-lg text-center break-words">
-                <p className="font-semibold text-lg pt-6 pb-2">{book.title}</p>
-                <p className="text-sm text-gray-600 break-words">{book.gpt}</p>
-              </div>
+      {/* 추천시그널 - 로그인한 경우에만 표시 */}
+      {isAuthenticated && userInfo && (
+        <>
+          <h2 className='main-title'>
+            {`${userInfo.mem_nick} 님에게 보내는`} 추천 시그널
+          </h2>
+          <br />
+          <div className="bg-[#FFEEE4] h-auto pt-3 pb-5 rounded-xl">
+            <br />
+            <div className='flex justify-center gap-4 max-w-5xl mx-auto'>
+              {signal.map((book, index) => (
+                <div
+                  key={index}
+                  className="relative flex flex-col items-center hover:transform hover:-translate-y-2 transition-transform duration-300"
+                  style={{ width: '380px' }}
+                  onClick={() => handleBookClick(book)}
+                >
+                  <img
+                    src={book.image}
+                    alt={`${book.title} Cover`}
+                    className="z-20 rounded-lg shadow-lg"
+                    style={{ width: '230px', height: '310px' }}
+                  />
+                  <div className="opacity-75 relative z-10 -mt-7 w-[300px] h-auto min-h-44 max-h-48 bg-white p-4 rounded-lg shadow-lg text-center break-words">
+                    <p className="font-semibold text-lg pt-6 pb-2">{book.title}</p>
+                    <p className="text-sm text-gray-600 break-words">{book.gpt}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <br />
-      </div>
+            <br />
+          </div>
+        </>
+      )}
 
       <div className='h-40 text-right'>
         <div className='h-28'></div>

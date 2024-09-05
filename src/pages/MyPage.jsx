@@ -56,11 +56,18 @@ const MyPage = () => {
       });
       setReviews(prevReviews => prevReviews.filter(review => review.end_idx !== reviewId));
 
-      // 최신 유저 데이터 다시 가져오기
-      const updatedUserInfo = await axios.get('http://localhost:3001/user-info/' + mem_id, { withCredentials: true });
-      if (updatedUserInfo.data) {
-        setUserInfo(updatedUserInfo.data); // 최신 포인트 반영
-      }
+      // 최신 유저 데이터 다시 가져오기 (이전 방식)
+      // const updatedUserInfo = await axios.get('http://localhost:3001/user-info/' + mem_id, { withCredentials: true });
+      // if (updatedUserInfo.data) {
+      //   setUserInfo(updatedUserInfo.data); // 최신 포인트 반영
+      // }
+
+      // 포인트를 즉시 업데이트 (포인트 차감 15 적용)
+      setUserInfo(prevUserInfo => ({
+        ...prevUserInfo,
+        mem_point: prevUserInfo.mem_point - 15
+      }));
+
       alert('리뷰가 성공적으로 삭제되었습니다.');
     } catch (error) {
       console.error('리뷰 삭제에 실패했습니다.', error);
