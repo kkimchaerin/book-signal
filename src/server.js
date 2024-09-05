@@ -16,7 +16,6 @@ const fs = require('fs'); // 파일 시스템 접근을 위한 모듈 추가
 const tts = require('./tts'); // TTS 기능 추가
 const textToSpeech = require('@google-cloud/text-to-speech');
 const client = new textToSpeech.TextToSpeechClient();
-const sameBookRoutes = require('./routes/sameBookRoutes');
 const session = require('express-session');
 const app = express();
 const pool = require('./config/database');
@@ -166,20 +165,44 @@ app.post('/summarize', async (req, res) => {
         const representativeSentence = repreResponse.data.choices[0].message.content.trim();
         console.log('대표 문장 생성 성공:', representativeSentence);
 
-        // OpenAI API를 사용하여 요약 생성
-        const summaryResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
+      // OpenAI API를 사용하여 대표 문장 추출
+      try {
+        const repreResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
           model: 'gpt-3.5-turbo',
           messages: [{
             role: "user",
-            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 세 문장으로 요약해 주세요. 요약은 주요 등장인물, 배경, 사건을 포함하고, 이 텍스트가 전달하는 주요 메시지나 테마를 간결하게 설명해 주세요.`
+            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분에서 가장 중요한 대표 문장을 하나 뽑아 주세요.`
           }],
-          max_tokens: 250,
+          max_tokens: 200,
         }, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
           }
         });
+
+        const representativeSentence = repreResponse.data.choices[0].message.content.trim();
+        console.log('대표 문장 생성 성공:', representativeSentence);
+
+      // OpenAI API를 사용하여 요약 생성
+      const summaryResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'gpt-3.5-turbo',
+<<<<<<<<< Temporary merge branch 1
+        messages: [{ role: "user", content: `다음 텍스트는 ${bookName}의 한 부분이야 이 텍스트를 요약해줘: ${trimmedText}` }],
+        max_tokens: 100,
+=========
+        messages: [{
+          role: "user",
+          content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 요약해 주세요. 요약은 주요 등장인물, 배경, 사건을 포함하고, 이 텍스트가 전달하는 주요 메시지나 테마를 간결하게 설명해 주세요.`
+        }],
+        max_tokens: 150,
+>>>>>>>>> Temporary merge branch 2
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        }
+      });
 
         let summary = summaryResponse.data.choices[0].message.content.trim();
 

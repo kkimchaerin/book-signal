@@ -12,14 +12,15 @@ const MyLib = () => {
   const [recentBooks, setRecentBooks] = useState([]); // 최근 읽은 도서 상태
   const [wishlistBooks, setWishlistBooks] = useState([]); // 찜한 도서 상태
   const [completedBooks, setCompletedBooks] = useState([]); // 완독 도서 상태
-  const [selectedBook, setSelectedBook] = useState(null); // 리뷰모달 관련 상태
-  const [isModalOpen, setIsModalOpen] = useState(false); // 리뷰모달 관련 상태
-  const [backgroundImage, setBackgroundImage] = useState(''); // 리뷰모달 배경 이미지 상태
-  const [reviewModalOpen, setReviewModalOpen] = useState(false); // 리뷰모달 상태
-
-  const [signalText, setSignalText] = useState('');
+  const [selectedBook, setSelectedBook] = useState(null); // 리뷰 모달 관련 상태
+  const [isModalOpen, setIsModalOpen] = useState(false); // 리뷰 모달 관련 상태
+  const [backgroundImage, setBackgroundImage] = useState(''); // 리뷰 모달 배경 이미지 상태
+  const [reviewModalOpen, setReviewModalOpen] = useState(false); // 리뷰 모달 상태
+  const [signalBooks, setSignalBooks] = useState([]);
   const [signalTitle, setSignalTitle] = useState(null); // 시그널 모달 관련 상태
-  const [isSignalOpen, setSignalOpen] = useState(false); // 시그널 모달 관련 상태
+  const [signalText, setSignalText] = useState('');
+  const [signalSumm, setSignalSumm] = useState('');
+  const [isSignalOpen, setSignalOpen] = useState(false); // 시그널 모달 열림 닫힘
   const [signalBackground, setSignalBackground] = useState(''); // 시그널 모달 배경 이미지 상태
 
   const navigate = useNavigate();
@@ -71,6 +72,15 @@ const MyLib = () => {
         .catch(error => {
           console.error('완독 도서를 가져오는데 실패했습니다.', error);
         });
+
+      // 북 시그널 도서 데이터를 가져옴
+      axios.get(`http://localhost:3001/signal-books?mem_id=${userInfo.mem_id}`, { withCredentials: true })
+        .then(response => {
+          setSignalBooks(response.data); // 서버에서 가져온 데이터를 상태에 저장
+        })
+        .catch(error => {
+          console.error('북 시그널 도서를 가져오는데 실패했습니다.', error);
+        });
     }
   }, [userInfo]);
 
@@ -97,11 +107,13 @@ const MyLib = () => {
     setSelectedBook(null);
   };
 
-  const handleSignalClick = (book, image, text) => {
+
+  const handleSignalClick = (book, image, text, summ) => {
     if (activeTab === 'bookSignal') {
       setSignalTitle(book);
       setSignalBackground(image);
       setSignalText(text);
+      setSignalSumm(summ);
       setSignalOpen(true);
     }
   }
@@ -162,26 +174,28 @@ const MyLib = () => {
           </div>
         );
 
-
-
       // 북시그널
       case 'bookSignal':
         return (
           <div className="signal-grid">
-
-            <div
-              className="signal-card"
-              style={{ backgroundImage: `url('/images/cover(21).jpg')` }}
-              onClick={() => handleSignalClick('작가,제목', '/images/cover(21).jpg', '시간은 흐르고, 우리는 그 속에서 끊임없이 변화한다.')}
-            >
-              <div className="signal-text">
-                <p>시간은 흐르고,우리는 그 속에서 끊임없이 변화한다.</p>
-              </div>
-            </div>
+            {signalBooks.length > 0 ? (
+              signalBooks.map((book, index) => (
+                <div
+                  key={index}
+                  className="signal-card"
+                  style={{ backgroundImage: `url(${book.dalle_path})` }}
+                  onClick={() => handleSignalClick(book.book_name, book.dalle_path, book.book_repre, book.book_extract)}
+                >
+                  <p className='signalName'>{book.book_name}</p>
+                  <br />
+                  <p className='w-[1000px] signalRepre'>{book.book_repre}</p>
+                </div>
+              ))
+            ) : (
+              <p className="mylib-no-readingbooks-message">북 시그널 도서가 없습니다.</p>
+            )}
           </div>
         );
-
-
 
       case 'completed':
         return (
@@ -256,6 +270,7 @@ const MyLib = () => {
         />
       )}
 
+
       {/* bookSignal 모달 */}
       <Modal
         isOpen={isSignalOpen}
@@ -263,8 +278,10 @@ const MyLib = () => {
         backgroundImage={signalBackground}
         onDownload={handleDownload}
       >
-        <h2>{signalTitle}</h2>
+        <p>{signalTitle}</p>
         <p>{signalText}</p>
+        <p>{signalSumm}</p>
+
       </Modal>
     </div>
   );

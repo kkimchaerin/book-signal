@@ -241,6 +241,33 @@ exports.getCompletedBooks = async (mem_id) => {
   }
 };
 
+// 시그널 도서를 가져오는 함수
+exports.getSignalBooks = (mem_id) => {
+  return new Promise((resolve, reject) => {
+    const query = `
+    SELECT *
+    FROM book_extract_data AS b1
+    WHERE b1.mem_id = ?
+    AND b1.saved_at = (
+      SELECT MAX(b2.saved_at)
+      FROM book_extract_data AS b2
+      WHERE b2.book_name = b1.book_name
+      AND b2.mem_id = b1.mem_id
+    )
+    ORDER BY b1.saved_at DESC;
+    `;
+
+    db.query(query, [mem_id], (err, results) => {
+      if (err) {
+        console.error('북 시그널 도서를 가져오는 중 오류 발생:', err);
+        reject(new Error('북 시그널 도서를 가져오는 중 오류가 발생했습니다.'));
+      } else {
+        resolve(results);
+      }
+    });
+  });
+};
+
 // 독서 기록을 추가하는 함수
 exports.addReadingRecord = async (mem_id, book_name) => {
   try {

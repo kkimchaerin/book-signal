@@ -24,7 +24,7 @@ const SLIDES = [
     background: "linear-gradient(to right, #C1A78B, #A68972)" // 뮤트톤의 샌드 베이지
   },
   {
-    title: "<내일 죽더라도 떡볶이는 먹고싶어>",
+    title: "<죽고싶지만 떡볶이는 먹고싶어>",
     description: "그대에게 오늘 하루가 마지막 날이라면, \n 무엇을 먹을건지 떡볶이를 추천하는 작가",
     image: '/img/CO(5).jpg',
     background: "linear-gradient(to right, #9D8BB0, #A68699)" // 뮤트톤의 라벤더 그레이

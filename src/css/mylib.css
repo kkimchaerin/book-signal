@@ -142,6 +142,7 @@
 
 .signal-card {
     position: relative;
+    background-color: #333;
     background-size: cover;
     background-position: center;
     height: 200px;
@@ -149,6 +150,7 @@
     max-width: 1280px;
     margin: 0 auto;
     display: flex;
+    flex-direction: column; 
     align-items: center;
     justify-content: center;
     color: white;
@@ -172,4 +174,23 @@
     color: #555;
     text-align: center;
     margin-top: 10px;
+}
+
+@font-face {
+    font-family: 'BookkMyungjo-Bd';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkMyungjo-Bd.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+
+.signalName{
+    font-family: 'BookkMyungjo-Bd';
+    font-size: 24px;
+    -webkit-text-stroke: 0.1px grey;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+.signalRepre {
+    font-family: 'BookkMyungjo-Bd';
+    font-size: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
