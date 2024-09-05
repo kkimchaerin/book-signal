@@ -378,69 +378,67 @@ const EpubReader = ({ url, book, location }) => {
     return "0.00";
   };
 
-  // 독서 완료 처리
-  // 페이지 이동 후 api호출
-  const handleReadingComplete = async () => {
-    console.log("독서 완료 처리 시작");
+// 독서 완료 처리
+const handleReadingComplete = async () => {
+  console.log("독서 완료 처리 시작");
 
-    if (userInfo && book) {
-      const { mem_id } = userInfo;
-      const { book_idx } = book;
+  if (userInfo && book) {
+    const { mem_id } = userInfo;
+    const { book_idx } = book;
 
-      // 상세 페이지로 네비게이션
-      console.log("상세 페이지로 네비게이션 중...");
-      navigate("/detail", {
-        state: {
-          book,
-          showReviewModal: true,
-        },
-      });
+    // 상세 페이지로 네비게이션
+    console.log("상세 페이지로 네비게이션 중...");
+    navigate("/detail", {
+      state: {
+        book,
+      },
+    });
 
-      // 페이지 이동 후 비동기로 요약 생성 요청
-      setTimeout(async () => {
-        try {
-          console.log("요약 생성 요청 중...");
-          const summarizeResult = await handleSummarize(mem_id, book_idx);
+    // 페이지 이동 후 요약 생성 요청을 비동기로 처리
+    generateSummaryAndImage(mem_id, book_idx);
+  } else {
+    console.warn("사용자 정보 또는 책 정보가 없습니다.");
+  }
+};
 
-          if (summarizeResult.success) {
-            console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
-          } else {
-            console.error("요약 생성 실패:", summarizeResult.error);
-          }
-        } catch (error) {
-          console.error("요약 및 이미지 생성 중 오류 발생:", error);
-        }
-      }, 1000); // 페이지가 완전히 로드된 후에 작업을 시작하도록 약간의 지연을 둠
+// 요약 및 이미지 생성 함수
+const generateSummaryAndImage = async (mem_id, book_idx) => {
+  try {
+    console.log("요약 생성 요청 중...");
+    const summarizeResult = await handleSummarize(mem_id, book_idx);
+
+    if (summarizeResult.success) {
+      console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
     } else {
-      console.warn("사용자 정보 또는 책 정보가 없습니다.");
+      console.error("요약 생성 실패:", summarizeResult.error);
     }
-  };
+  } catch (error) {
+    console.error("요약 및 이미지 생성 중 오류 발생:", error);
+  }
+};
 
-  const handleReadingQuit = async () => {
+const handleReadingQuit = async () => {
+  if (userInfo && book) {
+    const mem_id = userInfo.mem_id;
+    const book_idx = book.book_idx;
 
-    if (userInfo && book) {
-      // userInfo와 book의 구조에 따라 접근
-      const mem_id = userInfo.mem_id;  // userInfo가 { mem_id: 'user123' }인 경우
-      const book_idx = book.book_idx; // book이 { book_idx: 1, book_name: 'Sample Book' }인 경우
-
-      // 독서 중단 시 CFI 저장
-      const currentLocation = renditionRef.current?.currentLocation();
-      if (currentLocation && currentLocation.start) {
-        const cfi = currentLocation.start.cfi;
-        try {
-          await axios.post("http://localhost:3001/getBookPath/endReading", {
-            mem_id,
-            book_idx,
-            cfi,
-          });
-          console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
-        } catch (error) {
-          console.error("독서 중단 CFI 저장 중 오류:", error);
-        }
+    const currentLocation = renditionRef.current?.currentLocation();
+    if (currentLocation && currentLocation.start) {
+      const cfi = currentLocation.start.cfi;
+      try {
+        await axios.post("http://localhost:3001/getBookPath/endReading", {
+          mem_id,
+          book_idx,
+          cfi,
+        });
+        console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
+      } catch (error) {
+        console.error("독서 중단 CFI 저장 중 오류:", error);
       }
     }
-    navigate('/detail', { state: { book } });
-  };
+  }
+  navigate('/detail', { state: { book } });
+};
 
   const handleTTS = async () => {
     if (viewerRef.current && !isPlaying) {

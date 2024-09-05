@@ -6,6 +6,7 @@ import ControlBtn from 'components/header/ControlBtn';
 import TTSManager from 'components/tts/TTSManager';
 import TTSWrapper from 'components/tts/TTSWrapper';
 import '../css/ReaderHeader.css';
+import { handleSummarize } from 'components/SummarizePage';
 
 const Header: React.FC<Props> = ({
   rate,
@@ -21,23 +22,12 @@ const Header: React.FC<Props> = ({
   setAudioSource,
   book,
   userInfo, // userInfo를 props로 받아야 합니다.
+  fetchBookmarks,
+  goToBookmark,
+  onReadingComplete,
+  onReadingQuit,
+  onBookmarkRemove,
 }: Props) => {
-  // Props 확인 로그
-  console.log("Header Props:", {
-    rate,
-    gender,
-    onRateChange,
-    onVoiceChange,
-    onTTSToggle,
-    onTTSPause,
-    onTTSStop,
-    onTTSResume,
-    onBookmarkAdd,
-    onFontChange,
-    setAudioSource,
-    book,
-    userInfo,
-  });
   const [showTTSSettings, setShowTTSSettings] = useState(false);
   const [showBookmarkSettings, setShowBookmarkSettings] = useState(false);
   const [showFontSettings, setShowFontSettings] = useState(false);

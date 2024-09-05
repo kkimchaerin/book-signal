@@ -1,6 +1,10 @@
+const db = require('../config/database'); // Promise 기반 DB 모듈 사용
+
 // 도서 정보 검색 함수
 exports.searchBooks = async (searchQuery) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `SELECT * FROM book_db WHERE book_name LIKE ?`;
     const formattedQuery = `%${searchQuery}%`;
 
@@ -8,11 +12,7 @@ exports.searchBooks = async (searchQuery) => {
 
     const updatedResults = results.map(book => {
       book.book_cover = decodeURIComponent(book.book_cover);
-      if (book.book_cover) {
-        book.book_cover = `images/${book.book_cover}`;
-      } else {
-        book.book_cover = './files/default.jpg'; // 기본 이미지 경로 설정
-      }
+      book.book_cover = book.book_cover ? `images/${book.book_cover}` : './files/default.jpg'; // 기본 이미지 경로 설정
       return book;
     });
 
@@ -20,13 +20,17 @@ exports.searchBooks = async (searchQuery) => {
   } catch (err) {
     console.error('Error searching books:', err);
     throw err;
+  } finally {
+    if (conn) conn.release();
   }
 };
 
 // book_path를 가져오는 함수
 exports.getBookPath = async (bookName) => {
+  let conn;
   try {
-    const sql = `SELECT book_path FROM book_db WHERE book_path = ?`;
+    conn = await db.getConnection();
+    const sql = `SELECT book_path FROM book_db WHERE book_name = ?`;
     const [results] = await conn.query(sql, [bookName]);
 
     if (results.length > 0) {
@@ -37,12 +41,16 @@ exports.getBookPath = async (bookName) => {
   } catch (err) {
     console.error('book_path를 가져오는 중 오류 발생:', err);
     throw new Error('book_path를 가져오지 못했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
 
-/******************** 랭킹 도서 목록 ********************/
+// 랭킹 도서 목록
 const getBooks = async (orderBy, limit = 12) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `
         SELECT *
         FROM book_db
@@ -53,11 +61,7 @@ const getBooks = async (orderBy, limit = 12) => {
 
     const updatedResults = results.map(book => {
       book.book_cover = decodeURIComponent(book.book_cover);
-      if (book.book_cover) {
-        book.book_cover = `/images/${book.book_cover}`;
-      } else {
-        book.book_cover = '/images/default.jpg';
-      }
+      book.book_cover = book.book_cover ? `/images/${book.book_cover}` : '/images/default.jpg';
       return book;
     });
 
@@ -65,6 +69,8 @@ const getBooks = async (orderBy, limit = 12) => {
   } catch (err) {
     console.error('DB 쿼리 실행 중 오류 발생:', err);
     throw err;
+  } finally {
+    if (conn) conn.release();
   }
 };
 
@@ -88,7 +94,9 @@ exports.newBooks = () => getBooks('book_published_at DESC');
 
 // 관련 도서 목록을 가져오는 함수
 exports.sameBooksDetail = async (book_genre, book_idx) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `
       SELECT *
       FROM book_db 
@@ -101,11 +109,7 @@ exports.sameBooksDetail = async (book_genre, book_idx) => {
 
     const updatedResults = results.map(book => {
       book.book_cover = decodeURIComponent(book.book_cover);
-      if (book.book_cover) {
-        book.book_cover = `/images/${book.book_cover}`;
-      } else {
-        book.book_cover = '/images/default.jpg';
-      }
+      book.book_cover = book.book_cover ? `/images/${book.book_cover}` : '/images/default.jpg';
       return book;
     });
 
@@ -113,13 +117,16 @@ exports.sameBooksDetail = async (book_genre, book_idx) => {
   } catch (err) {
     console.error('관련 도서 목록을 가져오는 중 오류 발생:', err);
     throw new Error('관련 도서 목록을 가져오는 중 오류가 발생했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
 
-/******************** 찜하기 ********************/
 // 사용자가 이미 찜한 도서인지 확인
 exports.checkWishlist = async (mem_id, book_idx) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `SELECT COUNT(*) AS count FROM book_wishlist WHERE mem_id = ? AND book_idx = ?`;
     const [results] = await conn.query(sql, [mem_id, book_idx]);
 
@@ -127,12 +134,16 @@ exports.checkWishlist = async (mem_id, book_idx) => {
   } catch (err) {
     console.error('찜한 도서 여부 확인 에러:', err);
     throw new Error('찜한 도서 여부 확인에 실패했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
 
 // 도서 찜하기 추가
 exports.addWishlist = async (mem_id, book_idx) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `INSERT INTO book_wishlist (mem_id, book_idx) VALUES (?, ?)`;
     await conn.query(sql, [mem_id, book_idx]);
 
@@ -140,12 +151,16 @@ exports.addWishlist = async (mem_id, book_idx) => {
   } catch (err) {
     console.error('도서 찜하기 에러:', err);
     throw new Error('도서 찜하기에 실패했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
 
 // 찜한 도서 제거
 exports.removeWishlist = async (mem_id, book_idx) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `DELETE FROM book_wishlist WHERE mem_id = ? AND book_idx = ?`;
     const [result] = await conn.query(sql, [mem_id, book_idx]);
 
@@ -157,12 +172,16 @@ exports.removeWishlist = async (mem_id, book_idx) => {
   } catch (err) {
     console.error('찜한 도서 제거 에러:', err);
     throw new Error('찜한 도서 제거에 실패했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
 
-/******************** 시선 추적 시간 저장 ********************/
+// 시선 추적 시간 저장
 exports.saveGazeTime = async (book_idx, mem_id, book_text, gaze_duration) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `
       INSERT INTO book_eyegaze (book_idx, mem_id, book_text, gaze_duration, gaze_recorded_at)
       VALUES (?, ?, ?, ?, NOW())
@@ -173,12 +192,16 @@ exports.saveGazeTime = async (book_idx, mem_id, book_text, gaze_duration) => {
   } catch (err) {
     console.error('Error saving gaze time:', err);
     throw err;
+  } finally {
+    if (conn) conn.release();
   }
 };
 
-// 요약용 수동 북마크 저장 함수
+// 북마크 저장 함수
 exports.saveBookmark = async (book_name, book_idx, mem_id, cfi, page_text) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `
       INSERT INTO book_reading (book_name, book_idx, mem_id, book_mark, book_text, book_latest)
       VALUES (?, ?, ?, ?, ?, NOW())
@@ -189,12 +212,16 @@ exports.saveBookmark = async (book_name, book_idx, mem_id, cfi, page_text) => {
   } catch (err) {
     console.error('북마크 저장 중 오류 발생:', err);
     throw new Error('북마크를 저장하는 중 오류가 발생했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
 
-// 요약용 수동 사용자의 북마크를 가져오는 함수
+// 사용자의 북마크를 가져오는 함수
 exports.getBookmarks = async (book_idx, mem_id) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `
       SELECT book_mark
       FROM book_reading
@@ -208,12 +235,16 @@ exports.getBookmarks = async (book_idx, mem_id) => {
   } catch (err) {
     console.error('북마크를 가져오는 중 오류 발생:', err);
     throw new Error('북마크를 가져오는 중 오류가 발생했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
 
-// 최근 도서 읽기 특정 사용자와 책의 북마크를 가져오는 함수
+// 특정 사용자와 책의 북마크를 가져오는 함수
 exports.getUserBookmarkForBook = async (book_idx, mem_id) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `
       SELECT book_mark
       FROM book_reading
@@ -230,13 +261,16 @@ exports.getUserBookmarkForBook = async (book_idx, mem_id) => {
   } catch (err) {
     console.error('북마크를 가져오는 중 오류 발생:', err);
     throw new Error('북마크를 가져오는 중 오류가 발생했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
 
-// 최근 읽은 도서 용 독서 종료 시 북마크 저장 함수
+// 북마크 저장 함수
 exports.saveEndReading = async (book_idx, mem_id, cfi) => {
+  let conn;
   try {
-    // Step 1: book_idx에 해당하는 book_name 가져오기
+    conn = await db.getConnection();
     const getBookNameSql = `
       SELECT book_name 
       FROM book_reading 
@@ -251,7 +285,6 @@ exports.saveEndReading = async (book_idx, mem_id, cfi) => {
 
     const book_name = results[0].book_name;
 
-    // Step 2: 가져온 book_name을 사용해 북마크 저장
     const saveBookmarkSql = `
       INSERT INTO book_reading (book_idx, mem_id, book_mark, book_name, book_latest)
       VALUES (?, ?, ?, ?, NOW())
@@ -262,12 +295,16 @@ exports.saveEndReading = async (book_idx, mem_id, cfi) => {
   } catch (err) {
     console.error('독서 종료 중 북마크 저장 오류 발생:', err);
     throw new Error('독서 종료 중 북마크 저장에 실패했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
 
 // 북마크 삭제 함수
 exports.removeBookmark = async (book_idx, mem_id, book_mark) => {
+  let conn;
   try {
+    conn = await db.getConnection();
     const sql = `
       DELETE FROM book_reading 
       WHERE book_idx = ? 
@@ -275,9 +312,6 @@ exports.removeBookmark = async (book_idx, mem_id, book_mark) => {
       AND book_mark = ?
     `;
     const [result] = await conn.query(sql, [book_idx, mem_id, book_mark]);
-
-    console.log(book_idx, mem_id, book_mark);
-    console.log('삭제된 행 수:', result.affectedRows);
 
     if (result.affectedRows > 0) {
       return { message: '북마크가 삭제되었습니다.' };
@@ -287,5 +321,7 @@ exports.removeBookmark = async (book_idx, mem_id, book_mark) => {
   } catch (err) {
     console.error('북마크 삭제 중 오류 발생:', err);
     throw new Error('북마크 삭제에 실패했습니다.');
+  } finally {
+    if (conn) conn.release();
   }
 };
