@@ -214,6 +214,11 @@ const MyLib = () => {
   return (
     <div className="mylib-container">
       <h1 className="mylib-title">{userInfo?.mem_nick} 님의 서재</h1>
+            {/* 최근 읽은 도서 갯수에 따른 멘트 */}
+            <p className="mylib-welcome-message">
+        올해 {recentBooks.length}권을 읽으셨어요!
+      </p>
+      <br />
       <div className="tabs">
         <div
           className={`tab ${activeTab === 'recent' ? 'active' : ''}`}

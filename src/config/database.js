@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
 // MySQL 연결 풀 설정
 const pool = mysql.createPool({
@@ -13,13 +13,18 @@ const pool = mysql.createPool({
 });
 
 // 연결 테스트 (옵션)
-pool.getConnection((err, connection) => {
-    if (err) {
+async function testConnection() {
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        console.log('데이터베이스 연결 성공');
+    } catch (err) {
         console.error('데이터베이스 연결 실패:', err);
-        return;
+    } finally {
+        if (connection) connection.release(); // 연결 반환
     }
-    console.log('데이터베이스 연결 성공');
-    connection.release(); // 연결 반환
-});
+}
+
+testConnection(); // 연결 테스트 실행
 
 module.exports = pool;

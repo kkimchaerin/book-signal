@@ -41,8 +41,6 @@ app.use(express.json());
 app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true,
-  origin: 'http://localhost:3000',
-  credentials: true,
 }));
 
 // 정적 파일 제공을 위한 경로 설정

@@ -164,7 +164,7 @@ const Header: React.FC<Props> = ({
             <ControlBtn message="Sound" onClick={handleSoundClick} />
             <ControlBtn message="Bookmark" onClick={handleBookmarkToggle} />
             <ControlBtn message="Font Settings" onClick={handleFontClick} />
-            <ControlBtn message="독서 완료" onClick={handleFinishReading} />
+            <ControlBtn message="독서 완료" onClick={handleReadingComplete} />
             <ControlBtn message="독서 종료" onClick={handleReadingQuit} />
           </div>
         </AutoLayout>
@@ -237,6 +237,7 @@ interface Props {
   onVoiceChange: (gender: "MALE" | "FEMALE") => void;
   setAudioSource: (audioUrl: string) => void;
   book?: { [key: string]: any };
+  userInfo?: { mem_id: string };
   fetchBookmarks?: () => Promise<{ book_mark: string; book_text: string }[]>;
   goToBookmark?: (cfi: string) => void;
   onReadingComplete?: () => void;
