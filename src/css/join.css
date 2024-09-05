@@ -129,7 +129,12 @@
 
 /* input 필드 */
 /* input[type="text"], */
-input[type="password"],
+input[type="password"]{
+    border: none;
+    font-family: 'Pretendard-Regular', sans-serif;
+    line-height: 1.5;
+    /* 텍스트 높이를 맞추기 위해 라인 높이를 조정 */
+}
 input[type="date"] {
     border: none;
     padding: 15px;
