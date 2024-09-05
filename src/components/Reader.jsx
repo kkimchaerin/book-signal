@@ -378,7 +378,7 @@ const EpubReader = ({ url, book, location }) => {
     return "0.00";
   };
 
-// 독서 완료 처리
+// 독서 완료 처리 함수
 const handleReadingComplete = async () => {
   console.log("독서 완료 처리 시작");
 
@@ -386,36 +386,31 @@ const handleReadingComplete = async () => {
     const { mem_id } = userInfo;
     const { book_idx } = book;
 
-    // 상세 페이지로 네비게이션
-    console.log("상세 페이지로 네비게이션 중...");
-    navigate("/detail", {
-      state: {
-        book,
-      },
-    });
+    console.log("사용자 정보:", { mem_id });
+    console.log("책 정보:", { book_idx });
 
-    // 페이지 이동 후 요약 생성 요청을 비동기로 처리
-    generateSummaryAndImage(mem_id, book_idx);
+    // 상세 페이지로 네비게이션을 즉시 수행
+    console.log("상세 페이지로 네비게이션 중...");
+    navigate("/detail", { state: { book } });
+
+    // 요약 생성 요청을 비동기로 처리
+    try {
+      console.log("요약 생성 요청 중...");
+      const summarizeResult = await handleSummarize(mem_id, book_idx);
+
+      if (summarizeResult.success) {
+        console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
+      } else {
+        console.error("요약 생성 실패:", summarizeResult.error);
+      }
+    } catch (error) {
+      console.error("요약 생성 중 오류 발생:", error);
+    }
   } else {
     console.warn("사용자 정보 또는 책 정보가 없습니다.");
   }
 };
 
-// 요약 및 이미지 생성 함수
-const generateSummaryAndImage = async (mem_id, book_idx) => {
-  try {
-    console.log("요약 생성 요청 중...");
-    const summarizeResult = await handleSummarize(mem_id, book_idx);
-
-    if (summarizeResult.success) {
-      console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
-    } else {
-      console.error("요약 생성 실패:", summarizeResult.error);
-    }
-  } catch (error) {
-    console.error("요약 및 이미지 생성 중 오류 발생:", error);
-  }
-};
 
 const handleReadingQuit = async () => {
   if (userInfo && book) {
