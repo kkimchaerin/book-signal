@@ -29,6 +29,7 @@ const EpubReader = ({ url, book, location }) => {
   const bookRef = useRef(null);
   const renditionRef = useRef(null);
   const audioRef = useRef(new Audio());
+  const [fontSize, setFontSize] = useState(16); // 기본 글씨 크기
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
@@ -40,7 +41,6 @@ const EpubReader = ({ url, book, location }) => {
   const [currentTextIndex, setCurrentTextIndex] = useState(0); // 현재 읽고 있는 텍스트의 인덱스
   const [bookStyle, setBookStyle] = useState({
     fontFamily: "Arial",
-    fontSize: 16,
     lineHeight: 1.6,
     marginHorizontal: 50,
     marginVertical: 5,
@@ -55,7 +55,6 @@ const EpubReader = ({ url, book, location }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [bookmarks, setBookmarks] = useState([]);
-  const [fontSize, setFontSize] = useState("100%");
   const [lineHeight, setLineHeight] = useState("1.5");
   const [margin, setMargin] = useState("0");
   const [fontFamily, setFontFamily] = useState("Arial");
@@ -66,6 +65,41 @@ const EpubReader = ({ url, book, location }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [bookmarkMessage, setBookmarkMessage] = useState('');  // 추가된 부분
   const [cfi, setCfi] = useState('');
+
+  // 폰트 크기 변경 함수
+  const onFontSizeChange = (action) => {
+    if (action === 'increase') {
+      increaseFontSize();
+    } else if (action === 'decrease') {
+      decreaseFontSize();
+    }
+  };
+
+  // 폰트 크기를 증가시키는 함수
+  const increaseFontSize = () => {
+    console.log('in');
+    
+    setFontSize((prevSize) => Math.min(prevSize + 2, 32)); // 최대 32px
+  };
+
+  // 폰트 크기를 감소시키는 함수
+  const decreaseFontSize = () => {
+    console.log('de');
+    
+    setFontSize((prevSize) => Math.max(prevSize - 2, 12)); // 최소 12px
+  };
+
+  useEffect(() => {
+    if (renditionRef.current) {
+      renditionRef.current.themes.register("customTheme", {
+        "*": {
+          "font-size": `${fontSize}px !important`,
+          "line-height": "1.5 !important",
+        },
+      });
+      renditionRef.current.themes.override("customTheme");
+    }
+  }, [fontSize]); // fontSize가 변경될 때마다 적용
 
   useEffect(() => {
     axios.get('http://localhost:3001/check-session', { withCredentials: true })
@@ -225,62 +259,6 @@ const EpubReader = ({ url, book, location }) => {
       };
     }
   }, [url, dispatch, userInfo, location.state]);
-
-  const updateStyles = useCallback(() => {
-    console.log('font update');
-  
-    if (renditionRef.current) {
-      // 폰트 스타일 정의
-      const fontFaceCSS = `
-        @font-face {
-          font-family: 'FreeSerif';
-          src: url('OPS/fonts/FreeSerif.ttf');
-        }
-        @font-face {
-          font-family: 'FreeSerifBold';
-          src: url('OPS/fonts/FreeSerifBold.ttf');
-        }
-        @font-face {
-          font-family: 'FreeSerifItalic';
-          src: url('OPS/fonts/FreeSerifItalic.ttf');
-        }
-        @font-face {
-          font-family: 'FreeSerifBoldItalic';
-          src: url('OPS/fonts/FreeSerifBoldItalic.ttf');
-        }
-      `;
-  
-      // 강력한 스타일 덮어쓰기
-      const customCSS = `
-        * {
-          font-family: "FreeSerif" !important;
-          font-size: ${fontSize} !important;
-          line-height: ${lineHeight} !important;
-          margin: ${margin} !important;
-        }
-        body {
-          font-family: "FreeSerif" !important;
-          font-size: ${fontSize} !important;
-          line-height: ${lineHeight} !important;
-          margin: ${margin} !important;
-        }
-      `;
-  
-      // 폰트와 스타일을 EPUB에 주입
-      renditionRef.current.themes.register("customTheme", customCSS);
-      renditionRef.current.themes.select("customTheme");
-  
-      console.log("새로운 폰트와 스타일이 적용되었습니다:", fontFamily);
-    }
-  }, [fontFamily, fontSize, lineHeight, margin]);
-  
-
-  // 폰트 변경 시마다 스타일 업데이트
-  useEffect(() => {
-    updateStyles();
-  }, [fontFamily, fontSize, lineHeight, margin]);
-
-
 
   const onPageMove = useCallback((type) => {
     if (saveGazeTimeRef.current) {
@@ -679,7 +657,6 @@ const EpubReader = ({ url, book, location }) => {
           onRateChange={setRate}
           onVoiceChange={setGender}
           onBookmarkAdd={addBookmark}
-          onFontChange={setFontFamily}
           onReadingComplete={handleReadingComplete}
           goToBookmark={goToBookmark}  // 전달
           fetchBookmarks={fetchBookmarks}  // 전달
@@ -687,6 +664,9 @@ const EpubReader = ({ url, book, location }) => {
           book={book}
           userInfo={userInfo} // userInfo를 추가
           onBookmarkRemove={handleBookmarkRemove}
+          onFontSizeChange={onFontSizeChange} // 폰트 크기 변경 함수 전달
+          increaseFontSize={increaseFontSize}  // 전달
+          decreaseFontSize={decreaseFontSize}  // 전달
         />
 
         <div

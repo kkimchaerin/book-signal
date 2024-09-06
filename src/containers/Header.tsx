@@ -18,7 +18,6 @@ const Header: React.FC<Props> = ({
   onTTSStop,
   onTTSResume,
   onBookmarkAdd = () => { },
-  onFontChange = () => { },
   setAudioSource,
   book,
   userInfo,
@@ -27,6 +26,9 @@ const Header: React.FC<Props> = ({
   onReadingComplete,
   onReadingQuit,
   onBookmarkRemove,
+  increaseFontSize,
+  decreaseFontSize,
+  onFontSizeChange,  // 폰트 크기 변경 함수
 }: Props) => {
   const [showTTSSettings, setShowTTSSettings] = useState(false);
   const [showBookmarkSettings, setShowBookmarkSettings] = useState(false);
@@ -165,16 +167,6 @@ const Header: React.FC<Props> = ({
     }
   };
 
-  // 폰트 변경 처리 함수
-  const handleFontChange = (font: string) => {
-    setSelectedFont(font);  // 선택한 폰트 상태 업데이트
-    console.log(`폰트 변경됨: ${font}`);  // 폰트 변경 로그
-
-    if (onFontChange) {
-      onFontChange(font);  // EpubReader로 폰트 변경 알림
-    }
-  };
-
   return (
     <Wrapper style={{ fontFamily: selectedFont }} key={selectedFont}> {/* 선택한 폰트를 전체 Wrapper에 적용 */}
       <Layout>
@@ -253,10 +245,14 @@ const Header: React.FC<Props> = ({
 
       <TTSWrapper show={showFontSettings} onClose={handleClose} title="Font Settings">
         <div className="Header-font-settings">
-          <button onClick={() => handleFontChange('FreeSerif')}>FreeSerif</button>
-          <button onClick={() => handleFontChange('FreeSerifBold')}>FreeSerifBold</button>
-          <button onClick={() => handleFontChange('FreeSerifItalic')}>FreeSerifItalic</button>
-          <button onClick={() => handleFontChange('FreeSerifBoldItalic')}>FreeSerifBoldItalic</button>
+          <ControlBtn
+            message="Decrease Font"
+            onClick={() => onFontSizeChange ? onFontSizeChange('decrease') : null}
+          /> {/* 폰트 크기 감소 버튼 */}
+          <ControlBtn
+            message="Increase Font"
+            onClick={() => onFontSizeChange ? onFontSizeChange('increase') : null}
+          /> {/* 폰트 크기 증가 버튼 */}
         </div>
       </TTSWrapper>
     </Wrapper>
@@ -285,6 +281,9 @@ interface Props {
   onReadingComplete?: () => void;
   onReadingQuit?: () => void;
   onBookmarkRemove?: (book_mark: string) => void;
+  increaseFontSize?: () => void;  // 추가
+  decreaseFontSize?: () => void;  // 추가
+  onFontSizeChange?: (action: 'increase' | 'decrease') => void;
 }
 
 export default Header;
