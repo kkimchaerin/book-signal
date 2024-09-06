@@ -19,7 +19,24 @@ const Home = () => {
   const [bestBooks, setBestBooks] = useState([]);
   const [popularBooks, setPopularBooks] = useState([]);
   const [userInfo, setUserInfo] = useState(null); // 사용자 정보를 저장할 상태
+  const [recommendedBooks, setRecommendedBooks] = useState([]); // Python 추천 도서 목록
+  const [userId, setUserId] = useState(null); // 사용자 ID 저장
   const navigate = useNavigate();
+
+  // 세션 정보에서 사용자 ID를 가져오는 함수
+  useEffect(() => {
+    axios
+      .get("http://localhost:3001/check-session", { withCredentials: true })
+      .then((response) => {
+        const mem_id = response.data.user.mem_id;
+        setUserId(mem_id); // 사용자 ID 설정
+      })
+      .catch((error) => {
+        console.error("세션 정보를 가져오는 중 오류 발생:", error);
+        // 세션이 없으면 로그인 페이지로 이동
+        navigate("/");
+      });
+  }, [navigate]);
 
   // 세션 정보를 가져오는 useEffect (로그인된 상태일 때만)
   useEffect(() => {
@@ -56,7 +73,7 @@ const Home = () => {
   };
 
   return (
-    <div className='main-div'>
+    <div className="main-div">
       <SlideShow slides={SLIDES} />
       <br />
       <br />
@@ -64,14 +81,14 @@ const Home = () => {
       <br />
 
       {/* 인기top5 */}
-      <h2 className='main-title'>
+      <h2 className="main-title">
         지금, 많이 읽은 그 작품
-        <a href="/ranking/popular" className='main-link'>
+        <a href="/ranking/popular" className="main-link">
           더보기
         </a>
       </h2>
       <br />
-      <div className='main-book-container'>
+      <div className="main-book-container">
         {popularBooks.map((book, index) => (
           <div
             key={index}
@@ -79,7 +96,11 @@ const Home = () => {
             onClick={() => handleBookClick(book)}
           >
             <div className="main-book-cover">
-              <img src={book.book_cover} alt={`${book.book_name} Cover`} className="h-full w-full rounded-md shadow-lg" />
+              <img
+                src={book.book_cover}
+                alt={`${book.book_name} Cover`}
+                className="h-full w-full rounded-md shadow-lg"
+              />
             </div>
             <div className="main-book-info">
               <p className="main-book-title">{book.book_name}</p>
@@ -91,14 +112,14 @@ const Home = () => {
       <br />
 
       {/* 평점 top5 */}
-      <h2 className='main-title'>
+      <h2 className="main-title">
         평점, BEST!
-        <a href="/ranking/best" className='main-link'>
+        <a href="/ranking/best" className="main-link">
           더보기
         </a>
       </h2>
       <br />
-      <div className='main-book-container'>
+      <div className="main-book-container">
         {bestBooks.map((book, index) => (
           <div
             key={index}
@@ -106,7 +127,11 @@ const Home = () => {
             onClick={() => handleBookClick(book)}
           >
             <div className="main-book-cover">
-              <img src={book.book_cover} alt={`${book.book_name} Cover`} className="h-full w-full rounded-md shadow-lg" />
+              <img
+                src={book.book_cover}
+                alt={`${book.book_name} Cover`}
+                className="h-full w-full rounded-md shadow-lg"
+              />
             </div>
             <div className="main-book-info">
               <p className="main-book-title">{book.book_name}</p>
@@ -118,14 +143,14 @@ const Home = () => {
       <br />
 
       {/* 신작 top5 */}
-      <h2 className='main-title'>
+      <h2 className="main-title">
         갓 나온 신작
-        <a href="/ranking/new" className='main-link'>
+        <a href="/ranking/new" className="main-link">
           더보기
         </a>
       </h2>
       <br />
-      <div className='main-book-container'>
+      <div className="main-book-container">
         {newBooks.map((book, index) => (
           <div
             key={index}
@@ -133,7 +158,11 @@ const Home = () => {
             onClick={() => handleBookClick(book)}
           >
             <div className="main-book-cover">
-              <img src={book.book_cover} alt={`${book.book_name} Cover`} className="h-full w-full rounded-md shadow-lg" />
+              <img
+                src={book.book_cover}
+                alt={`${book.book_name} Cover`}
+                className="h-full w-full rounded-md shadow-lg"
+              />
             </div>
             <div className="main-book-info">
               <p className="main-book-title">{book.book_name}</p>
@@ -142,7 +171,9 @@ const Home = () => {
           </div>
         ))}
       </div>
-      <br /><br /><br />
+      <br />
+      <br />
+      <br />
 
       {/* 추천시그널 - 로그인한 경우에만 표시 */}
       {isAuthenticated && userInfo && (
@@ -179,15 +210,15 @@ const Home = () => {
         </>
       )}
 
-      <div className='h-40 text-right'>
-        <div className='h-28'></div>
+      <div className="h-40 text-right">
+        <div className="h-28"></div>
         <hr />
-        <div className='h-5'></div>
-        <span className='text-gray-400'>b:ook</span>
-        <div className='h-10'></div>
+        <div className="h-5"></div>
+        <span className="text-gray-400">b:ook</span>
+        <div className="h-10"></div>
       </div>
     </div>
   );
-}
+};
 
 export default Home;

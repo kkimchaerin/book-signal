@@ -1,5 +1,5 @@
-import { useDispatch } from "react-redux";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import {  useDispatch } from "react-redux";
+import React, { useState, useRef, useEffect,useCallback } from "react";
 import { Provider } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import ePub from "epubjs";
@@ -319,7 +319,7 @@ const EpubReader = ({ url, book, location }) => {
     if (renditionRef.current) {
       const contents = renditionRef.current.getContents();
 
-      let allVisibleTexts = [];
+    let allVisibleTexts = []; // 모든 텍스트를 담을 배열
 
       contents.forEach((content) => {
         const iframeDoc = content.document;
@@ -413,69 +413,65 @@ const EpubReader = ({ url, book, location }) => {
   const handleReadingComplete = async () => {
     console.log("독서 완료 처리 시작");
 
-    if (userInfo && book) {
-      const { mem_id } = userInfo;
-      const { book_idx } = book;
+  if (userInfo && book) {
+    const { mem_id } = userInfo;
+    const { book_idx } = book;
 
-      // 상세 페이지로 네비게이션
-      console.log("상세 페이지로 네비게이션 중...");
-      navigate("/detail", {
-        state: {
-          book,
-          showReviewModal: true,
-        },
-      });
+    console.log("사용자 정보:", { mem_id });
+    console.log("책 정보:", { book_idx });
 
-      // 페이지 이동 후 비동기로 요약 생성 요청
-      setTimeout(async () => {
-        try {
-          console.log("요약 생성 요청 중...");
-          const summarizeResult = await handleSummarize(mem_id, book_idx);
+    // 상세 페이지로 네비게이션을 즉시 수행
+    console.log("상세 페이지로 네비게이션 중...");
+    navigate("/detail", { state: { book } });
 
-          if (summarizeResult.success) {
-            console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
-          } else {
-            console.error("요약 생성 실패:", summarizeResult.error);
-          }
-        } catch (error) {
-          console.error("요약 및 이미지 생성 중 오류 발생:", error);
-        }
-      }, 1000); // 페이지가 완전히 로드된 후에 작업을 시작하도록 약간의 지연을 둠
-    } else {
-      console.warn("사용자 정보 또는 책 정보가 없습니다.");
+    // 요약 생성 요청을 비동기로 처리
+    try {
+      console.log("요약 생성 요청 중...");
+      const summarizeResult = await handleSummarize(mem_id, book_idx);
+
+      if (summarizeResult.success) {
+        console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
+      } else {
+        console.error("요약 생성 실패:", summarizeResult.error);
+      }
+    } catch (error) {
+      console.error("요약 생성 중 오류 발생:", error);
     }
-  };
+  } else {
+    console.warn("사용자 정보 또는 책 정보가 없습니다.");
+  }
+};
 
-  const handleReadingQuit = async () => {
 
-    if (userInfo && book) {
-      // userInfo와 book의 구조에 따라 접근
-      const mem_id = userInfo.mem_id;  // userInfo가 { mem_id: 'user123' }인 경우
-      const book_idx = book.book_idx; // book이 { book_idx: 1, book_name: 'Sample Book' }인 경우
+const handleReadingQuit = async () => {
+  if (userInfo && book) {
+    const mem_id = userInfo.mem_id;
+    const book_idx = book.book_idx;
 
-      // 독서 중단 시 CFI 저장
-      const currentLocation = renditionRef.current?.currentLocation();
-      if (currentLocation && currentLocation.start) {
-        const cfi = currentLocation.start.cfi;
-        try {
-          await axios.post("http://localhost:3001/getBookPath/endReading", {
-            mem_id,
-            book_idx,
-            cfi,
-          });
-          console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
-        } catch (error) {
-          console.error("독서 중단 CFI 저장 중 오류:", error);
-        }
+    const currentLocation = renditionRef.current?.currentLocation();
+    if (currentLocation && currentLocation.start) {
+      const cfi = currentLocation.start.cfi;
+      try {
+        await axios.post("http://localhost:3001/getBookPath/endReading", {
+          mem_id,
+          book_idx,
+          cfi,
+        });
+        console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
+      } catch (error) {
+        console.error("독서 중단 CFI 저장 중 오류:", error);
       }
     }
-    navigate('/detail', { state: { book } });
-  };
+  }
+  navigate('/detail', { state: { book } });
+};
 
-  const handleTTS = async () => {
-    if (viewerRef.current && !isPlaying) {
-      setIsPlaying(true);
-      setIsPaused(false);
+  
+ // TTS 관련 함수들
+const handleTTS = async () => {
+  if (!isPlaying) {
+    setIsPlaying(true);
+    setIsPaused(false);
 
       // TTS 시작 전에 현재 페이지의 텍스트 업데이트
       await logCurrentPageText(); // 텍스트 업데이트 완료를 기다림
@@ -547,62 +543,44 @@ const EpubReader = ({ url, book, location }) => {
         });
       }
     }
-  }, [rate]); // 배속이 변경될 때마다 실행
+  },
+[rate]); // 배속이 변경될 때마다 실행
 
 
-  // 오디오 소스가 변경될 때만 실행
-  useEffect(() => {
-    if (audioSource && audioRef.current) {
-      audioRef.current.src = audioSource;
-      audioRef.current.play();
-      audioRef.current.playbackRate = rate; // 배속 반영
-      setIsPlaying(true);
-      setIsPaused(false);
-    }
-  }, [audioSource]); // 오디오 소스가 변경될 때만 실행
+// 오디오 소스가 변경될 때만 실행
+useEffect(() => {
+  if (audioSource && audioRef.current) {
+    audioRef.current.src = audioSource;
+    audioRef.current.play();
+    audioRef.current.playbackRate = rate; // 배속 반영
+    setIsPlaying(true);
+    setIsPaused(false);
+  }
+}, [audioSource]); // 오디오 소스가 변경될 때만 실행
 
-  // 페이지 이동 후 텍스트를 추출하는 함수
-  const moveToNextPage = async () => {
-    if (renditionRef.current) {
-      await renditionRef.current.next();
+// 페이지 이동 후 텍스트를 추출하는 함수
+const moveToNextPage = async () => {
+  if (renditionRef.current) {
+    await renditionRef.current.next();
+    
+    // 페이지 이동 후 텍스트를 다시 로드
+    await logCurrentPageText();
 
-      // 페이지 이동 후 텍스트를 다시 로드
-      await logCurrentPageText();
-
-      // 페이지 이동 후 TTS 재실행을 위해 isPlaying을 false로 설정 후 다시 true로 변경
-      setIsPlaying(false); // 일시적으로 false로 설정하여 useEffect가 다시 트리거되도록 함
-      setTimeout(() => {
-        setIsPlaying(true);  // 상태를 다시 true로 설정하여 TTS 재실행
-      }, 500);
-    }
-  };
-
-  // 배속 변경에 따른 효과 적용
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.playbackRate = rate; // 배속 변경 시 항상 최신 배속을 적용
-      if (!audioRef.current.paused) {
-        audioRef.current.play(); // 현재 재생 중이면 재생 상태를 유지하면서 배속 변경
-      }
-    }
-  }, [rate]); // 배속이 변경될 때마다 실행
-
-
-  useEffect(() => {
-    if (audioSource && audioRef.current) {
-      audioRef.current.src = audioSource;
-      audioRef.current.play();
-      audioRef.current.playbackRate = rate; // 배속 반영
-      setIsPlaying(true);
-      setIsPaused(false);
-    }
-  }, [audioSource]); // 오디오 소스가 변경될 때만 실행
+    // 페이지 이동 후 TTS 재실행을 위해 isPlaying을 false로 설정 후 다시 true로 변경
+    setIsPlaying(false); // 일시적으로 false로 설정하여 useEffect가 다시 트리거되도록 함
+    setTimeout(() => {
+      setIsPlaying(true);  // 상태를 다시 true로 설정하여 TTS 재실행
+    }, 500); 
+  }
+};
 
 
   const stopTTS = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.src = ""; // 오디오 소스 리셋
+      console.log("tts 정지");
     }
     setIsPlaying(false);
     setIsPaused(false);

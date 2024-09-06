@@ -251,6 +251,7 @@ exports.getCompletedBooks = async (req, res) => {
   }
 };
 
+
 // 북 시그널 데이터를 가져오는 함수
 exports.getSignalBooks = async (req, res) => {
   const mem_id = req.session.user.mem_id;

@@ -9,6 +9,7 @@ const rankingRoutes = require('./routes/rankingRoutes');
 const wishListRoutes = require('./routes/wishListRoutes');
 const bookRoutes = require('./routes/bookRoutes');
 const mainRoutes = require('./routes/mainRoutes');
+const sameBookRoutes = require('./routes/sameBookRoutes')
 const path = require('path');
 const helmet = require('helmet');
 const reviewRoutes = require('./routes/reviewRoutes');
@@ -16,17 +17,13 @@ const fs = require('fs'); // 파일 시스템 접근을 위한 모듈 추가
 const tts = require('./tts'); // TTS 기능 추가
 const textToSpeech = require('@google-cloud/text-to-speech');
 const client = new textToSpeech.TextToSpeechClient();
-const sameBookRoutes = require('./routes/sameBookRoutes');
 const session = require('express-session');
 const app = express();
 const pool = require('./config/database');
-const axios = require('axios')
-
-
+const axios = require('axios');
 
 // 세션 설정 (기본 설정)
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'MyKey',
   secret: process.env.SESSION_SECRET || 'MyKey',
   resave: false,
   saveUninitialized: false,
@@ -93,6 +90,31 @@ app.post('/tts', async (req, res) => {
   }
 });
 
+// 독서 완료 API 엔드포인트
+app.post('/completeReading', async (req, res) => {
+  const { memId, bookIdx, bookName } = req.body;
+  
+  let connection;
+  try {
+    connection = await pool.getConnection();
+
+    // book_end 테이블에 정보 저장
+    const [result] = await connection.query(`
+      INSERT INTO book_end (mem_id, book_idx, book_name) 
+      VALUES (?, ?, ?)
+    `, [memId, bookIdx, bookName]);
+
+    console.log('독서 완료 정보 저장 성공:', result);
+    res.status(200).json({ success: true, message: '독서 완료 정보가 저장되었습니다.' });
+
+  } catch (err) {
+    console.error('Error saving complete reading data:', err.message);
+    res.status(500).json({ success: false, error: '독서 완료 정보를 저장하는 중 오류가 발생했습니다.' });
+  } finally {
+    if (connection) connection.release();
+  }
+});
+
 // 요약 생성 엔드포인트
 app.post('/summarize', async (req, res) => {
   const { memId, bookIdx } = req.body;
@@ -147,66 +169,94 @@ app.post('/summarize', async (req, res) => {
         }
       }
 
-      // OpenAI API를 사용하여 요약 생성
-      const summaryResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-3.5-turbo',
-        messages: [{
-          role: "user",
-          content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 요약해 주세요. 요약은 주요 등장인물, 배경, 사건을 포함하고, 이 텍스트가 전달하는 주요 메시지나 테마를 간결하게 설명해 주세요.`
-        }],
-        max_tokens: 250, // max_tokens 값을 증가하여 더 많은 내용을 포함
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+      try {
+        // OpenAI API를 사용하여 대표 문장 추출
+        const repreResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
+          model: 'gpt-3.5-turbo',
+          messages: [{
+            role: "user",
+            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분에서 가장 중요한 대표 문장을 하나 뽑아 주세요.`
+          }],
+          max_tokens: 200,
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+          }
+        });
+
+        const representativeSentence = repreResponse.data.choices[0].message.content.trim();
+        console.log('대표 문장 생성 성공:', representativeSentence);
+
+        // OpenAI API를 사용하여 요약 생성
+        const summaryResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
+          model: 'gpt-3.5-turbo',
+          messages: [{
+            role: "user",
+            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 요약해 주세요. 요약은 주요 등장인물, 배경, 사건을 포함하고, 이 텍스트가 전달하는 주요 메시지나 테마를 간결하게 설명해 주세요.`
+          }],
+          max_tokens: 150,
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+          }
+        });
+
+        let summary = summaryResponse.data.choices[0].message.content.trim();
+
+        // 요약이 잘린 경우 적절히 처리
+        if (!summary.endsWith('.') && summary.length >= 240) {
+          summary += '...';
         }
-      });
 
-      let summary = summaryResponse.data.choices[0].message.content.trim();
+        summaries.push(summary);
+        console.log('요약 생성 성공:', summary);
 
-      // 요약이 잘린 경우 적절히 처리
-      if (!summary.endsWith('.') && summary.length >= 240) {
-        summary += '...';
+        // 요약을 기반으로 텍스트 프롬프트를 생성
+        const promptForImage = `
+        책 "${bookName}"의 한 부분을 시각적으로 묘사한 이미지입니다. 
+        이 책의 요약된 내용은 다음과 같습니다: "${summary}".
+        이미지에는 다음의 요소들이 포함되어야 합니다:
+        - 의상 스타일 (예: 중세 의상, 현대적 드레스 등)
+        - 배경의 색상과 분위기 (예: 어두운 조명, 밝고 따뜻한 톤 등)
+        - 발생하는 주요 사건이나 감정 (예: 긴장된 대치, 행복한 순간 등).
+        이미지는 사실적이고 디테일이 풍부하며, ${bookName}의 특유의 분위기를 잘 반영해야 합니다.
+        `;
+
+        // DALL·E 이미지 생성
+        const dalleResponse = await axios.post('https://api.openai.com/v1/images/generations', {
+          prompt: promptForImage,
+          n: 1,
+          size: '1024x1024'
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+          }
+        });
+
+        console.log(`프롬프트: ${promptForImage}`);
+        const dalleImageUrl = dalleResponse.data.data[0].url;
+        const dalleImagePath = path.join(__dirname, '../public/dalle', `${bookIdx}_${summaries.length}.png`);
+
+        const imageResponse = await axios.get(dalleImageUrl, { responseType: 'arraybuffer' });
+        fs.writeFileSync(dalleImagePath, imageResponse.data);
+        console.log('이미지 생성 및 저장 성공:', dalleImagePath);
+
+        imagePaths.push(`/dalle/${bookIdx}_${summaries.length}.png`);
+
+        // book_extract_data 테이블에 데이터 저장
+        await connection.query('INSERT INTO book_extract_data (mem_id, book_idx, book_name, book_extract, dalle_path, book_repre) VALUES (?, ?, ?, ?, ?, ?)',
+          [memId, bookIdx, bookName, summary, imagePaths[imagePaths.length - 1], representativeSentence]);
+
+      } catch (err) {
+        if (err.response && err.response.data.error.code === 'content_policy_violation') {
+          console.error('요약 생성 중 안전 시스템에 의해 차단되었습니다. 프롬프트를 검토하고 수정하세요.');
+        } else {
+          console.error('Error during summary or image generation:', err.response ? err.response.data : err.message);
+        }
       }
-
-      summaries.push(summary);
-      console.log('요약 생성 성공:', summary);
-
-      // 요약을 기반으로 텍스트 프롬프트를 생성
-      const promptForImage = `
-      책 "${bookName}"의 한 부분을 시각적으로 묘사한 이미지입니다. 
-      이 책의 요약된 내용은 다음과 같습니다: "${summary}".
-      이미지에는 다음의 요소들이 포함되어야 합니다:
-      - 의상 스타일 (예: 중세 의상, 현대적 드레스 등)
-      - 배경의 색상과 분위기 (예: 어두운 조명, 밝고 따뜻한 톤 등)
-      - 발생하는 주요 사건이나 감정 (예: 긴장된 대치, 행복한 순간 등).
-      이미지는 사실적이고 디테일이 풍부하며, ${bookName}의 특유의 분위기를 잘 반영해야 합니다.
-      `;
-
-      // DALL·E 이미지 생성
-      const dalleResponse = await axios.post('https://api.openai.com/v1/images/generations', {
-        prompt: promptForImage,
-        n: 1,
-        size: '1024x1024'
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-        }
-      });
-
-      console.log(`프롬프트: ${promptForImage}`);
-      const dalleImageUrl = dalleResponse.data.data[0].url;
-      const dalleImagePath = path.join(__dirname, '../public/dalle', `${bookIdx}_${summaries.length}.png`);
-
-      const imageResponse = await axios.get(dalleImageUrl, { responseType: 'arraybuffer' });
-      fs.writeFileSync(dalleImagePath, imageResponse.data);
-      console.log('이미지 생성 및 저장 성공:', dalleImagePath);
-
-      imagePaths.push(`/dalle/${bookIdx}_${summaries.length}.png`);
-
-      // book_extract_data 테이블에 데이터 저장
-      await connection.query('INSERT INTO book_extract_data (mem_id, book_idx, book_name, book_extract, dalle_path) VALUES (?, ?, ?, ?, ?)', [memId, bookIdx, bookName, summary, imagePaths[imagePaths.length - 1]]);
     }
 
     console.log('데이터베이스에 요약 및 이미지 경로 저장 성공');

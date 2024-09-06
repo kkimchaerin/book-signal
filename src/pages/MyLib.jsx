@@ -111,11 +111,13 @@ const MyLib = () => {
     setSelectedBook(null);
   };
 
-  const handleSignalClick = (book, image, text) => {
+
+  const handleSignalClick = (book, image, text, summ) => {
     if (activeTab === 'bookSignal') {
       setSignalTitle(book);
       setSignalBackground(image);
       setSignalText(text);
+      setSignalSumm(summ);
       setSignalOpen(true);
     }
   }
@@ -273,6 +275,7 @@ const MyLib = () => {
           onReviewSubmit={closeReviewModal}
         />
       )}
+
 
       {/* bookSignal 모달 */}
       <Modal

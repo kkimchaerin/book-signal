@@ -116,7 +116,6 @@ exports.sameBooksDetail = async (book_genre, book_idx) => {
   }
 };
 
-/******************** 찜하기 ********************/
 // 사용자가 이미 찜한 도서인지 확인
 exports.checkWishlist = async (mem_id, book_idx) => {
   try {

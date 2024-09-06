@@ -1,4 +1,4 @@
-const db = require('../config/database'); // 데이터베이스 연결 설정
+const db = require('../config/database'); // 이미 promise 기반으로 설정된 database.js 모듈을 사용
 
 // 회원가입
 exports.join = async (data) => {
@@ -244,6 +244,26 @@ exports.addReadingRecord = async (mem_id, book_name) => {
     await exports.incrementBookViews(mem_id, book_idx);
   } catch (err) {
     console.error('book_idx 가져오기 에러:', err);
+    throw err;
+  }
+};
+
+// 독서 기록을 추가하는 함수
+exports.addReadingRecord = async (mem_id, book_name) => {
+  try {
+    const getBookIdxQuery = `SELECT book_idx FROM book_db WHERE book_name = ?;`;
+    const [results] = await db.query(getBookIdxQuery, [book_name]);
+
+    if (results.length === 0) {
+      throw new Error('해당 책을 찾을 수 없습니다.');
+    }
+
+    const book_idx = results[0].book_idx;
+
+    // book_reading 테이블에 조회 기록 추가 및 book_views 증가
+    await exports.incrementBookViews(mem_id, book_idx);
+  } catch (err) {
+    console.error('독서 기록 추가 중 오류 발생:', err);
     throw err;
   }
 };
