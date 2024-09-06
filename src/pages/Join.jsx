@@ -316,7 +316,7 @@ const Join = () => {
               {idCheck.message}
             </p>
           )}
-          <div className={`input-group ${errors.memPw ? 'error-border' : ''}`}>
+          <div className={`join-input-group ${errors.memPw ? 'error-border' : ''}`}>
             <input
               type="password"
               id="memPw"
@@ -331,7 +331,7 @@ const Join = () => {
               }}
             />
           </div>
-          <div className={`input-group ${errors.confirmPw ? 'error-border' : ''}`}>
+          <div className={`join-input-group ${errors.confirmPw ? 'error-border' : ''}`}>
             <input
               type="password"
               id="confirmPw"
@@ -351,8 +351,8 @@ const Join = () => {
               </span>
             )}
           </div>
-          <div className={`input-group ${errors.memBirth ? 'error-border' : ''}`}>
-            <label htmlFor="memBirth" className="input-label">생년월일</label>
+          <div className={`join-input-group ${errors.memBirth ? 'error-border' : ''}`}>
+            <label htmlFor="memBirth" className="join-input-label">생년월일</label>
             <input
               type="date"
               id="memBirth"

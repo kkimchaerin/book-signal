@@ -73,6 +73,19 @@
     margin-bottom: 30px;
 }
 
+.join-input-group {
+    display: flex;
+    height: 35px;
+    justify-content: space-between;
+    position: relative;
+    align-items: center;
+    /* 요소를 세로 중앙에 맞춤 */
+    background-color: #f5f5f5;
+    border-radius: 6px;
+    width: 96%;
+    margin-bottom: 30px;
+}
+
 /* 입력 필드 */
 .input-group input {
     border: none;
@@ -84,6 +97,33 @@
     /* 버튼을 제외한 나머지 공간을 채우도록 설정 */
     min-width: 0;
     /* flexbox에서 자식 요소의 기본 너비를 0으로 설정 */
+}
+
+.join-input-group input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border: none;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-family: 'Pretendard-Regular', sans-serif;
+    line-height: 1.5;
+}
+
+.join-input-group input[type="date"] {
+    width: 90%;
+    background-color: #f5f5f5;
+    border: none;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-family: 'Pretendard-Regular', sans-serif;
+    line-height: 1.5;
+}
+
+.join-input-label {
+    margin-right: 50px;
+    margin-left: 10px;
+    width: 80px;
 }
 
 /* 버튼 설정 */
@@ -132,10 +172,19 @@
 input[type="password"],
 input[type="date"] {
     border: none;
-    padding: 15px;
+    /* padding: 15px; */
     font-family: 'Pretendard-Regular', sans-serif;
     line-height: 1.5;
     /* 텍스트 높이를 맞추기 위해 라인 높이를 조정 */
+}
+
+input[type="date"]:focus,
+input[type="password"]:focus
+{
+    outline: none;
+    /* 검은색 테두리를 없앰 */
+    box-shadow: none;
+    /* 만약 그림자가 추가된다면 그것도 제거 */
 }
 
 /* 제출 버튼 */
@@ -159,7 +208,8 @@ button[type="submit"]:hover {
 .join-footer {
     text-align: center;
     font-size: 0.875rem;
-    margin-top: 20px; /* 위쪽 여백 추가 */
+    margin-top: 20px;
+    /* 위쪽 여백 추가 */
 }
 
 .join-footer a {
@@ -175,24 +225,20 @@ button[type="submit"]:hover {
 .footer-wrapper {
     text-align: center;
 }
-/* 기본 스타일 */
-.input-group {
-    margin-bottom: 10px; /* 입력 그룹 간 간격 추가 */
-  }
-  
-  .input-with-button {
+
+.input-with-button {
     display: flex;
     align-items: center;
-  }
-  
-  .input-with-button input {
+}
+
+.input-with-button input {
     flex: 1;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
-  }
-  
-  .check-button {
+}
+
+.check-button {
     margin-left: 10px;
     padding: 5px 10px;
     font-size: 0.9rem;
@@ -200,31 +246,32 @@ button[type="submit"]:hover {
     border: 1px solid #333;
     background-color: white;
     border-radius: 4px;
-  }
-  
-  /* 중복 확인 결과 메시지 스타일 */
-  .check-result {
+}
+
+/* 중복 확인 결과 메시지 스타일 */
+.check-result {
     margin-bottom: 20px;
     margin-left: 15px;
     font-size: 0.8rem;
     display: flex;
     align-items: center;
-    gap: 5px; /* 아이콘과 텍스트 사이의 간격 */
+    gap: 5px;
+    /* 아이콘과 텍스트 사이의 간격 */
     color: red;
 
-  }
-  
-  /* 성공 메시지 */
-  .check-result.success {
+}
+
+/* 성공 메시지 */
+.check-result.success {
     color: green;
-  }
-  
-  /* 오류 메시지 */
-  .check-result.error {
+}
+
+/* 오류 메시지 */
+.check-result.error {
     color: red;
-  }
-  
-  /* 오류 필드 */
+}
+
+/* 오류 필드 */
 .error-border {
     border: 2px solid red;
 }
@@ -241,7 +288,7 @@ button[type="submit"]:hover {
     text-align: left;
 }
 
-.emailvalid{
+.emailvalid {
     margin-left: 5px;
     margin-bottom: 20px;
     color: red;
