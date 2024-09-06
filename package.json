@@ -15,6 +15,7 @@
     "axios": "^1.7.4",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
+    "concurrently": "^7.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "epub.js": "^0.2.15",
@@ -45,8 +46,9 @@
     "web-vitals": "^4.2.3"
   },
   "scripts": {
-    "start": "npm-run-all --parallel server client",
+    "start": "npm-run-all --parallel client server python-server",
     "client": "react-scripts start",
+    "python-server": "python3 server/server.py",
     "server": "node src/server.js",
     "tailwind": "tailwindcss -i ./src/styles/index.css -o ./src/styles/output.css",
     "watch": "npm run tailwind -- --watch",
