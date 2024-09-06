@@ -1,5 +1,5 @@
-import { useDispatch } from "react-redux";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import {  useDispatch } from "react-redux";
+import React, { useState, useRef, useEffect,useCallback } from "react";
 import { Provider } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import ePub from "epubjs";
@@ -338,7 +338,7 @@ const EpubReader = ({ url, book, location }) => {
     if (renditionRef.current) {
       const contents = renditionRef.current.getContents();
 
-      let allVisibleTexts = [];
+    let allVisibleTexts = []; // 모든 텍스트를 담을 배열
 
       contents.forEach((content) => {
         const iframeDoc = content.document;
@@ -485,10 +485,12 @@ const handleReadingQuit = async () => {
   navigate('/detail', { state: { book } });
 };
 
-  const handleTTS = async () => {
-    if (viewerRef.current && !isPlaying) {
-      setIsPlaying(true);
-      setIsPaused(false);
+  
+ // TTS 관련 함수들
+const handleTTS = async () => {
+  if (!isPlaying) {
+    setIsPlaying(true);
+    setIsPaused(false);
 
       // TTS 시작 전에 현재 페이지의 텍스트 업데이트
       await logCurrentPageText(); // 텍스트 업데이트 완료를 기다림
@@ -560,62 +562,44 @@ const handleReadingQuit = async () => {
         });
       }
     }
-  }, [rate]); // 배속이 변경될 때마다 실행
+  },
+[rate]); // 배속이 변경될 때마다 실행
 
 
-  // 오디오 소스가 변경될 때만 실행
-  useEffect(() => {
-    if (audioSource && audioRef.current) {
-      audioRef.current.src = audioSource;
-      audioRef.current.play();
-      audioRef.current.playbackRate = rate; // 배속 반영
-      setIsPlaying(true);
-      setIsPaused(false);
-    }
-  }, [audioSource]); // 오디오 소스가 변경될 때만 실행
+// 오디오 소스가 변경될 때만 실행
+useEffect(() => {
+  if (audioSource && audioRef.current) {
+    audioRef.current.src = audioSource;
+    audioRef.current.play();
+    audioRef.current.playbackRate = rate; // 배속 반영
+    setIsPlaying(true);
+    setIsPaused(false);
+  }
+}, [audioSource]); // 오디오 소스가 변경될 때만 실행
 
-  // 페이지 이동 후 텍스트를 추출하는 함수
-  const moveToNextPage = async () => {
-    if (renditionRef.current) {
-      await renditionRef.current.next();
+// 페이지 이동 후 텍스트를 추출하는 함수
+const moveToNextPage = async () => {
+  if (renditionRef.current) {
+    await renditionRef.current.next();
+    
+    // 페이지 이동 후 텍스트를 다시 로드
+    await logCurrentPageText();
 
-      // 페이지 이동 후 텍스트를 다시 로드
-      await logCurrentPageText();
-
-      // 페이지 이동 후 TTS 재실행을 위해 isPlaying을 false로 설정 후 다시 true로 변경
-      setIsPlaying(false); // 일시적으로 false로 설정하여 useEffect가 다시 트리거되도록 함
-      setTimeout(() => {
-        setIsPlaying(true);  // 상태를 다시 true로 설정하여 TTS 재실행
-      }, 500);
-    }
-  };
-
-  // 배속 변경에 따른 효과 적용
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.playbackRate = rate; // 배속 변경 시 항상 최신 배속을 적용
-      if (!audioRef.current.paused) {
-        audioRef.current.play(); // 현재 재생 중이면 재생 상태를 유지하면서 배속 변경
-      }
-    }
-  }, [rate]); // 배속이 변경될 때마다 실행
-
-
-  useEffect(() => {
-    if (audioSource && audioRef.current) {
-      audioRef.current.src = audioSource;
-      audioRef.current.play();
-      audioRef.current.playbackRate = rate; // 배속 반영
-      setIsPlaying(true);
-      setIsPaused(false);
-    }
-  }, [audioSource]); // 오디오 소스가 변경될 때만 실행
+    // 페이지 이동 후 TTS 재실행을 위해 isPlaying을 false로 설정 후 다시 true로 변경
+    setIsPlaying(false); // 일시적으로 false로 설정하여 useEffect가 다시 트리거되도록 함
+    setTimeout(() => {
+      setIsPlaying(true);  // 상태를 다시 true로 설정하여 TTS 재실행
+    }, 500); 
+  }
+};
 
 
   const stopTTS = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.src = ""; // 오디오 소스 리셋
+      console.log("tts 정지");
     }
     setIsPlaying(false);
     setIsPaused(false);

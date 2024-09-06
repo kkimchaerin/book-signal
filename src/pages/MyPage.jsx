@@ -43,16 +43,16 @@ const MyPage = () => {
     fetchData();
   }, [navigate]);
 
-  const handleDeleteUser = () => {
+  const handleDeleteUser = () => {  
     navigate('/deleteuser'); // 회원탈퇴 페이지로 이동
   };
 
-  const handleDeleteReview = async (reviewId) => {
+  const handleDeleteReview = async (reviewId,book_idx) => {
     const mem_id = userInfo.mem_id;
 
     try {
       await axios.delete(`http://localhost:3001/review/${reviewId}`, {
-        data: { mem_id },
+        data: { mem_id, book_idx },
         withCredentials: true
       });
       setReviews(prevReviews => prevReviews.filter(review => review.end_idx !== reviewId));
@@ -62,6 +62,7 @@ const MyPage = () => {
       // if (updatedUserInfo.data) {
       //   setUserInfo(updatedUserInfo.data); // 최신 포인트 반영
       // }
+      
 
       // 포인트를 즉시 업데이트 (포인트 차감 15 적용)
       setUserInfo(prevUserInfo => ({
@@ -69,7 +70,7 @@ const MyPage = () => {
         mem_point: prevUserInfo.mem_point - 15
       }));
 
-      alert('리뷰가 성공적으로 삭제되었습니다.');
+      
       // 최신 유저 데이터 다시 가져오기
       const updatedUserInfo = await axios.get('http://localhost:3001/user-info/' + mem_id, { withCredentials: true });
       if (updatedUserInfo.data) {
@@ -120,7 +121,10 @@ const MyPage = () => {
           </div>
         ) : (
           <div className="reviews-list">
-            {reviews.map((review) => {
+            {reviews
+             .filter((review) => review.book_score !== null && review.book_review !== null) // 리뷰가 있는 도서만 렌더링
+             .map((review) => {
+              
               return (
                 <div key={review.end_idx} className="review-item">
                   <img src={`/images/${review.book_cover}`} alt={review.book_name} className="book-cover" />
@@ -128,7 +132,7 @@ const MyPage = () => {
                     <h4>{review.book_name}</h4>
                     <p>★ {review.book_score}</p>
                     <h5>리뷰: {review.book_review}</h5>
-                    <button onClick={() => handleDeleteReview(review.end_idx)}>삭제하기</button>
+                    <button onClick={() => handleDeleteReview(review.end_idx,review.book_idx)}>삭제하기</button>
                   </div>
                 </div>
               );
