@@ -28,8 +28,6 @@ const Header: React.FC<Props> = ({
   onReadingComplete,
   onReadingQuit,
   onBookmarkRemove,
-  increaseFontSize,
-  decreaseFontSize,
   onFontSizeChange,  // 폰트 크기 변경 함수
 }: Props) => {
   const [showTTSSettings, setShowTTSSettings] = useState(false);
@@ -42,6 +40,20 @@ const Header: React.FC<Props> = ({
   const [eyegazeBookmark, setEyegazeBookmark] = useState<{ book_mark: string; book_text: string } | null>(null);
 
   const navigate = useNavigate();
+
+  // 폰트 크기 증가 함수
+  const increaseFontSize = () => {
+    if (onFontSizeChange) {  // onFontSizeChange가 있을 때만 호출
+      onFontSizeChange('increase');
+    }
+  };
+
+  // 폰트 크기 감소 함수
+  const decreaseFontSize = () => {
+    if (onFontSizeChange) {  // onFontSizeChange가 있을 때만 호출
+      onFontSizeChange('decrease');
+    }
+  };
 
   const handleSoundClick = () => {
     setShowTTSSettings(true);
@@ -76,18 +88,18 @@ const Header: React.FC<Props> = ({
   // api 호출
   const handleReadingComplete = async () => {
     console.log("독서 완료 처리 시작"); // 함수 호출 시작 로그
-  
+
     if (userInfo && book) {
       const { mem_id } = userInfo;
       const { book_idx, book_name } = book;
-  
+
       console.log("사용자 정보:", { mem_id }); // 사용자 ID 로그
       console.log("책 정보:", { book_idx }); // 책 인덱스 로그
-  
+
       // 상세 페이지로 네비게이션
       console.log("상세 페이지로 네비게이션 중...");
       navigate("/detail", { state: { book } });
-  
+
       // 페이지 이동 후에 비동기로 데이터 저장 및 요약 생성 요청
       setTimeout(async () => {
         try {
@@ -97,13 +109,13 @@ const Header: React.FC<Props> = ({
             bookIdx: book_idx,
             bookName: book_name
           });
-  
+
           console.log("독서 완료 정보가 저장되었습니다."); // 저장 성공 로그
-  
+
           // 요약 생성 요청
           console.log("요약 생성 요청 중..."); // 요약 요청 시작 로그
           const summarizeResult = await handleSummarize(mem_id, book_idx);
-  
+
           if (summarizeResult.success) {
             console.log("요약 생성 및 저장 성공:", summarizeResult.summary); // 성공 로그
           } else {
@@ -117,7 +129,7 @@ const Header: React.FC<Props> = ({
       console.warn("사용자 정보 또는 책 정보가 없습니다."); // 사용자 또는 책 정보가 없을 때 경고 로그
     }
   };
-  
+
 
   const handleReadingQuit = () => {
     console.log("독서 중단 처리"); // 함수 호출 시작 로그
@@ -283,14 +295,8 @@ const Header: React.FC<Props> = ({
 
       <TTSWrapper show={showFontSettings} onClose={handleClose} title="Font Settings">
         <div className="Header-font-settings">
-          <ControlBtn
-            message="Decrease Font"
-            onClick={() => onFontSizeChange ? onFontSizeChange('decrease') : null}
-          /> {/* 폰트 크기 감소 버튼 */}
-          <ControlBtn
-            message="Increase Font"
-            onClick={() => onFontSizeChange ? onFontSizeChange('increase') : null}
-          /> {/* 폰트 크기 증가 버튼 */}
+          <ControlBtn message="Increase Font" onClick={increaseFontSize} />
+          <ControlBtn message="Decrease Font" onClick={decreaseFontSize} />
         </div>
       </TTSWrapper>
     </Wrapper>
@@ -319,8 +325,6 @@ interface Props {
   onReadingComplete?: () => void;
   onReadingQuit?: () => void;
   onBookmarkRemove?: (book_mark: string) => void;
-  increaseFontSize?: () => void;  // 추가
-  decreaseFontSize?: () => void;  // 추가
   onFontSizeChange?: (action: 'increase' | 'decrease') => void;
 }
 

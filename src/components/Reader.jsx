@@ -1,5 +1,5 @@
-import {  useDispatch } from "react-redux";
-import React, { useState, useRef, useEffect,useCallback } from "react";
+import { useDispatch } from "react-redux";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Provider } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import ePub from "epubjs";
@@ -66,40 +66,42 @@ const EpubReader = ({ url, book, location }) => {
   const [bookmarkMessage, setBookmarkMessage] = useState('');  // 추가된 부분
   const [cfi, setCfi] = useState('');
 
+  // 폰트 크기 증가 함수
+  const increaseFontSize = () => {
+    setFontSize((prevSize) => Math.min(prevSize + 2, 32)); // 최대 32px
+  };
+
+  // 폰트 크기 감소 함수
+  const decreaseFontSize = () => {
+    setFontSize((prevSize) => Math.max(prevSize - 2, 12)); // 최소 12px
+  };
+
   // 폰트 크기 변경 함수
   const onFontSizeChange = (action) => {
-    if (action === 'increase') {
+    if (action === "increase") {
       increaseFontSize();
-    } else if (action === 'decrease') {
+    } else if (action === "decrease") {
       decreaseFontSize();
     }
   };
 
-  // 폰트 크기를 증가시키는 함수
-  const increaseFontSize = () => {
-    console.log('in');
-    
-    setFontSize((prevSize) => Math.min(prevSize + 2, 32)); // 최대 32px
-  };
-
-  // 폰트 크기를 감소시키는 함수
-  const decreaseFontSize = () => {
-    console.log('de');
-    
-    setFontSize((prevSize) => Math.max(prevSize - 2, 12)); // 최소 12px
-  };
-
   useEffect(() => {
     if (renditionRef.current) {
+      console.log("폰트 크기 변경됨:", fontSize);  // 로그 추가
       renditionRef.current.themes.register("customTheme", {
         "*": {
           "font-size": `${fontSize}px !important`,
           "line-height": "1.5 !important",
         },
       });
-      renditionRef.current.themes.override("customTheme");
+
+      // 테마를 적용하고, 재렌더링 강제
+      renditionRef.current.themes.fontSize(`${fontSize}px`);
     }
-  }, [fontSize]); // fontSize가 변경될 때마다 적용
+  }, [fontSize]);  // fontSize가 변경될 때마다 테마 적용
+
+
+
 
   useEffect(() => {
     axios.get('http://localhost:3001/check-session', { withCredentials: true })
@@ -319,7 +321,7 @@ const EpubReader = ({ url, book, location }) => {
     if (renditionRef.current) {
       const contents = renditionRef.current.getContents();
 
-    let allVisibleTexts = []; // 모든 텍스트를 담을 배열
+      let allVisibleTexts = []; // 모든 텍스트를 담을 배열
 
       contents.forEach((content) => {
         const iframeDoc = content.document;
@@ -413,65 +415,65 @@ const EpubReader = ({ url, book, location }) => {
   const handleReadingComplete = async () => {
     console.log("독서 완료 처리 시작");
 
-  if (userInfo && book) {
-    const { mem_id } = userInfo;
-    const { book_idx } = book;
+    if (userInfo && book) {
+      const { mem_id } = userInfo;
+      const { book_idx } = book;
 
-    console.log("사용자 정보:", { mem_id });
-    console.log("책 정보:", { book_idx });
+      console.log("사용자 정보:", { mem_id });
+      console.log("책 정보:", { book_idx });
 
-    // 상세 페이지로 네비게이션을 즉시 수행
-    console.log("상세 페이지로 네비게이션 중...");
-    navigate("/detail", { state: { book } });
+      // 상세 페이지로 네비게이션을 즉시 수행
+      console.log("상세 페이지로 네비게이션 중...");
+      navigate("/detail", { state: { book } });
 
-    // 요약 생성 요청을 비동기로 처리
-    try {
-      console.log("요약 생성 요청 중...");
-      const summarizeResult = await handleSummarize(mem_id, book_idx);
-
-      if (summarizeResult.success) {
-        console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
-      } else {
-        console.error("요약 생성 실패:", summarizeResult.error);
-      }
-    } catch (error) {
-      console.error("요약 생성 중 오류 발생:", error);
-    }
-  } else {
-    console.warn("사용자 정보 또는 책 정보가 없습니다.");
-  }
-};
-
-
-const handleReadingQuit = async () => {
-  if (userInfo && book) {
-    const mem_id = userInfo.mem_id;
-    const book_idx = book.book_idx;
-
-    const currentLocation = renditionRef.current?.currentLocation();
-    if (currentLocation && currentLocation.start) {
-      const cfi = currentLocation.start.cfi;
+      // 요약 생성 요청을 비동기로 처리
       try {
-        await axios.post("http://localhost:3001/getBookPath/endReading", {
-          mem_id,
-          book_idx,
-          cfi,
-        });
-        console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
+        console.log("요약 생성 요청 중...");
+        const summarizeResult = await handleSummarize(mem_id, book_idx);
+
+        if (summarizeResult.success) {
+          console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
+        } else {
+          console.error("요약 생성 실패:", summarizeResult.error);
+        }
       } catch (error) {
-        console.error("독서 중단 CFI 저장 중 오류:", error);
+        console.error("요약 생성 중 오류 발생:", error);
+      }
+    } else {
+      console.warn("사용자 정보 또는 책 정보가 없습니다.");
+    }
+  };
+
+
+  const handleReadingQuit = async () => {
+    if (userInfo && book) {
+      const mem_id = userInfo.mem_id;
+      const book_idx = book.book_idx;
+
+      const currentLocation = renditionRef.current?.currentLocation();
+      if (currentLocation && currentLocation.start) {
+        const cfi = currentLocation.start.cfi;
+        try {
+          await axios.post("http://localhost:3001/getBookPath/endReading", {
+            mem_id,
+            book_idx,
+            cfi,
+          });
+          console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
+        } catch (error) {
+          console.error("독서 중단 CFI 저장 중 오류:", error);
+        }
       }
     }
-  }
-  navigate('/detail', { state: { book } });
-};
+    navigate('/detail', { state: { book } });
+  };
 
-  
- // TTS 관련 함수들
-const handleTTS = async () => {
-  if (!isPlaying) {
-    setIsPlaying(true);
-    setIsPaused(false);
+
+  // TTS 관련 함수들
+  const handleTTS = async () => {
+    if (!isPlaying) {
+      setIsPlaying(true);
+      setIsPaused(false);
 
       // TTS 시작 전에 현재 페이지의 텍스트 업데이트
       await logCurrentPageText(); // 텍스트 업데이트 완료를 기다림
@@ -544,35 +546,35 @@ const handleTTS = async () => {
       }
     }
   },
-[rate]); // 배속이 변경될 때마다 실행
+    [rate]); // 배속이 변경될 때마다 실행
 
 
-// 오디오 소스가 변경될 때만 실행
-useEffect(() => {
-  if (audioSource && audioRef.current) {
-    audioRef.current.src = audioSource;
-    audioRef.current.play();
-    audioRef.current.playbackRate = rate; // 배속 반영
-    setIsPlaying(true);
-    setIsPaused(false);
-  }
-}, [audioSource]); // 오디오 소스가 변경될 때만 실행
+  // 오디오 소스가 변경될 때만 실행
+  useEffect(() => {
+    if (audioSource && audioRef.current) {
+      audioRef.current.src = audioSource;
+      audioRef.current.play();
+      audioRef.current.playbackRate = rate; // 배속 반영
+      setIsPlaying(true);
+      setIsPaused(false);
+    }
+  }, [audioSource]); // 오디오 소스가 변경될 때만 실행
 
-// 페이지 이동 후 텍스트를 추출하는 함수
-const moveToNextPage = async () => {
-  if (renditionRef.current) {
-    await renditionRef.current.next();
-    
-    // 페이지 이동 후 텍스트를 다시 로드
-    await logCurrentPageText();
+  // 페이지 이동 후 텍스트를 추출하는 함수
+  const moveToNextPage = async () => {
+    if (renditionRef.current) {
+      await renditionRef.current.next();
 
-    // 페이지 이동 후 TTS 재실행을 위해 isPlaying을 false로 설정 후 다시 true로 변경
-    setIsPlaying(false); // 일시적으로 false로 설정하여 useEffect가 다시 트리거되도록 함
-    setTimeout(() => {
-      setIsPlaying(true);  // 상태를 다시 true로 설정하여 TTS 재실행
-    }, 500); 
-  }
-};
+      // 페이지 이동 후 텍스트를 다시 로드
+      await logCurrentPageText();
+
+      // 페이지 이동 후 TTS 재실행을 위해 isPlaying을 false로 설정 후 다시 true로 변경
+      setIsPlaying(false); // 일시적으로 false로 설정하여 useEffect가 다시 트리거되도록 함
+      setTimeout(() => {
+        setIsPlaying(true);  // 상태를 다시 true로 설정하여 TTS 재실행
+      }, 500);
+    }
+  };
 
 
   const stopTTS = () => {
