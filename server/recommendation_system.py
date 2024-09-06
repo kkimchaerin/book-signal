@@ -52,14 +52,15 @@ def get_recommendations(user_id):
     if not book_ids:
         return []  # 추천할 책이 없으면 빈 리스트 반환
 
-    # 추천된 책 정보 조회 및 이미지 경로 가져오기
-    cursor.execute(f"SELECT book_idx, book_name, book_cover FROM book_db WHERE book_idx IN ({','.join(map(str, book_ids))})")
+    # 추천된 책 정보 조회 (book_db에서 모든 정보를 가져옴)
+    cursor.execute(f"SELECT * FROM book_db WHERE book_idx IN ({','.join(map(str, book_ids))})")
     book_rows = cursor.fetchall()
+    column_names = [desc[0] for desc in cursor.description]  # 테이블의 모든 컬럼명 추출
 
     # DB 연결 닫기
     conn.close()
 
-    recommendations = [{'book_id': row[0], 
-                        'book_name': row[1], 
-                        'book_cover': row[2]} for row in book_rows]
+    # 추천된 책을 딕셔너리 형식으로 변환
+    recommendations = [dict(zip(column_names, row)) for row in book_rows]
+    
     return recommendations

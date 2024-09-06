@@ -80,6 +80,4 @@ router.post('/removeBookmark', async (req, res) => {
     }
 });
 
-
-
 module.exports = router;
