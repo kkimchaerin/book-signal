@@ -209,7 +209,7 @@ exports.getBookmarks = async (book_idx, mem_id) => {
     const sqlEyegaze = `
       SELECT book_mark
       FROM book_eyegaze
-      WHERE book_idx = ? AND mem_id = ? AND book_text IS NOT NULL
+      WHERE book_idx = ? AND mem_id = ? AND book_text IS NOT NULL AND book_mark IS NOT NULL
       ORDER BY gaze_duration DESC
       LIMIT 1
     `;
@@ -301,3 +301,26 @@ exports.removeBookmark = async (book_idx, mem_id, book_mark) => {
   }
 };
 
+// book_eyegaze 테이블에서 book_mark를 null로 설정하는 함수
+exports.removeEyegazeBookmark = async (book_idx, mem_id) => {
+  try {
+    const sql = `
+      UPDATE book_eyegaze
+      SET book_mark = NULL
+      WHERE book_idx = ? 
+      AND mem_id = ?
+    `;
+    const [result] = await conn.query(sql, [book_idx, mem_id]);
+    console.log(result);
+    
+
+    if (result.affectedRows > 0) {
+      return { message: 'eyegaze 북마크가 삭제되었습니다.' };
+    } else {
+      throw new Error('eyegaze 북마크를 찾지 못했습니다.');
+    }
+  } catch (err) {
+    console.error('eyegaze 북마크 삭제 중 오류 발생:', err);
+    throw new Error('eyegaze 북마크 삭제에 실패했습니다.');
+  }
+};

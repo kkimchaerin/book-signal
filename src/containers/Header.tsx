@@ -136,6 +136,35 @@ const Header: React.FC<Props> = ({
     }
   };
 
+  // eyegaze 북마크 삭제 API 호출 함수
+  const handleEyegazeBookmarkRemove = async () => {
+    if (eyegazeBookmark && book && userInfo) {
+      try {
+        const response = await fetch('http://localhost:3001/getBookPath/removeEyegazeBookmark', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            book_idx: book.book_idx,
+            mem_id: userInfo.mem_id,
+          }),
+        });
+
+        if (response.ok) {
+          setEyegazeBookmark(null);  // UI에서 eyegaze 북마크 삭제
+          setBookmarkMessage('eyegaze 북마크가 삭제되었습니다.');
+          setTimeout(() => setBookmarkMessage(''), 2000);
+        } else {
+          throw new Error('서버 오류');
+        }
+      } catch (error) {
+        console.error('eyegaze 북마크 삭제 중 오류 발생:', error);
+        setBookmarkMessage('eyegaze 북마크 삭제 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
   // 폰트 변경 처리 함수
   const handleFontChange = (font: string) => {
     setSelectedFont(font);  // 선택한 폰트 상태 업데이트
@@ -208,6 +237,9 @@ const Header: React.FC<Props> = ({
                 <div className="Header-bookmark-item">
                   <button className="Header-custom-button" onClick={() => handleBookmarkClick(eyegazeBookmark.book_mark)}>
                     Eye Gaze Bookmark
+                  </button>
+                  <button className="Header-remove-button" onClick={handleEyegazeBookmarkRemove}>
+                    -
                   </button>
                 </div>
               ) : (
