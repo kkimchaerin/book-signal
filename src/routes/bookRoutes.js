@@ -30,17 +30,23 @@ router.post('/saveBookmark', async (req, res) => {
 });
 
 // 북마크 가져오기 API
+// 북마크 가져오기 API
 router.get('/getBookmarks', async (req, res) => {
     const { book_idx, mem_id } = req.query;
 
     try {
         const bookmarks = await getBookmarks(book_idx, mem_id);
-        res.status(200).json(bookmarks); // 북마크가 없으면 빈 배열을 반환
+        res.status(200).json({
+            readingBookmarks: bookmarks.readingBookmarks,
+            eyegazeBookmark: bookmarks.eyegazeBookmark
+        });
     } catch (error) {
         res.status(500).json({ error: 'Failed to retrieve bookmarks.' });
     }
 });
 
+
+// 최근 읽은 도서용 북마크
 router.get('/getUserBookmark', async (req, res) => {
     const { book_idx, mem_id } = req.query;
 

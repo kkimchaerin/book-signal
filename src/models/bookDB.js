@@ -196,20 +196,36 @@ exports.saveBookmark = async (book_name, book_idx, mem_id, cfi, page_text) => {
 // 사용자의 북마크를 가져오는 함수
 exports.getBookmarks = async (book_idx, mem_id) => {
   try {
-    const sql = `
+    // book_reading 테이블에서 북마크 가져오기
+    const sqlReading = `
       SELECT book_mark
       FROM book_reading
       WHERE book_idx = ? AND mem_id = ? AND book_text IS NOT NULL
       ORDER BY book_latest ASC
     `;
-    const [results] = await conn.query(sql, [book_idx, mem_id]);
+    const [readingResults] = await conn.query(sqlReading, [book_idx, mem_id]);
 
-    return results.length > 0 ? results : [];
+    // book_eyegaze 테이블에서 북마크 가져오기
+    const sqlEyegaze = `
+      SELECT book_mark
+      FROM book_eyegaze
+      WHERE book_idx = ? AND mem_id = ? AND book_text IS NOT NULL
+      ORDER BY gaze_duration DESC
+      LIMIT 1
+    `;
+    const [eyegazeResults] = await conn.query(sqlEyegaze, [book_idx, mem_id]);
+
+    // 각 결과값을 배열에 담아 반환
+    return {
+      readingBookmarks: readingResults.length > 0 ? readingResults : [],
+      eyegazeBookmark: eyegazeResults.length > 0 ? eyegazeResults[0] : null  // 이름을 통일하고 첫 번째 값을 반환
+    };
   } catch (err) {
     console.error('북마크를 가져오는 중 오류 발생:', err);
     throw new Error('북마크를 가져오는 중 오류가 발생했습니다.');
   }
 };
+
 
 // 특정 사용자와 책의 북마크를 가져오는 함수
 exports.getUserBookmarkForBook = async (book_idx, mem_id) => {
@@ -277,10 +293,11 @@ exports.removeBookmark = async (book_idx, mem_id, book_mark) => {
     if (result.affectedRows > 0) {
       return { message: '북마크가 삭제되었습니다.' };
     } else {
-      throw new Error('삭제할 북마크를 찾지 못했습니다.');
+      throw new Error('삭제할 북마크를 찾지 못했습니다.'); // 북마크가 없는 경우 예외 처리
     }
   } catch (err) {
     console.error('북마크 삭제 중 오류 발생:', err);
     throw new Error('북마크 삭제에 실패했습니다.');
   }
 };
+
