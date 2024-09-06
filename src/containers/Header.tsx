@@ -6,6 +6,7 @@ import ControlBtn from 'components/header/ControlBtn';
 import TTSManager from 'components/tts/TTSManager';
 import TTSWrapper from 'components/tts/TTSWrapper';
 import '../css/ReaderHeader.css';
+import { handleSummarize } from 'components/SummarizePage';
 
 const Header: React.FC<Props> = ({
   rate,
@@ -20,18 +21,20 @@ const Header: React.FC<Props> = ({
   onFontChange = () => { },
   setAudioSource,
   book,
+  userInfo,
   fetchBookmarks,
   goToBookmark,
   onReadingComplete,
   onReadingQuit,
   onBookmarkRemove,
-}) => {
+}: Props) => {
   const [showTTSSettings, setShowTTSSettings] = useState(false);
   const [showBookmarkSettings, setShowBookmarkSettings] = useState(false);
   const [showFontSettings, setShowFontSettings] = useState(false);
   const [bookmarkMessage, setBookmarkMessage] = useState('');
   const [bookmarks, setBookmarks] = useState<{ book_mark: string; book_text: string }[]>([]);
-  const [showBookmarksList, setShowBookmarksList] = useState(false); // 북마크 리스트 보여주기 상태 추가
+  const [showBookmarksList, setShowBookmarksList] = useState(false);
+  const [selectedFont, setSelectedFont] = useState('Noto Sans KR'); // 기본 폰트: Noto Sans KR
 
   const navigate = useNavigate();
 
@@ -59,34 +62,37 @@ const Header: React.FC<Props> = ({
     setShowFontSettings(false);
   };
 
-  const handleFinishReading = () => {
-    navigate('/detail', { state: { book } });
+  const handleReadingComplete = async () => {
+    if (userInfo && book) {
+      const { mem_id } = userInfo;
+      const { book_idx } = book;
+
+      const summarizeResult = await handleSummarize(mem_id, book_idx);
+
+      if (summarizeResult.success) {
+        console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
+      } else {
+        console.error("요약 생성 실패:", summarizeResult.error);
+      }
+
+      navigate("/detail", { state: { book } });
+    } else {
+      console.warn("사용자 정보 또는 책 정보가 없습니다.");
+    }
   };
 
   const handleReadingQuit = () => {
-    if (onReadingQuit) {
-      onReadingQuit();
-    } else {
-      navigate('/detail', { state: { book } });
-    }
+    navigate("/detail", { state: { book } });
   };
 
   const handleBookmarkAdd = async () => {
     try {
       await onBookmarkAdd();
       setBookmarkMessage('북마크가 성공적으로 추가되었습니다.');
-
-      // 일정 시간 후에 메시지를 지우기 위해 setTimeout 사용
-      setTimeout(() => {
-        setBookmarkMessage('');
-      }, 2000); // 2000ms (2초) 후에 메시지 사라짐
-    } catch (error) {
+      setTimeout(() => setBookmarkMessage(''), 2000);
+    } catch {
       setBookmarkMessage('북마크 추가 중 오류가 발생했습니다.');
-
-      // 오류 메시지도 일정 시간 후에 사라지도록 설정
-      setTimeout(() => {
-        setBookmarkMessage('');
-      }, 2000); // 2000ms (2초) 후에 메시지 사라짐
+      setTimeout(() => setBookmarkMessage(''), 2000);
     }
   };
 
@@ -101,8 +107,8 @@ const Header: React.FC<Props> = ({
       try {
         const bookmarks = await fetchBookmarks();
         setBookmarks(bookmarks);
-        setShowBookmarksList((prev) => !prev); // 리스트 보여주기 상태를 토글
-      } catch (error) {
+        setShowBookmarksList((prev) => !prev);
+      } catch {
         setBookmarkMessage('북마크를 가져오는 중 오류가 발생했습니다.');
       }
     }
@@ -110,28 +116,35 @@ const Header: React.FC<Props> = ({
 
   const handleBookmarkRemove = (book_mark: string) => {
     if (onBookmarkRemove) {
-      onBookmarkRemove(book_mark);  // 여기서 props로 전달된 onBookmarkRemove를 호출
+      onBookmarkRemove(book_mark);
     }
     setBookmarks((prevBookmarks) =>
       prevBookmarks.filter((bookmark) => bookmark.book_mark !== book_mark)
     );
     setBookmarkMessage('북마크가 삭제되었습니다.');
+    setTimeout(() => setBookmarkMessage(''), 2000);
+  };
 
-    setTimeout(() => {
-      setBookmarkMessage('');
-    }, 2000); // 2000ms (2초) 후에 메시지 사라짐
+  // 폰트 변경 처리 함수
+  const handleFontChange = (font: string) => {
+    setSelectedFont(font);  // 선택한 폰트 상태 업데이트
+    console.log(`폰트 변경됨: ${font}`);  // 폰트 변경 로그
+
+    if (onFontChange) {
+      onFontChange(font);  // EpubReader로 폰트 변경 알림
+    }
   };
 
 
   return (
-    <Wrapper>
+    <Wrapper style={{ fontFamily: selectedFont }} key={selectedFont}> {/* 선택한 폰트를 전체 Wrapper에 적용 */}
       <Layout>
         <AutoLayout>
           <div>
             <ControlBtn message="Sound" onClick={handleSoundClick} />
             <ControlBtn message="Bookmark" onClick={handleBookmarkToggle} />
             <ControlBtn message="Font Settings" onClick={handleFontClick} />
-            <ControlBtn message="독서 완료" onClick={handleFinishReading} />
+            <ControlBtn message="독서 완료" onClick={handleReadingComplete} />
             <ControlBtn message="독서 종료" onClick={handleReadingQuit} />
           </div>
         </AutoLayout>
@@ -166,7 +179,7 @@ const Header: React.FC<Props> = ({
                   <button className="Header-custom-button" onClick={() => handleBookmarkClick(bookmark.book_mark)}>
                     {`Bookmark ${index + 1}`}
                   </button>
-                  <button className="Header-remove-button" onClick={() => handleBookmarkRemove(bookmark.book_mark)}>  {/* 여기 수정 */}
+                  <button className="Header-remove-button" onClick={() => handleBookmarkRemove(bookmark.book_mark)}>
                     -
                   </button>
                 </div>
@@ -178,11 +191,12 @@ const Header: React.FC<Props> = ({
 
       <TTSWrapper show={showFontSettings} onClose={handleClose} title="Font Settings">
         <div className="Header-font-settings">
-          <button onClick={() => onFontChange('Arial')}>Arial</button>
-          <button onClick={() => onFontChange('Georgia')}>Georgia</button>
-          <button onClick={() => onFontChange('Times New Roman')}>Times New Roman</button>
-          <button onClick={() => onFontChange('Courier New')}>Courier New</button>
+          <button onClick={() => handleFontChange('FreeSerif')}>FreeSerif</button>
+          <button onClick={() => handleFontChange('FreeSerifBold')}>FreeSerifBold</button>
+          <button onClick={() => handleFontChange('FreeSerifItalic')}>FreeSerifItalic</button>
+          <button onClick={() => handleFontChange('FreeSerifBoldItalic')}>FreeSerifBoldItalic</button>
         </div>
+
       </TTSWrapper>
     </Wrapper>
   );
@@ -192,18 +206,19 @@ interface Props {
   onNavToggle: (value?: boolean) => void;
   onOptionToggle: (value?: boolean) => void;
   onLearningToggle: (value?: boolean) => void;
-  onTTSToggle?: (settings: { rate: number; gender: 'MALE' | 'FEMALE' }) => void;
+  onTTSToggle?: (settings: { rate: number; gender: "MALE" | "FEMALE" }) => void;
   onTTSStop?: () => void;
   onTTSPause?: () => void;
   onTTSResume?: () => void;
   onBookmarkAdd?: () => void;
   onFontChange?: (font: string) => void;
   rate: number;
-  gender: 'MALE' | 'FEMALE';
+  gender: "MALE" | "FEMALE";
   onRateChange: (rate: number) => void;
-  onVoiceChange: (gender: 'MALE' | 'FEMALE') => void;
+  onVoiceChange: (gender: "MALE" | "FEMALE") => void;
   setAudioSource: (audioUrl: string) => void;
   book?: { [key: string]: any };
+  userInfo?: { mem_id: string };
   fetchBookmarks?: () => Promise<{ book_mark: string; book_text: string }[]>;
   goToBookmark?: (cfi: string) => void;
   onReadingComplete?: () => void;

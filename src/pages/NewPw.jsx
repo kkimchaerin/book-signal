@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import NewPwPopup from '../components/NewPwPopup'
+import { alertMessage } from "../../src/utils/alertMessage";
 
 import '../css/newpw.css';
 
@@ -47,14 +48,15 @@ const NewPw = () => {
           setShowPopup(true); // 팝업 표시
         } else {
           const data = await response.json();
-          alert(data.message || '비밀번호 재설정에 실패했습니다.');
+          alertMessage('비밀번호 재설정에 실패했습니다.','❗');
+          // alert(data.message || '비밀번호 재설정에 실패했습니다.');
         }
       } catch (error) {
         console.error('Error updating password:', error);
-        alert('서버 오류가 발생했습니다. 다시 시도해주세요.');
+        alertMessage('서버 오류가 발생했습니다. 다시 시도해주세요.','❗');
       }
     } else {
-      alert('비밀번호가 일치하지 않습니다.');
+      alertMessage('비밀번호가 일치하지 않습니다.','❗');
     }
   };
   return (

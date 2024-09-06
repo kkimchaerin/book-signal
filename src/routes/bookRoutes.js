@@ -79,7 +79,4 @@ router.post('/removeBookmark', async (req, res) => {
         res.status(500).json({ error: '북마크 삭제에 실패했습니다.' });
     }
 });
-
-
-
 module.exports = router;

@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
 // MySQL 연결 풀 설정
 const pool = mysql.createPool({
@@ -8,18 +8,19 @@ const pool = mysql.createPool({
     port: 3307,
     database: 'book',
     waitForConnections: true,
-    connectionLimit: 20, // 최대 연결 수
+    connectionLimit: 30, // 최대 연결 수
     queueLimit: 0        // 대기열의 최대 길이 (0은 무제한)
 });
 
 // 연결 테스트 (옵션)
-pool.getConnection((err, connection) => {
-    if (err) {
+(async () => {
+    try {
+        const connection = await pool.getConnection();
+        console.log('데이터베이스 연결 성공');
+        connection.release(); // 연결 반환
+    } catch (err) {
         console.error('데이터베이스 연결 실패:', err);
-        return;
     }
-    console.log('데이터베이스 연결 성공');
-    connection.release(); // 연결 반환
-});
+})();
 
 module.exports = pool;

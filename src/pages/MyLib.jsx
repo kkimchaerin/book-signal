@@ -5,6 +5,7 @@ import axios from 'axios';
 import Modal from '../components/Modal';
 import GetReview from './GetReview'; // GetReview 컴포넌트 import
 import html2canvas from 'html2canvas';
+import { alertMessage } from "../../src/utils/alertMessage";
 
 const MyLib = () => {
   const [activeTab, setActiveTab] = useState('recent'); // 기본 활성 탭
@@ -16,11 +17,13 @@ const MyLib = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // 리뷰모달 관련 상태
   const [backgroundImage, setBackgroundImage] = useState(''); // 리뷰모달 배경 이미지 상태
   const [reviewModalOpen, setReviewModalOpen] = useState(false); // 리뷰모달 상태
-
-  const [signalText, setSignalText] = useState('');
+  const [signalBooks, setSignalBooks] = useState([]);
   const [signalTitle, setSignalTitle] = useState(null); // 시그널 모달 관련 상태
-  const [isSignalOpen, setSignalOpen] = useState(false); // 시그널 모달 관련 상태
+  const [signalText, setSignalText] = useState('');
+  const [signalSumm, setSignalSumm] = useState('');
+  const [isSignalOpen, setSignalOpen] = useState(false); // 시그널 모달 열림 닫힘
   const [signalBackground, setSignalBackground] = useState(''); // 시그널 모달 배경 이미지 상태
+
 
   const navigate = useNavigate();
 
@@ -34,7 +37,7 @@ const MyLib = () => {
       .catch(error => {
         if (error.response && error.response.status === 401) {
           // 로그인이 필요하면 로그인 페이지로 이동
-          alert('로그인이 필요합니다.');
+          alertMessage('로그인이 필요합니다.','❗');
           navigate('/login');
         } else {
           console.error('', error);
@@ -71,6 +74,17 @@ const MyLib = () => {
         .catch(error => {
           console.error('완독 도서를 가져오는데 실패했습니다.', error);
         });
+
+      // 북 시그널 도서 데이터를 가져옴
+      axios.get(`http://localhost:3001/signal-books?mem_id=${userInfo.mem_id}`, { withCredentials: true })
+        .then(response => {
+          setSignalBooks(response.data); // 서버에서 가져온 데이터를 상태에 저장
+        })
+        .catch(error => {
+          console.error('북 시그널 도서를 가져오는데 실패했습니다.', error);
+        });
+
+
     }
   }, [userInfo]);
 
@@ -162,26 +176,28 @@ const MyLib = () => {
           </div>
         );
 
-
-
       // 북시그널
       case 'bookSignal':
         return (
           <div className="signal-grid">
-
-            <div
-              className="signal-card"
-              style={{ backgroundImage: `url('/images/cover(21).jpg')` }}
-              onClick={() => handleSignalClick('작가,제목', '/images/cover(21).jpg', '시간은 흐르고, 우리는 그 속에서 끊임없이 변화한다.')}
-            >
-              <div className="signal-text">
-                <p>시간은 흐르고,우리는 그 속에서 끊임없이 변화한다.</p>
-              </div>
-            </div>
+            {signalBooks.length > 0 ? (
+              signalBooks.map((book, index) => (
+                <div
+                  key={index}
+                  className="signal-card"
+                  style={{ backgroundImage: `url(${book.dalle_path})` }}
+                  onClick={() => handleSignalClick(book.book_name, book.dalle_path, book.book_repre, book.book_extract)}
+                >
+                  <p className='signalName'>{book.book_name}</p>
+                  <br />
+                  <p className='w-[1000px] signalSumm'>{book.book_repre}</p>
+                </div>
+              ))
+            ) : (
+              <p className="mylib-no-readingbooks-message">북 시그널 도서가 없습니다.</p>
+            )}
           </div>
         );
-
-
 
       case 'completed':
         return (
@@ -214,6 +230,13 @@ const MyLib = () => {
   return (
     <div className="mylib-container">
       <h1 className="mylib-title">{userInfo?.mem_nick} 님의 서재</h1>
+
+      {/* 최근 읽은 도서 갯수에 따른 멘트 */}
+      <p className="mylib-welcome-message">
+        올해 {recentBooks.length}권을 읽으셨어요!
+      </p>
+      <br />
+
       <div className="tabs">
         <div
           className={`tab ${activeTab === 'recent' ? 'active' : ''}`}
@@ -258,8 +281,10 @@ const MyLib = () => {
         backgroundImage={signalBackground}
         onDownload={handleDownload}
       >
-        <h2>{signalTitle}</h2>
+        <p>{signalTitle}</p>
         <p>{signalText}</p>
+        <p>{signalSumm}</p>
+
       </Modal>
     </div>
   );

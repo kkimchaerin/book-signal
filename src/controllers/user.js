@@ -39,7 +39,7 @@ exports.join = async (req, res) => {
       enroll_at: new Date()
     });
 
-   // 회원가입이 완료된 후 기본 세팅값을 설정
+    // 회원가입이 완료된 후 기본 세팅값을 설정
     const settingResult = await userDB.createUserSetting(mem_id);
     if (!settingResult) {
       throw new Error('기본 세팅값 설정 중 오류가 발생했습니다.');
@@ -250,6 +250,20 @@ exports.getCompletedBooks = async (req, res) => {
     res.status(500).json({ message: '완독 도서를 가져오는 중 오류가 발생했습니다.' });
   }
 };
+
+// 북 시그널 데이터를 가져오는 함수
+exports.getSignalBooks = async (req, res) => {
+  const mem_id = req.session.user.mem_id;
+
+  try {
+    const signalBooks = await userDB.getSignalBooks(mem_id);
+    res.status(200).json(signalBooks);
+  } catch (error) {
+    console.error('북 시그널 도서를 가져오는 중 오류 발생:', error);
+    res.status(500).json({ message: '북 시그널 도서를 가져오는 중 오류가 발생했습니다.' });
+  }
+};
+
 
 // 독서 기록을 추가하는 컨트롤러 함수
 exports.addReadingRecord = async (req, res) => {

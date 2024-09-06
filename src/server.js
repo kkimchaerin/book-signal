@@ -41,8 +41,6 @@ app.use(express.json());
 app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true,
-  origin: 'http://localhost:3000',
-  credentials: true,
 }));
 
 // 정적 파일 제공을 위한 경로 설정
@@ -133,6 +131,11 @@ app.post('/summarize', async (req, res) => {
     for (const row of gazeRows) {
       let selectedText = row.book_text;
 
+      if (!selectedText) {
+        console.error('Invalid book_text: null value encountered');
+        continue;  // `null`일 경우 건너뜁니다.
+      }
+
       // 텍스트 길이 제한을 초과하지 않도록 자르기
       const maxPromptLength = 900; // 여유를 두어 길이 제한 설정
       if (selectedText.length > maxPromptLength) {
@@ -149,11 +152,9 @@ app.post('/summarize', async (req, res) => {
         model: 'gpt-3.5-turbo',
         messages: [{
           role: "user",
-          // content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 요약해 주세요. 요약은 주요 등장인물, 배경, 사건을 포함하고, 이 텍스트가 전달하는 주요 메시지나 테마를 간결하게 설명해 주세요.`
-          // 대표 문장
-          // content: `"${bookName}"의 대표 문장을 알려줘`
+          content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 요약해 주세요. 요약은 주요 등장인물, 배경, 사건을 포함하고, 이 텍스트가 전달하는 주요 메시지나 테마를 간결하게 설명해 주세요.`
         }],
-        max_tokens: 150,
+        max_tokens: 250, // max_tokens 값을 증가하여 더 많은 내용을 포함
       }, {
         headers: {
           'Content-Type': 'application/json',
@@ -161,9 +162,16 @@ app.post('/summarize', async (req, res) => {
         }
       });
 
-      const summary = summaryResponse.data.choices[0].message.content.trim();
+      let summary = summaryResponse.data.choices[0].message.content.trim();
+
+      // 요약이 잘린 경우 적절히 처리
+      if (!summary.endsWith('.') && summary.length >= 240) {
+        summary += '...';
+      }
+
       summaries.push(summary);
       console.log('요약 생성 성공:', summary);
+
       // 요약을 기반으로 텍스트 프롬프트를 생성
       const promptForImage = `
       책 "${bookName}"의 한 부분을 시각적으로 묘사한 이미지입니다. 
@@ -173,9 +181,7 @@ app.post('/summarize', async (req, res) => {
       - 배경의 색상과 분위기 (예: 어두운 조명, 밝고 따뜻한 톤 등)
       - 발생하는 주요 사건이나 감정 (예: 긴장된 대치, 행복한 순간 등).
       이미지는 사실적이고 디테일이 풍부하며, ${bookName}의 특유의 분위기를 잘 반영해야 합니다.
-       `;
-      // 도서 대표 이미지 생성
-      // const promptForImage = `책 "${bookName}"에 어울리는 이미지를 생성해줘`
+      `;
 
       // DALL·E 이미지 생성
       const dalleResponse = await axios.post('https://api.openai.com/v1/images/generations', {
@@ -199,7 +205,6 @@ app.post('/summarize', async (req, res) => {
 
       imagePaths.push(`/dalle/${bookIdx}_${summaries.length}.png`);
 
-
       // book_extract_data 테이블에 데이터 저장
       await connection.query('INSERT INTO book_extract_data (mem_id, book_idx, book_name, book_extract, dalle_path) VALUES (?, ?, ?, ?, ?)', [memId, bookIdx, bookName, summary, imagePaths[imagePaths.length - 1]]);
     }
@@ -214,8 +219,6 @@ app.post('/summarize', async (req, res) => {
     if (connection) connection.release();
   }
 });
-
-
 
 // 정적 파일 서빙
 app.use(express.static('public'));

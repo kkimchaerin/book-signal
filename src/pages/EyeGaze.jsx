@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
+import { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import EasySeeSo from 'seeso/easy-seeso';
 import axios from 'axios';
-import { useNavigate } from "react-router-dom";
 import { alertMessage } from "../../src/utils/alertMessage";
 import { AuthContext } from '../App';
 
@@ -9,17 +8,16 @@ const SEESO_API_KEY = process.env.REACT_APP_SEESO_API_KEY;
 // console.log(SEESO_API_KEY);
 
 
-const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
+const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book, currentPage, cfi }) => {
   const { user } = useContext(AuthContext);
   const memId = user?.mem_id || null;
   // console.log('user!!!', user);
   
+  // console.log('CFI 값:', cfi);
 
-  const [userInfo, setUserInfo] = useState(null);
   const [calibrationData, setCalibrationData] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false); // SDK 초기화 상태 관리
   
-  const navigate = useNavigate();
-
   const canvasRef = useRef(null);
   const seesoRef = useRef(null);
 
@@ -66,7 +64,7 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
     return () => {
       window.removeEventListener('resize', resizeCanvas);
     };
-  }, [viewerRef, resizeCanvas]);
+  }, [resizeCanvas]);
   
   
   /******************** 로컬 스토리지에서 교정 데이터 로드 ********************/
@@ -79,30 +77,16 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
     }
   }, []);
 
-  // useEffect(() => {
-  //   const savedCalibrationData = localStorage.getItem('calibrationData');
-  //   if (savedCalibrationData) {
-  //     try {
-  //       // Base64 문자열이 올바르게 인코딩되었는지 확인
-  //       atob(savedCalibrationData);
-  //       setCalibrationData(savedCalibrationData);
-  //       console.log('Calibration data loaded from localStorage');
-  //     } catch (e) {
-  //       console.error('Invalid calibration data in localStorage:', e);
-  //       // 필요 시 로컬스토리지에서 잘못된 데이터를 제거할 수 있습니다.
-  //       // localStorage.removeItem('calibrationData');
-  //     }
-  //   }
-  // }, []);
-  
-
 
   /******************** 시선 추적 시간 계산 ********************/  
   function showGaze(gazeInfo) {
-    if (!gazeInfo || typeof gazeInfo.x === 'undefined' || typeof gazeInfo.y === 'undefined') {
-        console.error('Invalid gazeInfo:', gazeInfo);
-        return;
-    }
+
+    // Gaze 정보 유효성 검증
+  //   if (!gazeInfo || typeof gazeInfo.x === 'undefined' || typeof gazeInfo.y === 'undefined' ||
+  //     typeof gazeInfo.screen_x === 'undefined' || typeof gazeInfo.screen_y === 'undefined') {
+  //     console.error('왜?', gazeInfo);
+  //   return;
+  // }
 
     // Gaze 정보를 콘솔에 출력
     // console.log(`[좌표] X: ${gazeInfo.x}, Y: ${gazeInfo.y}`);
@@ -155,9 +139,11 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
                 console.log(`영역 안 머문 누적 시간: ${newTotal / 1000}초`);
                 return newTotal;
               });
-            } else {
-              console.error("잘못된 시간 계산 감지됨:", timeSpentInside);
-            }
+            } 
+            // else {
+            //   console.error("잘못된 시간 계산 감지됨:", timeSpentInside);
+            // }
+
               // 시선이 영역 밖으로 나갔으므로 바깥에 머문 시간 기록 시작
               gazeOutsideTimeRef.current = Date.now();
               isGazeInsideRef.current = false;
@@ -195,6 +181,15 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
     seeso.setFaceDistance(50);
     seeso.setCameraPosition(window.outerWidth / 2, true);
 
+      // 카메라 위치 설정 (window.outerWidth / 2가 제대로 동작하지 않으면 기본 값을 사용)
+  try {
+    // 혹시 오류가 발생하는지 확인
+    seeso.setCameraPosition(0, true); // X 좌표를 0으로 설정하고, flip 카메라를 true로 설정
+    console.log('카메라 위치 설정 완료');
+  } catch (error) {
+    console.error('카메라 위치 설정 중 오류 발생:', error);
+  }
+
     // 시선 교정
     // calibrationData = parseCalibrationDataInQueryString();
     // console.log('cal', calibrationData);
@@ -215,7 +210,8 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
       console.log("시선 교정 적용 완료");
     }
 
-    seeso.startTracking(onGaze, onDebug);
+    // seeso.startTracking(onGaze, onDebug);
+    setIsInitialized(true); // SDK 초기화 완료 상태로 설정
   }
 
   function afterFailed() {
@@ -223,19 +219,26 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
   }
 
   function onGaze(gazeInfo) {
+    // if (!gazeInfo || typeof gazeInfo.screen_x === 'undefined' || typeof gazeInfo.screen_y === 'undefined') {
+    //   console.error('Invalid gazeInfo:', gazeInfo);
+    //   return;
+    // }
+
     showGaze(gazeInfo);
 
-    if (seesoRef.current) {
-        showGaze(gazeInfo);
-    } else {
-        console.error('SeeSo SDK is not initialized properly.');
-    }
+    // if (seesoRef.current) {
+    //     showGaze(gazeInfo);
+    // } else {
+    //     console.error('SeeSo SDK is not initialized properly.');
+    // }
   }
 
   function onDebug(FPS, latency_min, latency_max, latency_avg) {
     // console.log("Debug Info:", FPS, latency_min, latency_max, latency_avg);
   }
 
+
+   /******************** SDK 초기화 및 시선 추적 시작 ********************/
   useEffect(() => {
     const initializeSeeso = async () => {
       const seeso = new EasySeeSo();
@@ -262,7 +265,23 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
     };
   }, [calibrationData]);
 
-  
+
+  /******************** 시선 추적 시작 (초기화 완료 후) ********************/
+  useEffect(() => {
+    if (isInitialized && seesoRef.current) {
+      seesoRef.current.startTracking(onGaze, onDebug);
+    }
+  }, [isInitialized]);
+
+  /******************** 페이지 이동 시 시선 추적 중단 후 재시작 ********************/
+useEffect(() => {
+  if (seesoRef.current) {
+    seesoRef.current.stopTracking(); // 페이지 이동 전 시선 추적 중단
+    seesoRef.current.startTracking(onGaze, onDebug); // 페이지 이동 후 시선 추적 재시작
+  }
+}, [currentPage]);
+
+
   /******************** 시선 추적 시간 저장 ********************/
   const bookIdx = book?.book_idx; 
   // 임의로 지정된 값들(테스트용)
@@ -275,11 +294,19 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
 
     if (duration > 0) {
       console.log('저장할 gazeTime:', duration);
+    //   console.log('으아아아아',{
+    //     book_idx: bookIdx,
+    //     mem_id: memId,
+    //     book_text: bookText,
+    //     book_mark: cfi,
+    //     gaze_duration: duration
+    // });
   
       axios.post('http://localhost:3001/gaze', {
         book_idx: bookIdx,
         mem_id: memId,
         book_text: bookText,
+        book_mark: cfi,
         gaze_duration: duration
       })
       .then(response => {
@@ -295,6 +322,8 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book }) => {
       });
     } else {
       console.log('gazeTime이 0이거나 없음');
+      gazeInsideTimeRef.current = 0;
+      setInsideTimeTotal(0);
     }
   };
 

@@ -11,35 +11,51 @@
   z-index: 1000;
 }
 
-.modal-polaroid{
-  width: 480px;
-  height: 800px;
+.modal-polaroid {
+  width: 550px;
+  height: 900px;
   background-color: white;
-  position: relative; /* 자식 요소의 위치 조정을 위해 필요 */
+  position: relative;
+  /* 자식 요소의 위치 조정을 위해 필요 */
   display: flex;
-  justify-content: center; /* 수평 중앙 정렬 */
-  align-items: flex-start;
+  flex-direction: column;
+  /* 수직 정렬 */
+  justify-content: center;
+  /* 수평 중앙 정렬 */
+  align-items: center;
 }
 
 .modal-content {
-  background-size: cover; /* 배경 이미지가 모달 크기에 맞도록 설정 */
-  background-position: center; /* 배경 이미지를 중앙에 맞춤 */
-  background-repeat: no-repeat; /* 이미지 반복 방지 */
+  background-size: cover;
+  /* 배경 이미지가 모달 크기에 맞도록 설정 */
+  background-position: center;
+  /* 배경 이미지를 중앙에 맞춤 */
+  background-repeat: no-repeat;
+  /* 이미지 반복 방지 */
   padding: 20px;
   position: absolute;
-  top: 50px;
-  width: 400px;
-  height: 560px;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* 중앙 정렬 */
+  width: 450px;
+  height: 600px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   text-align: center;
-  background-color: transparent; /* 배경색 제거 */
+  background-color: transparent;
+  /* 배경색 제거 */
+  margin: 0 auto;
+  /* 중앙 정렬 */
 }
 
-.modal-text {
-  background-color: rgba(225, 225, 225, 0.7); /* 텍스트 배경을 반투명 검정으로 설정 */
+
+.modal-signal {
+  font-family: 'SF_HambakSnow';
+  background-color: rgba(225, 225, 225, 0.75);
+  /* 텍스트 배경을 반투명 흰색으로 설정 */
   width: 300px;
   height: auto;
   min-height: 200px;
@@ -51,24 +67,46 @@
   align-items: center;
 }
 
+.modal-summ {
+  position: absolute;
+  top: 620px;
+  /* .modal-content 밑 50px */
+  width: 450px;
+  padding: 20px;
+  text-align: center;
+  font-size: 18px;
+}
 
 .modal-download,
 .modal-close {
   position: absolute;
   background: none;
   cursor: pointer;
-  color: white;
+  color: black;
   opacity: 0.7;
 }
 
 .modal-download {
-  font-size: 25px;
-  top : 30px;
-  right: 80px; /* 두 버튼 간의 간격 유지 */
+  font-size: 23px;
+  top: -40px;
+  right: 20px;
+  /* 두 버튼 간의 간격 유지 */
 }
 
 .modal-close {
   font-size: 32px;
-  top : 27px;
-  right: 30px;
+  top: -45px;
+  right: -25px;
+}
+
+.summary {
+  margin-top: 50px;
+  /* 상단에 약간의 여백 추가 */
+}
+
+@font-face {
+  font-family: 'SF_HambakSnow';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2106@1.1/SF_HambakSnow.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
 }
