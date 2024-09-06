@@ -19,7 +19,6 @@
   // 리뷰 삭제 기능
   exports.deleteReview = async (reviewId, mem_id) => {
     
-    
     const checkReviewQuery = `SELECT book_score, book_review,book_idx FROM book_end WHERE end_idx = ?`;
     const updateReviewQuery = `UPDATE book_end SET book_score = NULL, book_review = NULL WHERE end_idx = ?`;
     const updatePointsQuery = `UPDATE member SET mem_point = mem_point - 15 WHERE mem_id = ?`;
@@ -127,8 +126,6 @@
       throw err;
     }
   };
-
-
 
   // 도서의 평균 평점을 업데이트하는 함수
   exports.updateAverageRating = async (book_idx, averageRating) => {
