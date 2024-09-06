@@ -227,55 +227,58 @@ const EpubReader = ({ url, book, location }) => {
   }, [url, dispatch, userInfo, location.state]);
 
   const updateStyles = useCallback(() => {
-    console.log('font');
-    
+    console.log('font update');
+  
     if (renditionRef.current) {
-      // EPUB 내부 폰트 파일 경로 설정
+      // 폰트 스타일 정의
       const fontFaceCSS = `
         @font-face {
           font-family: 'FreeSerif';
-          src: url('OPS/fonts/FreeSerif.ttf');  // EPUB 내 실제 폴더 경로 반영
+          src: url('OPS/fonts/FreeSerif.ttf');
         }
         @font-face {
           font-family: 'FreeSerifBold';
-          src: url('OPS/fonts/FreeSerifBold.ttf');  // EPUB 내 실제 폴더 경로 반영
+          src: url('OPS/fonts/FreeSerifBold.ttf');
         }
         @font-face {
           font-family: 'FreeSerifItalic';
-          src: url('OPS/fonts/FreeSerifItalic.ttf');  // EPUB 내 실제 폴더 경로 반영
+          src: url('OPS/fonts/FreeSerifItalic.ttf');
         }
         @font-face {
           font-family: 'FreeSerifBoldItalic';
-          src: url('OPS/fonts/FreeSerifBoldItalic.ttf');  // EPUB 내 실제 폴더 경로 반영
+          src: url('OPS/fonts/FreeSerifBoldItalic.ttf');
         }
       `;
-
-      // 폰트 CSS 적용 및 선택
-      renditionRef.current.themes.register("customTheme", {
-        body: {
-          "font-family": fontFamily || "FreeSerif", // 선택된 폰트를 반영
-          "font-size": `${fontSize} !important`,
-          "line-height": `${lineHeight} !important`,
-          margin: `${margin} !important`,
-        },
-      });
-
-      // 폰트 CSS를 적용
-      renditionRef.current.themes.fontFace(fontFaceCSS);
-
-      // 테마 적용
+  
+      // 강력한 스타일 덮어쓰기
+      const customCSS = `
+        * {
+          font-family: "FreeSerif" !important;
+          font-size: ${fontSize} !important;
+          line-height: ${lineHeight} !important;
+          margin: ${margin} !important;
+        }
+        body {
+          font-family: "FreeSerif" !important;
+          font-size: ${fontSize} !important;
+          line-height: ${lineHeight} !important;
+          margin: ${margin} !important;
+        }
+      `;
+  
+      // 폰트와 스타일을 EPUB에 주입
+      renditionRef.current.themes.register("customTheme", customCSS);
       renditionRef.current.themes.select("customTheme");
-
-      console.log("새로운 폰트가 적용되었습니다:", fontFamily);
+  
+      console.log("새로운 폰트와 스타일이 적용되었습니다:", fontFamily);
     }
   }, [fontFamily, fontSize, lineHeight, margin]);
+  
 
   // 폰트 변경 시마다 스타일 업데이트
-  const handleFontChange = (font) => {
-    setFontFamily(font); // 폰트를 상태로 설정
-    updateStyles(); // 업데이트된 스타일을 반영
-    console.log(`폰트 변경됨: ${font}`);
-  };
+  useEffect(() => {
+    updateStyles();
+  }, [fontFamily, fontSize, lineHeight, margin]);
 
 
 
