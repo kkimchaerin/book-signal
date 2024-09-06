@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getBookPath, saveBookmark, getBookmarks, saveEndReading, getUserBookmarkForBook, removeBookmark } = require('../models/bookDB');
+const { getBookPath, saveBookmark, getBookmarks, saveEndReading, getUserBookmarkForBook, removeBookmark, removeEyegazeBookmark } = require('../models/bookDB');
 
 
 router.post('/', async (req, res) => {
@@ -35,12 +35,17 @@ router.get('/getBookmarks', async (req, res) => {
 
     try {
         const bookmarks = await getBookmarks(book_idx, mem_id);
-        res.status(200).json(bookmarks); // 북마크가 없으면 빈 배열을 반환
+        res.status(200).json({
+            readingBookmarks: bookmarks.readingBookmarks,
+            eyegazeBookmark: bookmarks.eyegazeBookmark
+        });
     } catch (error) {
         res.status(500).json({ error: 'Failed to retrieve bookmarks.' });
     }
 });
 
+
+// 최근 읽은 도서용 북마크
 router.get('/getUserBookmark', async (req, res) => {
     const { book_idx, mem_id } = req.query;
 
@@ -77,6 +82,20 @@ router.post('/removeBookmark', async (req, res) => {
         res.status(200).json(result);
     } catch (error) {
         res.status(500).json({ error: '북마크 삭제에 실패했습니다.' });
+    }
+});
+
+// eyegaze 북마크 삭제 API
+router.post('/removeEyegazeBookmark', async (req, res) => {
+    const { book_idx, mem_id } = req.body;
+    console.log(book_idx, mem_id);
+    
+
+    try {
+        const result = await removeEyegazeBookmark(book_idx, mem_id);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ error: 'eyegaze 북마크 삭제에 실패했습니다.' });
     }
 });
 

@@ -4,10 +4,11 @@ const { saveGazeTime } = require('../models/bookDB');
 
 // 시선 추적 시간 저장
 router.post('/', async (req, res) => {
-  const { book_idx, mem_id, book_text, gaze_duration } = req.body;
+  const { book_idx, mem_id, book_text, book_mark, gaze_duration } = req.body;
+  // console.log('Received request:', { book_idx, mem_id, book_text, book_mark, gaze_duration });
 
   try {
-    await saveGazeTime(book_idx, mem_id, book_text, gaze_duration);
+    await saveGazeTime(book_idx, mem_id, book_text, book_mark, gaze_duration);
     res.status(200).json({ message: 'Gaze time saved successfully' });
   } catch (error) {
     console.error('Error saving gaze time:', error);

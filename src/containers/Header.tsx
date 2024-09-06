@@ -35,7 +35,9 @@ const Header: React.FC<Props> = ({
   const [showFontSettings, setShowFontSettings] = useState(false);
   const [bookmarkMessage, setBookmarkMessage] = useState('');
   const [bookmarks, setBookmarks] = useState<{ book_mark: string; book_text: string }[]>([]);
-  const [showBookmarksList, setShowBookmarksList] = useState(false); // 북마크 리스트 보여주기 상태 추가
+  const [showBookmarksList, setShowBookmarksList] = useState(false);
+  const [selectedFont, setSelectedFont] = useState('Noto Sans KR'); // 기본 폰트: Noto Sans KR
+  const [eyegazeBookmark, setEyegazeBookmark] = useState<{ book_mark: string; book_text: string } | null>(null);
 
   const navigate = useNavigate();
 
@@ -126,18 +128,10 @@ const Header: React.FC<Props> = ({
     try {
       await onBookmarkAdd();
       setBookmarkMessage('북마크가 성공적으로 추가되었습니다.');
-
-      // 일정 시간 후에 메시지를 지우기 위해 setTimeout 사용
-      setTimeout(() => {
-        setBookmarkMessage('');
-      }, 2000); // 2000ms (2초) 후에 메시지 사라짐
-    } catch (error) {
+      setTimeout(() => setBookmarkMessage(''), 2000);
+    } catch {
       setBookmarkMessage('북마크 추가 중 오류가 발생했습니다.');
-
-      // 오류 메시지도 일정 시간 후에 사라지도록 설정
-      setTimeout(() => {
-        setBookmarkMessage('');
-      }, 2000); // 2000ms (2초) 후에 메시지 사라짐
+      setTimeout(() => setBookmarkMessage(''), 2000);
     }
   };
 
@@ -150,32 +144,77 @@ const Header: React.FC<Props> = ({
   const handleFetchBookmarks = async () => {
     if (fetchBookmarks) {
       try {
-        const bookmarks = await fetchBookmarks();
-        setBookmarks(bookmarks);
-        setShowBookmarksList((prev) => !prev); // 리스트 보여주기 상태를 토글
-      } catch (error) {
+        const bookmarks = await fetchBookmarks();  // 객체로 반환된 데이터를 처리
+        setBookmarks(bookmarks.readingBookmarks);  // book_reading 테이블 북마크 설정
+        setEyegazeBookmark(bookmarks.eyegazeBookmark);  // book_eyegaze 테이블 북마크 설정
+        setShowBookmarksList((prev) => !prev);
+      } catch {
         setBookmarkMessage('북마크를 가져오는 중 오류가 발생했습니다.');
       }
     }
   };
 
-  const handleBookmarkRemove = (book_mark: string) => {
-    if (onBookmarkRemove) {
-      onBookmarkRemove(book_mark);  // 여기서 props로 전달된 onBookmarkRemove를 호출
+  const handleBookmarkRemove = async (book_mark: string) => {
+    // 수동 북마크 삭제 로직 (DB에 반영)
+    if (bookmarks.some((bookmark) => bookmark.book_mark === book_mark)) {
+      if (onBookmarkRemove) {
+        try {
+          // DB에서 수동 북마크 삭제
+          await onBookmarkRemove(book_mark);
+          // UI에서도 북마크 삭제
+          setBookmarks((prevBookmarks) =>
+            prevBookmarks.filter((bookmark) => bookmark.book_mark !== book_mark)
+          );
+          setBookmarkMessage('북마크가 삭제되었습니다.');
+        } catch (error) {
+          console.error('북마크 삭제 중 오류 발생:', error);
+          setBookmarkMessage('북마크 삭제 중 오류가 발생했습니다.');
+        }
+      }
     }
-    setBookmarks((prevBookmarks) =>
-      prevBookmarks.filter((bookmark) => bookmark.book_mark !== book_mark)
-    );
-    setBookmarkMessage('북마크가 삭제되었습니다.');
-
-    setTimeout(() => {
-      setBookmarkMessage('');
-    }, 2000); // 2000ms (2초) 후에 메시지 사라짐
   };
 
+  // eyegaze 북마크 삭제 API 호출 함수
+  const handleEyegazeBookmarkRemove = async () => {
+    if (eyegazeBookmark && book && userInfo) {
+      try {
+        const response = await fetch('http://localhost:3001/getBookPath/removeEyegazeBookmark', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            book_idx: book.book_idx,
+            mem_id: userInfo.mem_id,
+          }),
+        });
+
+        if (response.ok) {
+          setEyegazeBookmark(null);  // UI에서 eyegaze 북마크 삭제
+          setBookmarkMessage('eyegaze 북마크가 삭제되었습니다.');
+          setTimeout(() => setBookmarkMessage(''), 2000);
+        } else {
+          throw new Error('서버 오류');
+        }
+      } catch (error) {
+        console.error('eyegaze 북마크 삭제 중 오류 발생:', error);
+        setBookmarkMessage('eyegaze 북마크 삭제 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
+  // 폰트 변경 처리 함수
+  const handleFontChange = (font: string) => {
+    setSelectedFont(font);  // 선택한 폰트 상태 업데이트
+    console.log(`폰트 변경됨: ${font}`);  // 폰트 변경 로그
+
+    if (onFontChange) {
+      onFontChange(font);  // EpubReader로 폰트 변경 알림
+    }
+  };
 
   return (
-    <Wrapper>
+    <Wrapper style={{ fontFamily: selectedFont }} key={selectedFont}> {/* 선택한 폰트를 전체 Wrapper에 적용 */}
       <Layout>
         <AutoLayout>
           <div>
@@ -202,7 +241,8 @@ const Header: React.FC<Props> = ({
         />
       </TTSWrapper>
 
-      <TTSWrapper show={showBookmarkSettings} onClose={handleClose} title="Bookmark">
+      {/* 북마크 UI */}
+      <TTSWrapper show={showBookmarkSettings} onClose={() => setShowBookmarkSettings(false)} title="Bookmark">
         <div className="Header-bookmark-settings">
           <button className="Header-custom-button" onClick={handleBookmarkAdd}>Add Current Page to Bookmarks</button>
           <br />
@@ -212,27 +252,49 @@ const Header: React.FC<Props> = ({
           {bookmarkMessage && <p>{bookmarkMessage}</p>}
           {showBookmarksList && (
             <div className="Header-bookmark-list">
-              {bookmarks.map((bookmark, index) => (
-                <div key={index} className="Header-bookmark-item">
-                  <button className="Header-custom-button" onClick={() => handleBookmarkClick(bookmark.book_mark)}>
-                    {`Bookmark ${index + 1}`}
+              {/* Book Reading Bookmarks */}
+              <h4>Book Reading Bookmarks</h4>
+              {bookmarks && bookmarks.length > 0 ? (
+                bookmarks.map((bookmark, index) => (
+                  <div key={index} className="Header-bookmark-item">
+                    <button className="Header-custom-button" onClick={() => handleBookmarkClick(bookmark.book_mark)}>
+                      {`Bookmark ${index + 1}`}
+                    </button>
+                    <button className="Header-remove-button" onClick={() => handleBookmarkRemove(bookmark.book_mark)}>
+                      -
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p>No Book Reading Bookmarks</p>
+              )}
+
+              {/* Eye Gaze Bookmark */}
+              <h4>Eye Gaze Bookmark</h4>
+              {eyegazeBookmark ? (
+                <div className="Header-bookmark-item">
+                  <button className="Header-custom-button" onClick={() => handleBookmarkClick(eyegazeBookmark.book_mark)}>
+                    Eye Gaze Bookmark
                   </button>
-                  <button className="Header-remove-button" onClick={() => handleBookmarkRemove(bookmark.book_mark)}>  {/* 여기 수정 */}
+                  <button className="Header-remove-button" onClick={handleEyegazeBookmarkRemove}>
                     -
                   </button>
                 </div>
-              ))}
+              ) : (
+                <p>No Eye Gaze Bookmark</p>
+              )}
             </div>
           )}
+
         </div>
       </TTSWrapper>
 
       <TTSWrapper show={showFontSettings} onClose={handleClose} title="Font Settings">
         <div className="Header-font-settings">
-          <button onClick={() => onFontChange('Arial')}>Arial</button>
-          <button onClick={() => onFontChange('Georgia')}>Georgia</button>
-          <button onClick={() => onFontChange('Times New Roman')}>Times New Roman</button>
-          <button onClick={() => onFontChange('Courier New')}>Courier New</button>
+          <button onClick={() => handleFontChange('FreeSerif')}>FreeSerif</button>
+          <button onClick={() => handleFontChange('FreeSerifBold')}>FreeSerifBold</button>
+          <button onClick={() => handleFontChange('FreeSerifItalic')}>FreeSerifItalic</button>
+          <button onClick={() => handleFontChange('FreeSerifBoldItalic')}>FreeSerifBoldItalic</button>
         </div>
       </TTSWrapper>
     </Wrapper>
@@ -256,7 +318,7 @@ interface Props {
   setAudioSource: (audioUrl: string) => void;
   book?: { [key: string]: any };
   userInfo?: { mem_id: string };
-  fetchBookmarks?: () => Promise<{ book_mark: string; book_text: string }[]>;
+  fetchBookmarks?: () => Promise<{ readingBookmarks: { book_mark: string; book_text: string }[], eyegazeBookmark: { book_mark: string; book_text: string } | null }>;
   goToBookmark?: (cfi: string) => void;
   onReadingComplete?: () => void;
   onReadingQuit?: () => void;

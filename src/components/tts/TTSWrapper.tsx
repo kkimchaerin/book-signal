@@ -8,7 +8,7 @@ interface TTSWrapperProps {
   show: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  title: string;  // 제목을 prop으로 받음
+  title: string;
 }
 
 const TTSWrapper: React.FC<TTSWrapperProps> = ({ show, onClose, children, title }) => {

@@ -32,10 +32,9 @@ exports.createUserSetting = async (mem_id) => {
 // 사용자 정보 조회
 exports.getUser = async (mem_id) => {
   try {
-    const [result] = await db.query(`SELECT * FROM member WHERE mem_id = ?`, [mem_id]);
-    return result;
+    const [rows] = await db.query(`SELECT * FROM member WHERE mem_id = ?`, [mem_id]);
+    return rows;
   } catch (err) {
-    console.error('Error fetching user:', err);
     throw err;
   }
 };
@@ -43,10 +42,9 @@ exports.getUser = async (mem_id) => {
 // 이메일 중복체크
 exports.getUserByEmail = async (mem_email) => {
   try {
-    const [result] = await db.query(`SELECT * FROM member WHERE mem_mail = ?`, [mem_email]);
-    return result;
+    const [rows] = await db.query(`SELECT * FROM member WHERE mem_mail = ?`, [mem_email]);
+    return rows;
   } catch (err) {
-    console.error('Error checking email:', err);
     throw err;
   }
 };
@@ -54,10 +52,9 @@ exports.getUserByEmail = async (mem_email) => {
 // 닉네임 중복체크
 exports.getUserByNick = async (mem_nick) => {
   try {
-    const [result] = await db.query(`SELECT * FROM member WHERE mem_nick = ?`, [mem_nick]);
-    return result;
+    const [rows] = await db.query(`SELECT * FROM member WHERE mem_nick = ?`, [mem_nick]);
+    return rows;
   } catch (err) {
-    console.error('Error checking nickname:', err);
     throw err;
   }
 };
@@ -65,10 +62,9 @@ exports.getUserByNick = async (mem_nick) => {
 // 아이디 중복체크
 exports.getUserId = async (mem_id) => {
   try {
-    const [result] = await db.query(`SELECT * FROM member WHERE mem_id = ?`, [mem_id]);
-    return result;
+    const [rows] = await db.query(`SELECT * FROM member WHERE mem_id = ?`, [mem_id]);
+    return rows;
   } catch (err) {
-    console.error('Error checking user ID:', err);
     throw err;
   }
 };
@@ -76,34 +72,31 @@ exports.getUserId = async (mem_id) => {
 // 아이디 찾기 (이메일, 이름)
 exports.getUserByEmailAndName = async (mem_email, mem_name) => {
   try {
-    const [result] = await db.query(
+    const [rows] = await db.query(
       `SELECT mem_id FROM member WHERE mem_mail = ? AND mem_name = ?`,
       [mem_email, mem_name]
     );
-    return result;
+    return rows;
   } catch (err) {
-    console.error('Error finding user by email and name:', err);
     throw err;
   }
 };
 
 // 회원탈퇴 - 연관된 데이터 삭제
 exports.deleteRelatedData = async (mem_id) => {
-  try {
-    const queries = [
-      `DELETE FROM book_end WHERE mem_id = ?`,
-      `DELETE FROM book_extract_data WHERE mem_id = ?`,
-      `DELETE FROM book_eyegaze WHERE mem_id = ?`,
-      `DELETE FROM book_reading WHERE mem_id = ?`,
-      `DELETE FROM book_wishlist WHERE mem_id = ?`,
-      `DELETE FROM setting WHERE mem_id = ?`
-    ];
+  const queries = [
+    `DELETE FROM book_end WHERE mem_id = ?`,
+    `DELETE FROM book_extract_data WHERE mem_id = ?`,
+    `DELETE FROM book_eyegaze WHERE mem_id = ?`,
+    `DELETE FROM book_reading WHERE mem_id = ?`,
+    `DELETE FROM book_wishlist WHERE mem_id = ?`,
+    `DELETE FROM setting WHERE mem_id = ?`
+  ];
 
+  try {
     for (const query of queries) {
       await db.query(query, [mem_id]);
     }
-
-    return { message: '관련 데이터가 성공적으로 삭제되었습니다.' };
   } catch (err) {
     console.error('관련 데이터 삭제 중 오류 발생:', err);
     throw err;
@@ -124,13 +117,12 @@ exports.deleteUser = async (mem_id) => {
 // 비밀번호 찾기 (이메일, 아이디)
 exports.getUserByEmailAndId = async (mem_email, mem_id) => {
   try {
-    const [result] = await db.query(
+    const [rows] = await db.query(
       `SELECT * FROM member WHERE mem_mail = ? AND mem_id = ?`,
       [mem_email, mem_id]
     );
-    return result;
+    return rows;
   } catch (err) {
-    console.error('Error finding user by email and ID:', err);
     throw err;
   }
 };
@@ -144,7 +136,6 @@ exports.updatePassword = async (mem_id, newPw) => {
     );
     return result;
   } catch (err) {
-    console.error('Error updating password:', err);
     throw err;
   }
 };
@@ -152,15 +143,14 @@ exports.updatePassword = async (mem_id, newPw) => {
 // 찜한 도서를 가져오는 함수
 exports.getWishlistBooks = async (mem_id) => {
   try {
-    const sql = `
+    const [rows] = await db.query(`
       SELECT book_db.*
       FROM book_wishlist
       JOIN book_db ON book_wishlist.book_idx = book_db.book_idx
       WHERE book_wishlist.mem_id = ?;
-    `;
+    `, [mem_id]);
 
-    const [results] = await db.query(sql, [mem_id]);
-    const updatedResults = results.map(book => {
+    const updatedResults = rows.map(book => {
       book.book_cover = decodeURIComponent(book.book_cover);
       if (book.book_cover) {
         book.book_cover = `/images/${book.book_cover}`;
@@ -179,7 +169,7 @@ exports.getWishlistBooks = async (mem_id) => {
 // 최근 읽은 도서 가져오기
 exports.getRecentBooks = async (mem_id) => {
   try {
-    const query = `
+    const [rows] = await db.query(`
       SELECT 
           book_db.*,
           MAX(book_reading.book_latest) AS book_latest
@@ -195,10 +185,9 @@ exports.getRecentBooks = async (mem_id) => {
           book_db.book_idx
       ORDER BY 
           book_latest DESC
-    `;
+    `, [mem_id]);
 
-    const [results] = await db.query(query, [mem_id]);
-    const updatedResults = results.map(book => {
+    const updatedResults = rows.map(book => {
       book.book_cover = decodeURIComponent(book.book_cover);
       if (book.book_cover) {
         book.book_cover = `/images/${book.book_cover}`;
@@ -217,15 +206,14 @@ exports.getRecentBooks = async (mem_id) => {
 // 완독 도서를 가져오는 함수
 exports.getCompletedBooks = async (mem_id) => {
   try {
-    const sql = `
+    const [rows] = await db.query(`
       SELECT book_db.*
       FROM book_end
       JOIN book_db ON book_end.book_idx = book_db.book_idx
       WHERE book_end.mem_id = ?;
-    `;
+    `, [mem_id]);
 
-    const [results] = await db.query(sql, [mem_id]);
-    const updatedResults = results.map(book => {
+    const updatedResults = rows.map(book => {
       book.book_cover = decodeURIComponent(book.book_cover);
       if (book.book_cover) {
         book.book_cover = `/images/${book.book_cover}`;
@@ -241,31 +229,23 @@ exports.getCompletedBooks = async (mem_id) => {
   }
 };
 
-// 시그널 도서를 가져오는 함수
-exports.getSignalBooks = (mem_id) => {
-  return new Promise((resolve, reject) => {
-    const query = `
-    SELECT *
-    FROM book_extract_data AS b1
-    WHERE b1.mem_id = ?
-    AND b1.saved_at = (
-      SELECT MAX(b2.saved_at)
-      FROM book_extract_data AS b2
-      WHERE b2.book_name = b1.book_name
-      AND b2.mem_id = b1.mem_id
-    )
-    ORDER BY b1.saved_at DESC;
-    `;
+// 독서 기록을 추가하는 함수
+exports.addReadingRecord = async (mem_id, book_name) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT book_idx FROM book_db WHERE book_name = ?;
+    `, [book_name]);
 
-    db.query(query, [mem_id], (err, results) => {
-      if (err) {
-        console.error('북 시그널 도서를 가져오는 중 오류 발생:', err);
-        reject(new Error('북 시그널 도서를 가져오는 중 오류가 발생했습니다.'));
-      } else {
-        resolve(results);
-      }
-    });
-  });
+    if (rows.length === 0) {
+      throw new Error('해당 책을 찾을 수 없습니다.');
+    }
+
+    const book_idx = rows[0].book_idx;
+    await exports.incrementBookViews(mem_id, book_idx);
+  } catch (err) {
+    console.error('book_idx 가져오기 에러:', err);
+    throw err;
+  }
 };
 
 // 독서 기록을 추가하는 함수
@@ -291,27 +271,53 @@ exports.addReadingRecord = async (mem_id, book_name) => {
 // 책 조회수 증가 및 로그 기록
 exports.incrementBookViews = async (mem_id, book_idx) => {
   try {
-    const checkIfViewedQuery = `
+    const [rows] = await db.query(`
       SELECT COUNT(*) AS count 
       FROM book_reading 
       WHERE mem_id = ? AND book_idx = ?
-    `;
-    const [results] = await db.query(checkIfViewedQuery, [mem_id, book_idx]);
+    `, [mem_id, book_idx]);
 
-    const hasViewed = results[0].count > 0;
+    const hasViewed = rows[0].count > 0;
 
     if (!hasViewed) {
-      const updateViewsQuery = `UPDATE book_db SET book_views = book_views + 1 WHERE book_idx = ?`;
-      await db.query(updateViewsQuery, [book_idx]);
+      await db.query(`
+        UPDATE book_db 
+        SET book_views = book_views + 1 
+        WHERE book_idx = ?
+      `, [book_idx]);
     }
 
-    const logViewQuery = `
+    await db.query(`
       INSERT INTO book_reading (mem_id, book_idx, book_name, book_summ, book_latest, book_rp, book_mark)
       VALUES (?, ?, (SELECT book_name FROM book_db WHERE book_idx = ?), '', NOW(), 1, 1)
-    `;
-    await db.query(logViewQuery, [mem_id, book_idx, book_idx]);
+    `, [mem_id, book_idx, book_idx]);
+
   } catch (err) {
-    console.error('책 조회수 증가 중 오류 발생:', err);
-    throw new Error('책 조회수 증가에 실패했습니다.');
+    console.error('책 조회 로그 기록 중 오류 발생:', err);
+    throw new Error('책 조회 로그 기록에 실패했습니다.');
+  }
+};
+
+// 시그널 도서를 가져오는 함수
+exports.getSignalBooks = async (mem_id) => {
+  try {
+    const query = `
+      SELECT *
+      FROM book_extract_data AS b1
+      WHERE b1.mem_id = ?
+      AND b1.saved_at = (
+        SELECT MAX(b2.saved_at)
+        FROM book_extract_data AS b2
+        WHERE b2.book_name = b1.book_name
+        AND b2.mem_id = b1.mem_id
+      )
+      ORDER BY b1.saved_at DESC;
+    `;
+
+    const [results] = await db.query(query, [mem_id]);
+    return results;
+  } catch (err) {
+    console.error('북 시그널 도서를 가져오는 중 오류 발생:', err);
+    throw new Error('북 시그널 도서를 가져오는 중 오류가 발생했습니다.');
   }
 };

@@ -188,14 +188,15 @@ app.post('/summarize', async (req, res) => {
         const representativeSentence = repreResponse.data.choices[0].message.content.trim();
         console.log('대표 문장 생성 성공:', representativeSentence);
 
-        // OpenAI API를 사용하여 요약 생성
-        const summaryResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
+      try {
+        // OpenAI API를 사용하여 대표 문장 추출
+        const repreResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
           model: 'gpt-3.5-turbo',
           messages: [{
             role: "user",
-            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 요약해 주세요. 요약은 주요 등장인물, 배경, 사건을 포함하고, 이 텍스트가 전달하는 주요 메시지나 테마를 간결하게 설명해 주세요.`
+            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분에서 가장 중요한 대표 문장을 하나 뽑아 주세요.`
           }],
-          max_tokens: 150,
+          max_tokens: 200,
         }, {
           headers: {
             'Content-Type': 'application/json',
@@ -203,26 +204,46 @@ app.post('/summarize', async (req, res) => {
           }
         });
 
-        let summary = summaryResponse.data.choices[0].message.content.trim();
+        const representativeSentence = repreResponse.data.choices[0].message.content.trim();
+        console.log('대표 문장 생성 성공:', representativeSentence);
 
-        // 요약이 잘린 경우 적절히 처리
-        if (!summary.endsWith('.') && summary.length >= 240) {
-          summary += '...';
+      // OpenAI API를 사용하여 요약 생성
+      const summaryResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'gpt-3.5-turbo',
+        messages: [{
+          role: "user",
+          // content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 요약해 주세요. 요약은 주요 등장인물, 배경, 사건을 포함하고, 이 텍스트가 전달하는 주요 메시지나 테마를 간결하게 설명해 주세요.`
+          // 대표 문장
+          // content: `"${bookName}"의 대표 문장을 알려줘`
+        }],
+        max_tokens: 150,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
         }
+      });
 
-        summaries.push(summary);
-        console.log('요약 생성 성공:', summary);
+      let summary = summaryResponse.data.choices[0].message.content.trim();
 
-        // 요약을 기반으로 텍스트 프롬프트를 생성
-        const promptForImage = `
-          책 "${bookName}"의 한 부분을 시각적으로 묘사한 이미지입니다. 
-          이 책의 요약된 내용은 다음과 같습니다: "${summary}".
-          이미지에는 다음의 요소들이 포함되어야 합니다:
-          - 의상 스타일 (예: 중세 의상, 현대적 드레스 등)
-          - 배경의 색상과 분위기 (예: 어두운 조명, 밝고 따뜻한 톤 등)
-          - 발생하는 주요 사건이나 감정 (예: 긴장된 대치, 행복한 순간 등).
-          이미지는 사실적이고 디테일이 풍부하며, ${bookName}의 특유의 분위기를 잘 반영해야 합니다.
-        `;
+      // 요약이 잘린 경우 적절히 처리
+      if (!summary.endsWith('.') && summary.length >= 240) {
+        summary += '...';
+      }
+
+      summaries.push(summary);
+      console.log('요약 생성 성공:', summary);
+
+      // 요약을 기반으로 텍스트 프롬프트를 생성
+      const promptForImage = `
+      책 "${bookName}"의 한 부분을 시각적으로 묘사한 이미지입니다. 
+      이 책의 요약된 내용은 다음과 같습니다: "${summary}".
+      이미지에는 다음의 요소들이 포함되어야 합니다:
+      - 의상 스타일 (예: 중세 의상, 현대적 드레스 등)
+      - 배경의 색상과 분위기 (예: 어두운 조명, 밝고 따뜻한 톤 등)
+      - 발생하는 주요 사건이나 감정 (예: 긴장된 대치, 행복한 순간 등).
+      이미지는 사실적이고 디테일이 풍부하며, ${bookName}의 특유의 분위기를 잘 반영해야 합니다.
+      `;
 
         // DALL·E 이미지 생성
         const dalleResponse = await axios.post('https://api.openai.com/v1/images/generations', {

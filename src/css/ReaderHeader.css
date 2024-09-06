@@ -93,3 +93,11 @@
     align-items: center;
     margin-bottom: 5px;
 }
+
+.Header-bookmark-list p {
+    padding-left: 20px;
+    color: #6c757d;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}

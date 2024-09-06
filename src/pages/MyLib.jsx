@@ -5,6 +5,7 @@ import axios from 'axios';
 import Modal from '../components/Modal';
 import GetReview from './GetReview'; // GetReview 컴포넌트 import
 import html2canvas from 'html2canvas';
+import { alertMessage } from "../../src/utils/alertMessage";
 
 const MyLib = () => {
   const [activeTab, setActiveTab] = useState('recent'); // 기본 활성 탭
@@ -12,16 +13,17 @@ const MyLib = () => {
   const [recentBooks, setRecentBooks] = useState([]); // 최근 읽은 도서 상태
   const [wishlistBooks, setWishlistBooks] = useState([]); // 찜한 도서 상태
   const [completedBooks, setCompletedBooks] = useState([]); // 완독 도서 상태
-  const [selectedBook, setSelectedBook] = useState(null); // 리뷰 모달 관련 상태
-  const [isModalOpen, setIsModalOpen] = useState(false); // 리뷰 모달 관련 상태
-  const [backgroundImage, setBackgroundImage] = useState(''); // 리뷰 모달 배경 이미지 상태
-  const [reviewModalOpen, setReviewModalOpen] = useState(false); // 리뷰 모달 상태
+  const [selectedBook, setSelectedBook] = useState(null); // 리뷰모달 관련 상태
+  const [isModalOpen, setIsModalOpen] = useState(false); // 리뷰모달 관련 상태
+  const [backgroundImage, setBackgroundImage] = useState(''); // 리뷰모달 배경 이미지 상태
+  const [reviewModalOpen, setReviewModalOpen] = useState(false); // 리뷰모달 상태
   const [signalBooks, setSignalBooks] = useState([]);
   const [signalTitle, setSignalTitle] = useState(null); // 시그널 모달 관련 상태
   const [signalText, setSignalText] = useState('');
   const [signalSumm, setSignalSumm] = useState('');
   const [isSignalOpen, setSignalOpen] = useState(false); // 시그널 모달 열림 닫힘
   const [signalBackground, setSignalBackground] = useState(''); // 시그널 모달 배경 이미지 상태
+
 
   const navigate = useNavigate();
 
@@ -35,7 +37,7 @@ const MyLib = () => {
       .catch(error => {
         if (error.response && error.response.status === 401) {
           // 로그인이 필요하면 로그인 페이지로 이동
-          alert('로그인이 필요합니다.');
+          alertMessage('로그인이 필요합니다.','❗');
           navigate('/login');
         } else {
           console.error('', error);
@@ -81,6 +83,8 @@ const MyLib = () => {
         .catch(error => {
           console.error('북 시그널 도서를 가져오는데 실패했습니다.', error);
         });
+
+
     }
   }, [userInfo]);
 
@@ -188,7 +192,7 @@ const MyLib = () => {
                 >
                   <p className='signalName'>{book.book_name}</p>
                   <br />
-                  <p className='w-[1000px] signalRepre'>{book.book_repre}</p>
+                  <p className='w-[1000px] signalSumm'>{book.book_repre}</p>
                 </div>
               ))
             ) : (
@@ -228,11 +232,13 @@ const MyLib = () => {
   return (
     <div className="mylib-container">
       <h1 className="mylib-title">{userInfo?.mem_nick} 님의 서재</h1>
-            {/* 최근 읽은 도서 갯수에 따른 멘트 */}
-            <p className="mylib-welcome-message">
+
+      {/* 최근 읽은 도서 갯수에 따른 멘트 */}
+      <p className="mylib-welcome-message">
         올해 {recentBooks.length}권을 읽으셨어요!
       </p>
       <br />
+
       <div className="tabs">
         <div
           className={`tab ${activeTab === 'recent' ? 'active' : ''}`}
