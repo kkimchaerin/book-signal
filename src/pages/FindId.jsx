@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link,useNavigate } from 'react-router-dom';
 import { ErrorPopup } from '../components/ErrorPopup'; 
 import FindIdPopup from '../components/FindIdPopup';
 import '../css/findid.css';
@@ -11,6 +11,12 @@ const FindId = () => {
   const [showPopup, setShowPopup] = useState(false); // 팝업 표시 여부
   const [showErrorPopup, setShowErrorPopup] = useState(false); // 오류 팝업 표시 여부
   const [errorMessage, setErrorMessage] = useState(''); // 오류 메시지 저장
+  const navigate = useNavigate();
+
+
+   const handleTitleClick = () => {
+    navigate('/');
+  };
 
 
   const FindId = async (e) => {
@@ -43,7 +49,7 @@ const FindId = () => {
 
   return (
     <div className="findid-container">
-      <div className='title-container'>
+      <div className='title-container' onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
         <h1 className='title-book'>북</h1>
         <h1 className='title-signal'>시그널</h1>
       </div>

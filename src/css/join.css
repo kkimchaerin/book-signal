@@ -132,7 +132,6 @@
 input[type="password"],
 input[type="date"] {
     border: none;
-    padding: 15px;
     font-family: 'Pretendard-Regular', sans-serif;
     line-height: 1.5;
     /* 텍스트 높이를 맞추기 위해 라인 높이를 조정 */
@@ -232,6 +231,11 @@ button[type="submit"]:hover {
 .error-input::placeholder {
     color: red;
 }
+
+#memBirth{
+    margin-left: 10px;
+}
+
 
 /* 모든 항목을 입력해주세요 메시지 스타일 */
 .all-fields-error {

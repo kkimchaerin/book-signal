@@ -11,6 +11,11 @@ const Login = () => { // 'async' 키워드를 제거
   const { setIsAuthenticated, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
+
+  const handleTitleClick = () => {
+    navigate('/');
+  };
+
   // 비동기 로그인 함수
   const login = async (e) => {
     e.preventDefault(); // 폼 제출 기본 동작 방지
@@ -49,7 +54,7 @@ const Login = () => { // 'async' 키워드를 제거
 
   return (
     <div className='page-container'>
-      <div className='title-container'>
+      <div className="title-container" onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
         <h1 className='title-book'>북</h1>
         <h1 className='title-signal'>시그널</h1>
       </div>
@@ -63,6 +68,7 @@ const Login = () => { // 'async' 키워드를 제거
               type='text'
               id='memId'
               name='memId'
+              className='login-input-field'
               placeholder='아이디'
               value={memId}
               onChange={(e) => setMemId(e.target.value)}
@@ -74,6 +80,7 @@ const Login = () => { // 'async' 키워드를 제거
               type='password'
               id='memPw'
               name='memPw'
+              className='login-password-field'
               placeholder='비밀번호'
               value={memPw}
               onChange={(e) => setMemPw(e.target.value)}
@@ -95,7 +102,7 @@ const Login = () => { // 'async' 키워드를 제거
       </div>
       <div className='footer-wrapper'>
         <div className='login-footer'>
-          <Link to='/find-id'>아이디 찾기</Link> | <Link to='/find-pw'>비밀번호 찾기</Link> | <Link to='/join'>회원가입</Link>
+          <Link to='/findId'>아이디 찾기</Link> | <Link to='/findPw'>비밀번호 찾기</Link> | <Link to='/join'>회원가입</Link>
         </div>
       </div>
     </div>

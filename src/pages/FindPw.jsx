@@ -9,6 +9,10 @@ const FindPw = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [showErrorPopup, setShowErrorPopup] = useState(false); // 오류 팝업 표시 여부
   const navigate = useNavigate();
+  
+  const handleTitleClick = () => {
+    navigate('/');
+  };
 
   const handleFindPw = async (e) => {
     e.preventDefault();
@@ -40,7 +44,7 @@ const FindPw = () => {
 
   return (
     <div className="findpw-container">
-      <div className='title-container'>
+      <div className='title-container' onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
         <h1 className='title-book'>북</h1>
         <h1 className='title-signal'>시그널</h1>
       </div>
