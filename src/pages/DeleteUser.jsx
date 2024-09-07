@@ -64,7 +64,7 @@ const DeleteUser = () => {
           <div className="input-group">
             <input
               type="text"
-              className="input-field"
+              className="du-input-field"
               id="memId"
               name="memId"
               placeholder="아이디 입력"
@@ -76,7 +76,7 @@ const DeleteUser = () => {
           <div className="input-group">
             <input
               type="password"
-              className="input-field"
+              className="du-input-field"
               id="memPw"
               name="memPw"
               placeholder="비밀번호 입력"
