@@ -33,6 +33,7 @@ const Header: React.FC<Props> = ({
   const [showTTSSettings, setShowTTSSettings] = useState(false);
   const [showBookmarkSettings, setShowBookmarkSettings] = useState(false);
   const [showFontSettings, setShowFontSettings] = useState(false);
+  const [fontSize, setFontSize] = useState(16); // 초기값 16
   const [bookmarkMessage, setBookmarkMessage] = useState('');
   const [bookmarks, setBookmarks] = useState<{ book_mark: string; book_text: string }[]>([]);
   const [showBookmarksList, setShowBookmarksList] = useState(false);
@@ -43,15 +44,36 @@ const Header: React.FC<Props> = ({
 
   // 폰트 크기 증가 함수
   const increaseFontSize = () => {
-    if (onFontSizeChange) {  // onFontSizeChange가 있을 때만 호출
-      onFontSizeChange('increase');
+    if (fontSize < 32) {
+      setFontSize((prev) => {
+        const newSize = prev + 2;
+        if (onFontSizeChange) onFontSizeChange('increase');
+        return newSize;
+      });
     }
   };
 
   // 폰트 크기 감소 함수
   const decreaseFontSize = () => {
-    if (onFontSizeChange) {  // onFontSizeChange가 있을 때만 호출
-      onFontSizeChange('decrease');
+    if (fontSize > 12) {
+      setFontSize((prev) => {
+        const newSize = prev - 2;
+        if (onFontSizeChange) onFontSizeChange('decrease');
+        return newSize;
+      });
+    }
+  };
+
+  // 슬라이더 값 변경 함수
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    setFontSize(value);
+    if (onFontSizeChange) {
+      if (value > fontSize) {
+        onFontSizeChange('increase');
+      } else {
+        onFontSizeChange('decrease');
+      }
     }
   };
 
@@ -295,8 +317,24 @@ const Header: React.FC<Props> = ({
 
       <TTSWrapper show={showFontSettings} onClose={handleClose} title="Font Settings">
         <div className="Header-font-settings">
-          <ControlBtn message="Increase Font" onClick={increaseFontSize} />
-          <ControlBtn message="Decrease Font" onClick={decreaseFontSize} />
+          <div className="slider-container">
+            <label htmlFor="font-size-slider">Font Size</label>
+            <br />
+            <div className="font-size-control">
+              <button className="font-minus" onClick={decreaseFontSize} disabled={fontSize <= 12}>-</button>
+              <input
+                type="range"
+                id="font-size-slider"
+                min="12"
+                max="32"
+                value={fontSize}
+                onChange={handleSliderChange}
+                className="font-size-slider"
+              />
+              <button className="font-plus" onClick={increaseFontSize} disabled={fontSize >= 32}>+</button>
+            </div>
+            <p>Current Font Size: {fontSize}px</p> {/* 현재 선택된 폰트 크기 표시 */}
+          </div>
         </div>
       </TTSWrapper>
     </Wrapper>

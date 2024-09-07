@@ -71,8 +71,7 @@
 
 .Header-font-settings button {
     margin: 5px 0;
-    padding: 10px;
-    width: 100%;
+    width: 40px;
     font-size: 14px;
     background-color: #f8f9fa;
     border: 1px solid #ced4da;
@@ -100,4 +99,17 @@
     margin-top: 10px;
     margin-bottom: 10px;
     font-size: 14px;
+}
+
+.font-size-control {
+    display: flex;
+    align-items: center;
+    /* 세로 가운데 정렬 */
+    gap: 10px;
+    /* 버튼과 슬라이더 사이 간격 */
+}
+
+.font-size-slider {
+    flex-grow: 1;
+    /* 슬라이더가 남는 공간을 채우도록 */
 }
