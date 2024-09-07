@@ -321,6 +321,7 @@ const Header: React.FC<Props> = ({
             <label htmlFor="font-size-slider">Font Size</label>
             <br />
             <div className="font-size-control">
+              <p className='current-font'>{fontSize}</p> {/* 현재 선택된 폰트 크기 표시 */}
               <button className="font-minus" onClick={decreaseFontSize} disabled={fontSize <= 12}>-</button>
               <input
                 type="range"
@@ -333,7 +334,6 @@ const Header: React.FC<Props> = ({
               />
               <button className="font-plus" onClick={increaseFontSize} disabled={fontSize >= 32}>+</button>
             </div>
-            <p>Current Font Size: {fontSize}px</p> {/* 현재 선택된 폰트 크기 표시 */}
           </div>
         </div>
       </TTSWrapper>

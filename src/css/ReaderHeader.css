@@ -73,8 +73,6 @@
     margin: 5px 0;
     width: 40px;
     font-size: 14px;
-    background-color: #f8f9fa;
-    border: 1px solid #ced4da;
     border-radius: 4px;
     cursor: pointer;
 }
@@ -112,4 +110,8 @@
 .font-size-slider {
     flex-grow: 1;
     /* 슬라이더가 남는 공간을 채우도록 */
+}
+
+.current-font{
+    color: blue;
 }
