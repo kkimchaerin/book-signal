@@ -47,7 +47,7 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 // Multer 설정 (파일을 서버의 'uploads' 폴더에 저장)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = './uploads';
+    const uploadPath = '../public/uploads';
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath);
     }
