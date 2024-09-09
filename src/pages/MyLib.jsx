@@ -49,6 +49,44 @@ const MyLib = () => {
       });
   }, [navigate]);
 
+  const handleBookClickWithUploadPath = async (book) => {
+    try {
+      // book 객체 출력
+      console.log('book 객체:', book);
+
+      // upload_idx를 사용하여 서버에 요청
+      const response = await axios.post('http://localhost:3001/getBookPath/getUploadBookPath', {
+        upload_idx: book.upload_idx,  // upload_idx 사용
+      });
+
+      const bookPath = response.data.book_path || book.book_file_path; // 서버에서 경로를 못 가져오면 book_file_path 사용
+      console.log('bookPath:', bookPath);
+
+      if (bookPath) {
+        navigate(`/reader`, { state: { book, bookPath } }); // bookPath를 넘겨줌
+      } else {
+        alertMessage('책 경로를 찾을 수 없습니다.', '❗');
+      }
+    } catch (error) {
+      console.error('책 경로를 가져오는 중 오류가 발생했습니다.', error);
+    }
+  };
+
+
+
+  // 업로드 도서 탭에서 이 함수로 책 클릭 처리
+  const handleBookClickWithBookmark = (book) => {
+    if (activeTab === 'upload') {
+      // 업로드된 도서일 경우
+      handleBookClickWithUploadPath(book);
+    } else {
+      // 나머지 탭에서도 reader 페이지로 이동
+      navigate(`/reader`, { state: { book, from: 'mylib' } });
+    }
+  };
+
+
+
   // 리뷰 존재 여부 확인 함수
   const checkIfReviewExists = async (book) => {
     if (userInfo && book) {
@@ -144,10 +182,6 @@ const MyLib = () => {
 
   const handleBookClick = (book) => {
     navigate(`/detail`, { state: { book } }); // 선택한 책의 전체 객체를 상태로 전달하여 이동
-  };
-
-  const handleBookClickWithBookmark = (book) => {
-    navigate(`/reader`, { state: { book, from: 'mylib' } }); // 'from' 정보를 추가
   };
 
   // 리뷰 모달 열기 함수
@@ -282,7 +316,7 @@ const MyLib = () => {
           <div className="mylib-books-grid">
             {uploadedBooks.length > 0 ? (
               uploadedBooks.map((book, index) => (
-                <div className="mylib-book-card" key={index} onClick={() => handleBookClick(book)}>
+                <div className="mylib-book-card" key={index} onClick={() => handleBookClickWithBookmark(book)}>
                   <img src={book.book_cover} alt={`${book.book_name} Cover`} className="mylib-book-cover" />
                   <div className="book-info">
                     <p className="book-title">{book.book_name}</p>

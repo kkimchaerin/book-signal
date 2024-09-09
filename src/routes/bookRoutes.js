@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { getBookPath, saveBookmark, getBookmarks, saveEndReading, getUserBookmarkForBook, removeBookmark, removeEyegazeBookmark } = require('../models/bookDB');
+const { getBookPath, saveBookmark, getBookmarks, saveEndReading,
+    getUserBookmarkForBook, removeBookmark, removeEyegazeBookmark, getBookUploadPath } = require('../models/bookDB');
 
 
 router.post('/', async (req, res) => {
@@ -65,7 +66,7 @@ router.get('/getUserBookmark', async (req, res) => {
 router.post('/endReading', async (req, res) => {
     const { book_idx, mem_id, cfi, fontsize } = req.body;
 
-    console.log('routes',{ book_idx, mem_id, cfi, fontsize }); // 요청 값 로그 출력
+    console.log('routes', { book_idx, mem_id, cfi, fontsize }); // 요청 값 로그 출력
 
     try {
         const result = await saveEndReading(book_idx, mem_id, cfi, fontsize);
@@ -102,5 +103,24 @@ router.post('/removeEyegazeBookmark', async (req, res) => {
         res.status(500).json({ error: 'eyegaze 북마크 삭제에 실패했습니다.' });
     }
 });
+
+// 업로드한 도서 불러오기
+router.post('/getUploadBookPath', async (req, res) => {
+    const { upload_idx } = req.body;
+
+    try {
+        const bookPath = await getBookUploadPath(upload_idx);
+        console.log(bookPath);
+
+        if (!bookPath) {
+            return res.status(404).json({ error: 'Book path not found' });
+        }
+        res.status(200).json({ book_path: bookPath });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
 
 module.exports = router;

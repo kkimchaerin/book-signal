@@ -355,3 +355,26 @@ exports.removeEyegazeBookmark = async (book_idx, mem_id) => {
     throw new Error('eyegaze 북마크 삭제에 실패했습니다.');
   }
 };
+
+// 업로드 책 경로 가져오기 함수 수정
+exports.getBookUploadPath = async (upload_idx) => {
+  try {
+    // book_upload 테이블에서 book_path 가져오기
+    const sql = `
+      SELECT book_file_path 
+      FROM book_upload 
+      WHERE upload_idx = ?
+    `;
+    const [results] = await conn.query(sql, [upload_idx]);
+    const bookPath = results.length > 0 ? results[0].book_file_path : null;
+
+    console.log(bookPath);
+
+    // book_path 반환
+    return bookPath;
+  } catch (err) {
+    console.error('업로드된 책의 경로를 가져오는 중 오류 발생:', err);
+    throw new Error('업로드된 책의 경로를 가져오는 중 오류가 발생했습니다.');
+  }
+};
+
