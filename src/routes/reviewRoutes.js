@@ -11,5 +11,9 @@ router.delete('/:reviewId', reviewController.deleteReview);
 // 리뷰 등록 
 router.post('/addReview', reviewController.addReview);
 
+// 리뷰가 있는지 확인하기
+router.get('/check', reviewController.checkReviewExists);
+
+
 
 module.exports = router;

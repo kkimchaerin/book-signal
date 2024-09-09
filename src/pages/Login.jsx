@@ -95,7 +95,7 @@ const Login = () => { // 'async' 키워드를 제거
             />
             <label htmlFor='autologin'>자동로그인</label>
           </div>
-          {errorMessage && <p className='error-message'>{errorMessage}</p>}
+          {errorMessage && <p className="error-message" dangerouslySetInnerHTML={{ __html: errorMessage }}></p>}
           <button type='submit'>로그인</button>
         </form>
       </div>

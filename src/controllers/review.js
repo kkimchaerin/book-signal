@@ -25,7 +25,7 @@ exports.getUserReviews = async (req, res) => {
 
 exports.deleteReview = async (req, res) => {
   const { reviewId } = req.params;
-  const { mem_id,book_idx } = req.body; // 요청 바디에서 mem_id 가져오기
+  const { mem_id, book_idx } = req.body; // 요청 바디에서 mem_id 가져오기
 
   try {
     const result = await reviewDB.deleteReview(reviewId, mem_id);
@@ -41,12 +41,12 @@ exports.deleteReview = async (req, res) => {
     }
 
     console.log('Recalculating average rating after deletion...');
-    
+
     // 평균 평점 재계산 및 업데이트
     const newAverage = await reviewDB.calculateAverageRating(book_idx);
     await reviewDB.updateAverageRating(book_idx, newAverage); // 평균 평점을 book_db에 업데이트
     console.log('Average rating updated successfully after deletion.');
-    
+
     res.status(200).json({ message: '리뷰가 성공적으로 삭제되었습니다.' });
   } catch (error) {
     console.error('리뷰 삭제 중 오류 발생:', error);
@@ -104,3 +104,34 @@ exports.addReview = async (req, res) => {
     return res.status(500).json({ message: '리뷰 등록에 실패했습니다.' });
   }
 };
+
+// 리뷰가 있는지 확인하는 함수
+exports.checkReviewExists = async (req, res) => {
+  const { mem_id, book_idx } = req.query; // 클라이언트에서 전달된 mem_id와 book_idx 확인
+
+  try {
+    const existingReview = await reviewDB.getExistingReview(mem_id, book_idx);
+
+    // 응답에 score와 review가 null이 아닌 경우만 존재 여부를 true로 반환
+    if (existingReview) {
+      res.status(200).json({
+        score: existingReview.book_score, // score와 review가 모두 있으면 리뷰 존재
+        review: existingReview.book_review
+      });
+      console.log(score, review);
+    } else {
+      res.status(200).json({
+        score: null,
+        review: null
+      });
+    }
+  } catch (error) {
+    console.error('리뷰 존재 여부 확인 중 오류 발생:', error);
+    res.status(500).json({ message: '리뷰 확인 중 오류가 발생했습니다.' });
+  }
+};
+
+
+
+
+
