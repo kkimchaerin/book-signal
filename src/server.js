@@ -20,6 +20,8 @@ const session = require('express-session');
 const app = express();
 const pool = require('./config/database');
 const axios = require('axios');
+const multer = require('multer');
+const EPub = require('epub'); // 'epub' 패키지 사용
 
 // 세션 설정 (기본 설정)
 app.use(session({
@@ -41,6 +43,66 @@ app.use(cors({
 
 // 정적 파일 제공을 위한 경로 설정
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
+
+// Multer 설정 (파일을 서버의 'uploads' 폴더에 저장)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = './uploads';
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath);
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
+
+// EPUB 파일 업로드 및 파싱 엔드포인트
+app.post('/upload-epub', upload.single('file'), (req, res) => {
+  const filePath = req.file.path;
+
+  // EPUB 파일을 파싱
+  const epub = new EPub(filePath, "/imagewebroot/", "/articlewebroot/");
+  
+  epub.on("error", (err) => {
+    console.error('EPUB 처리 중 오류:', err);
+    return res.status(500).json({ error: 'EPUB 처리 중 오류가 발생했습니다.' });
+  });
+
+  epub.on("end", async () => {
+    const metadata = epub.metadata;
+    const bookName = metadata.title;
+    const bookAuthor = metadata.creator;
+    const bookPublishedAt = metadata.date || new Date().toISOString().split('T')[0]; // 기본적으로 오늘 날짜로 저장
+    const bookGenre = metadata.subject || '미정'; // 책 장르 정보가 없을 경우 기본값 설정
+    const bookExplanation = metadata.description || '설명이 제공되지 않았습니다.';
+    const bookCover = epub.cover || ''; // 커버 이미지 경로
+
+    // DB에 저장
+    let connection;
+    try {
+      connection = await pool.getConnection();
+      await connection.query(
+        `INSERT INTO book_db 
+          (book_name, book_writer, book_genre, book_file_path, book_explanation, book_published_at, book_cover) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [bookName, bookAuthor, bookGenre, filePath, bookExplanation, bookPublishedAt, bookCover]
+      );
+      connection.release();
+
+      res.json({ message: '파일 업로드 및 DB 반영 성공', bookName, bookAuthor });
+    } catch (error) {
+      console.error('DB 저장 중 오류:', error);
+      if (connection) connection.release();
+      return res.status(500).json({ error: 'DB 저장 중 오류가 발생했습니다.' });
+    }
+  });
+
+  epub.parse(); // EPUB 파일 파싱 시작
+});
 
 // 세션 상태 확인을 위한 엔드포인트
 app.get('/check-session', (req, res) => {
