@@ -27,6 +27,7 @@ import Reader from 'components/Reader';
 import Epubjs from 'components/Epubjs';
 import EyeGaze from 'pages/EyeGaze';
 import axios from 'axios';
+import UploadEpub from 'pages/UploadEpub';
 
 // 로그인 상태를 관리하기 위한 Context 생성
 export const AuthContext = createContext();
@@ -90,6 +91,7 @@ function App() {
             <Route path="/reader" element={<Reader />} />
             <Route path="/epubjs" element={<Epubjs />} />
             <Route path='/eyegaze' element={<EyeGaze />} />
+            <Route path='/uploadepub' element={<UploadEpub />} />
           </Route>
 
           <Route path="/readerwrapper" element={<ReaderWrapper url="files/김유정-동백꽃-조광.epub" />} />
