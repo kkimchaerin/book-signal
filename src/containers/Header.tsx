@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Wrapper from 'components/header/Wrapper';
 import Layout, { AutoLayout } from 'components/header/Layout';
@@ -26,14 +26,15 @@ const Header: React.FC<Props> = ({
   fetchBookmarks,
   goToBookmark,
   onReadingComplete,
-  onReadingQuit,
+  onReadingQuit = () => { },
   onBookmarkRemove,
   onFontSizeChange,  // 폰트 크기 변경 함수
+  initialFontSize,
 }: Props) => {
   const [showTTSSettings, setShowTTSSettings] = useState(false);
   const [showBookmarkSettings, setShowBookmarkSettings] = useState(false);
   const [showFontSettings, setShowFontSettings] = useState(false);
-  const [fontSize, setFontSize] = useState(16); // 초기값 16
+  const [fontSize, setFontSize] = useState<number>(initialFontSize ?? 16);
   const [bookmarkMessage, setBookmarkMessage] = useState('');
   const [bookmarks, setBookmarks] = useState<{ book_mark: string; book_text: string }[]>([]);
   const [showBookmarksList, setShowBookmarksList] = useState(false);
@@ -42,10 +43,16 @@ const Header: React.FC<Props> = ({
 
   const navigate = useNavigate();
 
+  // 폰트 크기 상태를 초기화할 때 useEffect 추가
+  useEffect(() => {
+    setFontSize(initialFontSize ?? 16);  // initialFontSize가 변경될 때 fontSize를 업데이트
+  }, [initialFontSize]);  // 의존성 배열에 initialFontSize를 추가
+
+
   // 폰트 크기 증가 함수
   const increaseFontSize = () => {
     if (fontSize < 32) {
-      setFontSize((prev) => {
+      setFontSize((prev: number) => {  // 'prev'에 'number' 타입 지정
         const newSize = prev + 2;
         if (onFontSizeChange) onFontSizeChange('increase');
         return newSize;
@@ -56,7 +63,7 @@ const Header: React.FC<Props> = ({
   // 폰트 크기 감소 함수
   const decreaseFontSize = () => {
     if (fontSize > 12) {
-      setFontSize((prev) => {
+      setFontSize((prev: number) => {  // 'prev'에 'number' 타입 지정
         const newSize = prev - 2;
         if (onFontSizeChange) onFontSizeChange('decrease');
         return newSize;
@@ -248,7 +255,7 @@ const Header: React.FC<Props> = ({
             <ControlBtn message="Bookmark" onClick={handleBookmarkToggle} />
             <ControlBtn message="Font Settings" onClick={handleFontClick} />
             <ControlBtn message="독서 완료" onClick={handleReadingComplete} />
-            <ControlBtn message="독서 종료" onClick={handleReadingQuit} />
+            <ControlBtn message="독서 종료" onClick={onReadingQuit} />
           </div>
         </AutoLayout>
       </Layout>
@@ -364,6 +371,7 @@ interface Props {
   onReadingQuit?: () => void;
   onBookmarkRemove?: (book_mark: string) => void;
   onFontSizeChange?: (action: 'increase' | 'decrease') => void;
+  initialFontSize?: number;
 }
 
 export default Header;
