@@ -25,7 +25,6 @@ const MyLib = () => {
   const [signalBackground, setSignalBackground] = useState(''); // 시그널 모달 배경 이미지 상태
   const [reviewExists, setReviewExists] = useState(false); // 리뷰 존재 여부 상태
   const [reviewStatus, setReviewStatus] = useState({}); // 각 책의 리뷰 여부를 저장하는 상태
-  const [uploadedBooks, setUploadedBooks] = useState([]); // 업로드한 도서 상태
 
 
 
@@ -126,14 +125,8 @@ const MyLib = () => {
         .catch(error => {
           console.error('북 시그널 도서를 가져오는데 실패했습니다.', error);
         });
-      // 사용자 업로드한 도서 데이터를 가져옴
-      axios.get(`http://localhost:3001/upload-books?mem_id=${userInfo.mem_id}`, { withCredentials: true })
-        .then(response => {
-          setUploadedBooks(response.data); // 서버에서 가져온 데이터를 상태에 저장
-        })
-        .catch(error => {
-          console.error('업로드한 도서를 가져오는데 실패했습니다.', error);
-        });
+
+
     }
   }, [userInfo]);
 
@@ -268,6 +261,7 @@ const MyLib = () => {
                   <button className="write-review-button" onClick={() => openReviewModal(book)}>
                     {reviewStatus[book.book_idx] ? '리뷰 수정' : '리뷰 작성'}
                   </button>
+
                 </div>
               ))
             ) : (
@@ -275,26 +269,6 @@ const MyLib = () => {
             )}
           </div>
         );
-
-      case 'upload':
-        return (
-          <div className="mylib-books-grid">
-            {uploadedBooks.length > 0 ? (
-              uploadedBooks.map((book, index) => (
-                <div className="mylib-book-card" key={index} onClick={() => handleBookClickWithBookmark(book)}>
-                  <img src={book.book_cover} alt={`${book.book_name} Cover`} className="mylib-book-cover" />
-                  <div className="book-info">
-                    <p className="book-title">{book.book_name}</p>
-                    <p className="book-author">{book.book_writer}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="mylib-no-readingbooks-message">업로드한 도서가 없습니다.</p>
-            )}
-          </div>
-        );
-
       default:
         return null;
     }
@@ -334,12 +308,6 @@ const MyLib = () => {
           onClick={() => handleTabClick('completed')}
         >
           완독 도서
-        </div>
-        <div
-          className={`tab ${activeTab === 'upload' ? 'active' : ''}`}
-          onClick={() => handleTabClick('upload')}
-        >
-          업로드한 도서
         </div>
       </div>
 

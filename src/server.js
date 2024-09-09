@@ -79,7 +79,6 @@ app.post('/upload-epub', upload.single('file'), (req, res) => {
     const bookAuthor = metadata.creator;
     const bookPublishedAt = metadata.date || new Date().toISOString().split('T')[0]; // 기본적으로 오늘 날짜로 저장
     const bookGenre = metadata.subject || '미정'; // 책 장르 정보가 없을 경우 기본값 설정
-    const bookpath = metadata.filePath;
     const bookExplanation = metadata.description || '설명이 제공되지 않았습니다.';
     const bookCover = epub.cover || ''; // 커버 이미지 경로
 
@@ -88,7 +87,7 @@ app.post('/upload-epub', upload.single('file'), (req, res) => {
     try {
       connection = await pool.getConnection();
       await connection.query(
-        `INSERT INTO book_upload 
+        `INSERT INTO book_db 
           (book_name, book_writer, book_genre, book_file_path, book_explanation, book_published_at, book_cover) 
         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [bookName, bookAuthor, bookGenre, filePath, bookExplanation, bookPublishedAt, bookCover]
