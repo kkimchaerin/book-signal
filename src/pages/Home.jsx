@@ -58,7 +58,7 @@ const Home = () => {
       <SlideShow slides={SLIDES} />
       <br />
 
-      <h2 className='flex justify-between items-end mt-28 mb-0'>
+      <h2 class = 'title' className='flex justify-between items-end mt-28 mb-0 text-black'>
         지금, 많이 읽은 그 작품
         <Link to="/ranking/popular" className="text-sm text-gray-400">
           더보기
@@ -82,7 +82,7 @@ const Home = () => {
       <br />
 
       {/* 평점 top5 */}
-      <h2 className='flex justify-between items-end mt-6 mb-0'>
+      <h2 className='flex justify-between items-end mt-6 mb-0 text-black'>
         평점, BEST!
         <Link to="/ranking/best" className="text-sm text-gray-400">
           더보기
@@ -106,7 +106,7 @@ const Home = () => {
 
 
       {/* 신작 top5 */}
-      <h2 className='flex justify-between items-end mt-6 mb-0'>
+      <h2 className='flex justify-between items-end mt-6 mb-0 text-black'>
         갓 나온 신작
         <Link to="/ranking/new" className="text-sm text-gray-400">
           더보기
@@ -129,7 +129,7 @@ const Home = () => {
       <br />
 
       {/* 최근읽은 도서 */}
-      <h2 className='flex justify-between items-end mt-6 mb-0'>
+      <h2 className='flex justify-between items-end mt-6 mb-0 text-black'>
         최근 읽은 도서
         <Link to="/mylib" className="text-sm text-gray-400">
           더보기
@@ -152,7 +152,7 @@ const Home = () => {
       <br />
 
       {/* 추천시그널 */}
-      <h2 className='flex justify-between items-end mt-6 mb-0'>
+      <h2 className='flex justify-between items-end mt-6 mb-0 text-black'>
         닉네임 님에게 보내는 추천 시그널
       </h2>
       <br />
