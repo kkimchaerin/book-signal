@@ -23,6 +23,9 @@ const MyLib = () => {
   const [signalSumm, setSignalSumm] = useState('');
   const [isSignalOpen, setSignalOpen] = useState(false); // 시그널 모달 열림 닫힘
   const [signalBackground, setSignalBackground] = useState(''); // 시그널 모달 배경 이미지 상태
+  const [reviewExists, setReviewExists] = useState(false); // 리뷰 존재 여부 상태
+  const [reviewStatus, setReviewStatus] = useState({}); // 각 책의 리뷰 여부를 저장하는 상태
+
 
 
   const navigate = useNavigate();
@@ -37,13 +40,46 @@ const MyLib = () => {
       .catch(error => {
         if (error.response && error.response.status === 401) {
           // 로그인이 필요하면 로그인 페이지로 이동
-          alertMessage('로그인이 필요합니다.','❗');
+          alertMessage('로그인이 필요합니다.', '❗');
           navigate('/login');
         } else {
           console.error('', error);
         }
       });
   }, [navigate]);
+
+  // 리뷰 존재 여부 확인 함수
+  const checkIfReviewExists = async (book) => {
+    if (userInfo && book) {
+      try {
+
+        const response = await axios.get(`http://localhost:3001/review/check`, {
+          params: { mem_id: userInfo.mem_id, book_idx: book.book_idx }, // 파라미터 전달
+          withCredentials: true,
+        });
+
+        // 책 리스트에서 book.book_idx와 일치하는 객체를 찾음
+        const bookData = response.data.find(item => item.book_idx === book.book_idx);
+
+        if (bookData) {
+          // 서버에서 받은 reviewExists 값 사용
+          const reviewExists = bookData.book_score !== null || bookData.book_review !== null;
+
+          // 상태 업데이트
+          setReviewStatus(prevStatus => ({
+            ...prevStatus,
+            [book.book_idx]: reviewExists, // 책 별로 리뷰 존재 여부 저장
+          }));
+        } else {
+        }
+
+      } catch (error) {
+        console.error('리뷰 확인 중 오류 발생:', error);
+      }
+    }
+  };
+
+
 
   // 세션 확인 후 처리
   useEffect(() => {
@@ -68,8 +104,14 @@ const MyLib = () => {
 
       // 완독 도서 데이터를 가져옴
       axios.get('http://localhost:3001/completed-books', { withCredentials: true })
-        .then(response => {
-          setCompletedBooks(response.data); // 서버에서 가져온 데이터를 상태에 저장
+        .then(async (response) => {
+          const books = response.data;
+          setCompletedBooks(books); // 서버에서 가져온 데이터를 상태에 저장
+
+          // 각 책에 대해 리뷰 존재 여부 확인
+          for (const book of books) {
+            await checkIfReviewExists(book); // 리뷰 존재 여부 확인
+          }
         })
         .catch(error => {
           console.error('완독 도서를 가져오는데 실패했습니다.', error);
@@ -100,12 +142,14 @@ const MyLib = () => {
     navigate(`/reader`, { state: { book, from: 'mylib' } }); // 'from' 정보를 추가
   };
 
-  const openReviewModal = (book) => {
+  // 리뷰 모달 열기 함수
+  const openReviewModal = async (book) => {
     setSelectedBook(book);
+    await checkIfReviewExists(book); // 리뷰 존재 여부 확인
     setReviewModalOpen(true);
   };
 
-
+  // 리뷰 모달 닫기 함수
   const closeReviewModal = () => {
     setReviewModalOpen(false);
     setSelectedBook(null);
@@ -215,8 +259,9 @@ const MyLib = () => {
                     </div>
                   </div>
                   <button className="write-review-button" onClick={() => openReviewModal(book)}>
-                    리뷰 작성 및 수정
+                    {reviewStatus[book.book_idx] ? '리뷰 수정' : '리뷰 작성'}
                   </button>
+
                 </div>
               ))
             ) : (
