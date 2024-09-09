@@ -13,26 +13,24 @@
     font-style: normal;
 }
 
-.findid-container{
+.findid-container {
     background-color: #fcf4ef;
     width: 100%;
     min-height: 100vh;
-}
-
-/* 컨테이너 설정 */
-.findid-container {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-/* 타이틀 컨테이너 */
 .title-container {
+    margin-top: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 20px;
     font-family: 'Cafe24Moyamoya-Regular-v1.0', cursive;
+    cursor: pointer;
+    justify-content: center;
 }
 
 /* "북" 타이틀 */

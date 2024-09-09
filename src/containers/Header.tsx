@@ -20,7 +20,6 @@ const Header: React.FC<Props> = ({
   onTTSStop,
   onTTSResume,
   onBookmarkAdd = () => { },
-  onFontChange = () => { },
   setAudioSource,
   book,
   userInfo, // userInfo를 props로 받아야 합니다.
@@ -29,10 +28,12 @@ const Header: React.FC<Props> = ({
   onReadingComplete,
   onReadingQuit,
   onBookmarkRemove,
+  onFontSizeChange,  // 폰트 크기 변경 함수
 }: Props) => {
   const [showTTSSettings, setShowTTSSettings] = useState(false);
   const [showBookmarkSettings, setShowBookmarkSettings] = useState(false);
   const [showFontSettings, setShowFontSettings] = useState(false);
+  const [fontSize, setFontSize] = useState(16); // 초기값 16
   const [bookmarkMessage, setBookmarkMessage] = useState('');
   const [bookmarks, setBookmarks] = useState<{ book_mark: string; book_text: string }[]>([]);
   const [showBookmarksList, setShowBookmarksList] = useState(false);
@@ -40,6 +41,41 @@ const Header: React.FC<Props> = ({
   const [eyegazeBookmark, setEyegazeBookmark] = useState<{ book_mark: string; book_text: string } | null>(null);
 
   const navigate = useNavigate();
+
+  // 폰트 크기 증가 함수
+  const increaseFontSize = () => {
+    if (fontSize < 32) {
+      setFontSize((prev) => {
+        const newSize = prev + 2;
+        if (onFontSizeChange) onFontSizeChange('increase');
+        return newSize;
+      });
+    }
+  };
+
+  // 폰트 크기 감소 함수
+  const decreaseFontSize = () => {
+    if (fontSize > 12) {
+      setFontSize((prev) => {
+        const newSize = prev - 2;
+        if (onFontSizeChange) onFontSizeChange('decrease');
+        return newSize;
+      });
+    }
+  };
+
+  // 슬라이더 값 변경 함수
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    setFontSize(value);
+    if (onFontSizeChange) {
+      if (value > fontSize) {
+        onFontSizeChange('increase');
+      } else {
+        onFontSizeChange('decrease');
+      }
+    }
+  };
 
   const handleSoundClick = () => {
     setShowTTSSettings(true);
@@ -74,18 +110,18 @@ const Header: React.FC<Props> = ({
   // api 호출
   const handleReadingComplete = async () => {
     console.log("독서 완료 처리 시작"); // 함수 호출 시작 로그
-  
+
     if (userInfo && book) {
       const { mem_id } = userInfo;
       const { book_idx, book_name } = book;
-  
+
       console.log("사용자 정보:", { mem_id }); // 사용자 ID 로그
       console.log("책 정보:", { book_idx }); // 책 인덱스 로그
-  
+
       // 상세 페이지로 네비게이션
       console.log("상세 페이지로 네비게이션 중...");
       navigate("/detail", { state: { book } });
-  
+
       // 페이지 이동 후에 비동기로 데이터 저장 및 요약 생성 요청
       setTimeout(async () => {
         try {
@@ -95,13 +131,13 @@ const Header: React.FC<Props> = ({
             bookIdx: book_idx,
             bookName: book_name
           });
-  
+
           console.log("독서 완료 정보가 저장되었습니다."); // 저장 성공 로그
-  
+
           // 요약 생성 요청
           console.log("요약 생성 요청 중..."); // 요약 요청 시작 로그
           const summarizeResult = await handleSummarize(mem_id, book_idx);
-  
+
           if (summarizeResult.success) {
             console.log("요약 생성 및 저장 성공:", summarizeResult.summary); // 성공 로그
           } else {
@@ -115,7 +151,7 @@ const Header: React.FC<Props> = ({
       console.warn("사용자 정보 또는 책 정보가 없습니다."); // 사용자 또는 책 정보가 없을 때 경고 로그
     }
   };
-  
+
 
   const handleReadingQuit = () => {
     console.log("독서 중단 처리"); // 함수 호출 시작 로그
@@ -203,16 +239,6 @@ const Header: React.FC<Props> = ({
     }
   };
 
-  // 폰트 변경 처리 함수
-  const handleFontChange = (font: string) => {
-    setSelectedFont(font);  // 선택한 폰트 상태 업데이트
-    console.log(`폰트 변경됨: ${font}`);  // 폰트 변경 로그
-
-    if (onFontChange) {
-      onFontChange(font);  // EpubReader로 폰트 변경 알림
-    }
-  };
-
   return (
     <Wrapper style={{ fontFamily: selectedFont }} key={selectedFont}> {/* 선택한 폰트를 전체 Wrapper에 적용 */}
       <Layout>
@@ -291,10 +317,24 @@ const Header: React.FC<Props> = ({
 
       <TTSWrapper show={showFontSettings} onClose={handleClose} title="Font Settings">
         <div className="Header-font-settings">
-          <button onClick={() => handleFontChange('FreeSerif')}>FreeSerif</button>
-          <button onClick={() => handleFontChange('FreeSerifBold')}>FreeSerifBold</button>
-          <button onClick={() => handleFontChange('FreeSerifItalic')}>FreeSerifItalic</button>
-          <button onClick={() => handleFontChange('FreeSerifBoldItalic')}>FreeSerifBoldItalic</button>
+          <div className="slider-container">
+            <label htmlFor="font-size-slider">Font Size</label>
+            <br />
+            <div className="font-size-control">
+              <p className='current-font'>{fontSize}</p> {/* 현재 선택된 폰트 크기 표시 */}
+              <button className="font-minus" onClick={decreaseFontSize} disabled={fontSize <= 12}>-</button>
+              <input
+                type="range"
+                id="font-size-slider"
+                min="12"
+                max="32"
+                value={fontSize}
+                onChange={handleSliderChange}
+                className="font-size-slider"
+              />
+              <button className="font-plus" onClick={increaseFontSize} disabled={fontSize >= 32}>+</button>
+            </div>
+          </div>
         </div>
       </TTSWrapper>
     </Wrapper>
@@ -323,6 +363,7 @@ interface Props {
   onReadingComplete?: () => void;
   onReadingQuit?: () => void;
   onBookmarkRemove?: (book_mark: string) => void;
+  onFontSizeChange?: (action: 'increase' | 'decrease') => void;
 }
 
 export default Header;

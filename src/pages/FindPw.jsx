@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {ErrorPopupPw} from '../components/ErrorPopup'; // 오류 팝업 컴포넌트 임포트
+import { ErrorPopupPw } from '../components/ErrorPopup'; // 오류 팝업 컴포넌트 임포트
 import '../css/findpw.css';
 
 const FindPw = () => {
@@ -10,9 +10,6 @@ const FindPw = () => {
   const [showErrorPopup, setShowErrorPopup] = useState(false); // 오류 팝업 표시 여부
   const navigate = useNavigate();
   
-  const handleTitleClick = () => {
-    navigate('/');
-  };
 
   const handleFindPw = async (e) => {
     e.preventDefault();
@@ -42,9 +39,14 @@ const FindPw = () => {
     }
   };
 
+  // 타이틀 컨테이너 클릭 시 Home 페이지로 이동
+  const handleTitleClick = () => {
+    navigate('/');
+  };
+
   return (
     <div className="findpw-container">
-      <div className='title-container' onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
+      <div className='title-container' onClick={handleTitleClick}>
         <h1 className='title-book'>북</h1>
         <h1 className='title-signal'>시그널</h1>
       </div>
@@ -79,11 +81,11 @@ const FindPw = () => {
       <div className="findpw-footer">
         <Link to="/FindId">아이디 찾기</Link> | <Link to="/Login">로그인</Link> | <Link to="/Join">회원가입</Link>
       </div>
-        {/* 오류 발생 시 팝업 표시 */}
-        {showErrorPopup && (
+      {/* 오류 발생 시 팝업 표시 */}
+      {showErrorPopup && (
         <ErrorPopupPw
-          message={errorMessage} 
-          onClose={() => setShowErrorPopup(false)} 
+          message={errorMessage}
+          onClose={() => setShowErrorPopup(false)}
         />
       )}
     </div>

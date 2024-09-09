@@ -1,5 +1,5 @@
-import {  useDispatch } from "react-redux";
-import React, { useState, useRef, useEffect,useCallback } from "react";
+import { useDispatch } from "react-redux";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Provider } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import ePub from "epubjs";
@@ -29,6 +29,7 @@ const EpubReader = ({ url, book, location }) => {
   const bookRef = useRef(null);
   const renditionRef = useRef(null);
   const audioRef = useRef(new Audio());
+  const [fontSize, setFontSize] = useState(16); // 기본 글씨 크기
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
@@ -40,7 +41,6 @@ const EpubReader = ({ url, book, location }) => {
   const [currentTextIndex, setCurrentTextIndex] = useState(0); // 현재 읽고 있는 텍스트의 인덱스
   const [bookStyle, setBookStyle] = useState({
     fontFamily: "Arial",
-    fontSize: 16,
     lineHeight: 1.6,
     marginHorizontal: 50,
     marginVertical: 5,
@@ -55,7 +55,6 @@ const EpubReader = ({ url, book, location }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [bookmarks, setBookmarks] = useState([]);
-  const [fontSize, setFontSize] = useState("100%");
   const [lineHeight, setLineHeight] = useState("1.5");
   const [margin, setMargin] = useState("0");
   const [fontFamily, setFontFamily] = useState("Arial");
@@ -66,6 +65,43 @@ const EpubReader = ({ url, book, location }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [bookmarkMessage, setBookmarkMessage] = useState('');  // 추가된 부분
   const [cfi, setCfi] = useState('');
+
+  // 폰트 크기 증가 함수
+  const increaseFontSize = () => {
+    setFontSize((prevSize) => Math.min(prevSize + 2, 32)); // 최대 32px
+  };
+
+  // 폰트 크기 감소 함수
+  const decreaseFontSize = () => {
+    setFontSize((prevSize) => Math.max(prevSize - 2, 12)); // 최소 12px
+  };
+
+  // 폰트 크기 변경 함수
+  const onFontSizeChange = (action) => {
+    if (action === "increase") {
+      increaseFontSize();
+    } else if (action === "decrease") {
+      decreaseFontSize();
+    }
+  };
+
+  useEffect(() => {
+    if (renditionRef.current) {
+      console.log("폰트 크기 변경됨:", fontSize);  // 로그 추가
+      renditionRef.current.themes.register("customTheme", {
+        "*": {
+          "font-size": `${fontSize}px !important`,
+          "line-height": "1.5 !important",
+        },
+      });
+
+      // 테마를 적용하고, 재렌더링 강제
+      renditionRef.current.themes.fontSize(`${fontSize}px`);
+    }
+  }, [fontSize]);  // fontSize가 변경될 때마다 테마 적용
+
+
+
 
   useEffect(() => {
     axios.get('http://localhost:3001/check-session', { withCredentials: true })
@@ -226,59 +262,6 @@ const EpubReader = ({ url, book, location }) => {
     }
   }, [url, dispatch, userInfo, location.state]);
 
-  const updateStyles = useCallback(() => {
-    console.log('font');
-    
-    if (renditionRef.current) {
-      // EPUB 내부 폰트 파일 경로 설정
-      const fontFaceCSS = `
-        @font-face {
-          font-family: 'FreeSerif';
-          src: url('OPS/fonts/FreeSerif.ttf');  // EPUB 내 실제 폴더 경로 반영
-        }
-        @font-face {
-          font-family: 'FreeSerifBold';
-          src: url('OPS/fonts/FreeSerifBold.ttf');  // EPUB 내 실제 폴더 경로 반영
-        }
-        @font-face {
-          font-family: 'FreeSerifItalic';
-          src: url('OPS/fonts/FreeSerifItalic.ttf');  // EPUB 내 실제 폴더 경로 반영
-        }
-        @font-face {
-          font-family: 'FreeSerifBoldItalic';
-          src: url('OPS/fonts/FreeSerifBoldItalic.ttf');  // EPUB 내 실제 폴더 경로 반영
-        }
-      `;
-
-      // 폰트 CSS 적용 및 선택
-      renditionRef.current.themes.register("customTheme", {
-        body: {
-          "font-family": fontFamily || "FreeSerif", // 선택된 폰트를 반영
-          "font-size": `${fontSize} !important`,
-          "line-height": `${lineHeight} !important`,
-          margin: `${margin} !important`,
-        },
-      });
-
-      // 폰트 CSS를 적용
-      renditionRef.current.themes.fontFace(fontFaceCSS);
-
-      // 테마 적용
-      renditionRef.current.themes.select("customTheme");
-
-      console.log("새로운 폰트가 적용되었습니다:", fontFamily);
-    }
-  }, [fontFamily, fontSize, lineHeight, margin]);
-
-  // 폰트 변경 시마다 스타일 업데이트
-  const handleFontChange = (font) => {
-    setFontFamily(font); // 폰트를 상태로 설정
-    updateStyles(); // 업데이트된 스타일을 반영
-    console.log(`폰트 변경됨: ${font}`);
-  };
-
-
-
   const onPageMove = useCallback((type) => {
     if (saveGazeTimeRef.current) {
       saveGazeTimeRef.current();
@@ -338,7 +321,7 @@ const EpubReader = ({ url, book, location }) => {
     if (renditionRef.current) {
       const contents = renditionRef.current.getContents();
 
-    let allVisibleTexts = []; // 모든 텍스트를 담을 배열
+      let allVisibleTexts = []; // 모든 텍스트를 담을 배열
 
       contents.forEach((content) => {
         const iframeDoc = content.document;
@@ -432,65 +415,65 @@ const EpubReader = ({ url, book, location }) => {
   const handleReadingComplete = async () => {
     console.log("독서 완료 처리 시작");
 
-  if (userInfo && book) {
-    const { mem_id } = userInfo;
-    const { book_idx } = book;
+    if (userInfo && book) {
+      const { mem_id } = userInfo;
+      const { book_idx } = book;
 
-    console.log("사용자 정보:", { mem_id });
-    console.log("책 정보:", { book_idx });
+      console.log("사용자 정보:", { mem_id });
+      console.log("책 정보:", { book_idx });
 
-    // 상세 페이지로 네비게이션을 즉시 수행
-    console.log("상세 페이지로 네비게이션 중...");
-    navigate("/detail", { state: { book } });
+      // 상세 페이지로 네비게이션을 즉시 수행
+      console.log("상세 페이지로 네비게이션 중...");
+      navigate("/detail", { state: { book } });
 
-    // 요약 생성 요청을 비동기로 처리
-    try {
-      console.log("요약 생성 요청 중...");
-      const summarizeResult = await handleSummarize(mem_id, book_idx);
-
-      if (summarizeResult.success) {
-        console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
-      } else {
-        console.error("요약 생성 실패:", summarizeResult.error);
-      }
-    } catch (error) {
-      console.error("요약 생성 중 오류 발생:", error);
-    }
-  } else {
-    console.warn("사용자 정보 또는 책 정보가 없습니다.");
-  }
-};
-
-
-const handleReadingQuit = async () => {
-  if (userInfo && book) {
-    const mem_id = userInfo.mem_id;
-    const book_idx = book.book_idx;
-
-    const currentLocation = renditionRef.current?.currentLocation();
-    if (currentLocation && currentLocation.start) {
-      const cfi = currentLocation.start.cfi;
+      // 요약 생성 요청을 비동기로 처리
       try {
-        await axios.post("http://localhost:3001/getBookPath/endReading", {
-          mem_id,
-          book_idx,
-          cfi,
-        });
-        console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
+        console.log("요약 생성 요청 중...");
+        const summarizeResult = await handleSummarize(mem_id, book_idx);
+
+        if (summarizeResult.success) {
+          console.log("요약 생성 및 저장 성공:", summarizeResult.summary);
+        } else {
+          console.error("요약 생성 실패:", summarizeResult.error);
+        }
       } catch (error) {
-        console.error("독서 중단 CFI 저장 중 오류:", error);
+        console.error("요약 생성 중 오류 발생:", error);
+      }
+    } else {
+      console.warn("사용자 정보 또는 책 정보가 없습니다.");
+    }
+  };
+
+
+  const handleReadingQuit = async () => {
+    if (userInfo && book) {
+      const mem_id = userInfo.mem_id;
+      const book_idx = book.book_idx;
+
+      const currentLocation = renditionRef.current?.currentLocation();
+      if (currentLocation && currentLocation.start) {
+        const cfi = currentLocation.start.cfi;
+        try {
+          await axios.post("http://localhost:3001/getBookPath/endReading", {
+            mem_id,
+            book_idx,
+            cfi,
+          });
+          console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
+        } catch (error) {
+          console.error("독서 중단 CFI 저장 중 오류:", error);
+        }
       }
     }
-  }
-  navigate('/detail', { state: { book } });
-};
+    navigate('/detail', { state: { book } });
+  };
 
-  
- // TTS 관련 함수들
-const handleTTS = async () => {
-  if (!isPlaying) {
-    setIsPlaying(true);
-    setIsPaused(false);
+
+  // TTS 관련 함수들
+  const handleTTS = async () => {
+    if (!isPlaying) {
+      setIsPlaying(true);
+      setIsPaused(false);
 
       // TTS 시작 전에 현재 페이지의 텍스트 업데이트
       await logCurrentPageText(); // 텍스트 업데이트 완료를 기다림
@@ -563,35 +546,35 @@ const handleTTS = async () => {
       }
     }
   },
-[rate]); // 배속이 변경될 때마다 실행
+    [rate]); // 배속이 변경될 때마다 실행
 
 
-// 오디오 소스가 변경될 때만 실행
-useEffect(() => {
-  if (audioSource && audioRef.current) {
-    audioRef.current.src = audioSource;
-    audioRef.current.play();
-    audioRef.current.playbackRate = rate; // 배속 반영
-    setIsPlaying(true);
-    setIsPaused(false);
-  }
-}, [audioSource]); // 오디오 소스가 변경될 때만 실행
+  // 오디오 소스가 변경될 때만 실행
+  useEffect(() => {
+    if (audioSource && audioRef.current) {
+      audioRef.current.src = audioSource;
+      audioRef.current.play();
+      audioRef.current.playbackRate = rate; // 배속 반영
+      setIsPlaying(true);
+      setIsPaused(false);
+    }
+  }, [audioSource]); // 오디오 소스가 변경될 때만 실행
 
-// 페이지 이동 후 텍스트를 추출하는 함수
-const moveToNextPage = async () => {
-  if (renditionRef.current) {
-    await renditionRef.current.next();
-    
-    // 페이지 이동 후 텍스트를 다시 로드
-    await logCurrentPageText();
+  // 페이지 이동 후 텍스트를 추출하는 함수
+  const moveToNextPage = async () => {
+    if (renditionRef.current) {
+      await renditionRef.current.next();
 
-    // 페이지 이동 후 TTS 재실행을 위해 isPlaying을 false로 설정 후 다시 true로 변경
-    setIsPlaying(false); // 일시적으로 false로 설정하여 useEffect가 다시 트리거되도록 함
-    setTimeout(() => {
-      setIsPlaying(true);  // 상태를 다시 true로 설정하여 TTS 재실행
-    }, 500); 
-  }
-};
+      // 페이지 이동 후 텍스트를 다시 로드
+      await logCurrentPageText();
+
+      // 페이지 이동 후 TTS 재실행을 위해 isPlaying을 false로 설정 후 다시 true로 변경
+      setIsPlaying(false); // 일시적으로 false로 설정하여 useEffect가 다시 트리거되도록 함
+      setTimeout(() => {
+        setIsPlaying(true);  // 상태를 다시 true로 설정하여 TTS 재실행
+      }, 500);
+    }
+  };
 
 
   const stopTTS = () => {
@@ -654,7 +637,6 @@ const moveToNextPage = async () => {
           onRateChange={setRate}
           onVoiceChange={setGender}
           onBookmarkAdd={addBookmark}
-          onFontChange={setFontFamily}
           onReadingComplete={handleReadingComplete}
           goToBookmark={goToBookmark}  // 전달
           fetchBookmarks={fetchBookmarks}  // 전달
@@ -662,6 +644,9 @@ const moveToNextPage = async () => {
           book={book}
           userInfo={userInfo} // userInfo를 추가
           onBookmarkRemove={handleBookmarkRemove}
+          onFontSizeChange={onFontSizeChange} // 폰트 크기 변경 함수 전달
+          increaseFontSize={increaseFontSize}  // 전달
+          decreaseFontSize={decreaseFontSize}  // 전달
         />
 
         <div

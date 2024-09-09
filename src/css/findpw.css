@@ -27,8 +27,9 @@
     align-items: center;
 }
 
-/* 타이틀 컨테이너 */
 .title-container {
+    margin-top: 30px;
+    cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
