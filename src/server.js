@@ -23,6 +23,7 @@ const axios = require('axios');
 const multer = require('multer');
 const EPub = require('epub'); // 'epub' 패키지 사용
 
+
 // 세션 설정 (기본 설정)
 app.use(session({
   secret: process.env.SESSION_SECRET || 'MyKey',
@@ -44,17 +45,19 @@ app.use(cors({
 // 정적 파일 제공을 위한 경로 설정
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
-// Multer 설정 (파일을 서버의 'uploads' 폴더에 저장)
+// Multer 설정 (파일을 임시 이름으로 서버의 'uploads' 폴더에 저장)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = '../public/uploads';
+    const uploadPath = 'public/uploads';
     if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath);
+      fs.mkdirSync(uploadPath); // 폴더가 없으면 생성
     }
-    cb(null, uploadPath);
+    cb(null, uploadPath); // 업로드 경로 설정
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+    // 파일을 먼저 임시 이름으로 저장
+    const tempFileName = Date.now() + path.extname(file.originalname);
+    cb(null, tempFileName);
   }
 });
 
@@ -62,6 +65,10 @@ const upload = multer({ storage });
 
 // EPUB 파일 업로드 및 파싱 엔드포인트
 app.post('/upload-epub', upload.single('file'), (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: '로그인이 필요합니다.' });
+  }
+
   const filePath = req.file.path;
 
   // EPUB 파일을 파싱
@@ -74,29 +81,45 @@ app.post('/upload-epub', upload.single('file'), (req, res) => {
 
   epub.on("end", async () => {
     const metadata = epub.metadata;
-    const bookName = metadata.title;
-    const bookAuthor = metadata.creator;
+    const bookName = metadata.title || '제목 없음';
+    const bookAuthor = metadata.creator || '저자 없음';
 
-    // DB에 저장
-    let connection;
-    try {
-      connection = await pool.getConnection();
-      await connection.query(
-        'INSERT INTO book_upload (book_name, book_writer, book_file_path) VALUES (?, ?, ?)',
-        [bookName, bookAuthor, filePath]
-      );
-      connection.release();
+    const memId = req.session.user.mem_id; // 세션에서 사용자 ID 가져오기
 
-      res.json({ message: '파일 업로드 및 DB 반영 성공', bookName, bookAuthor });
-    } catch (error) {
-      console.error('DB 저장 중 오류:', error);
-      if (connection) connection.release();
-      return res.status(500).json({ error: 'DB 저장 중 오류가 발생했습니다.' });
-    }
+    // 책 제목을 파일명으로 사용할 수 있도록 특수문자와 공백 제거
+    const safeBookName = bookName.replace(/[^a-zA-Z0-9가-힣]/g, '_'); // 특수문자는 '_'로 치환
+    const newFileName = `${safeBookName}${path.extname(req.file.originalname)}`;
+    const newFilePath = path.join('public/uploads', newFileName);
+
+    // 파일명을 책 제목으로 변경
+    fs.rename(filePath, newFilePath, async (err) => {
+      if (err) {
+        console.error('파일 이름 변경 중 오류:', err);
+        return res.status(500).json({ error: '파일 이름 변경 중 오류가 발생했습니다.' });
+      }
+
+      // DB에 저장
+      let connection;
+      try {
+        connection = await pool.getConnection();
+        await connection.query(
+          'INSERT INTO book_upload (mem_id, book_name, book_writer, book_file_path) VALUES (?, ?, ?, ?)',
+          [memId, bookName, bookAuthor, newFilePath]
+        );
+        connection.release();
+
+        res.json({ message: '파일 업로드 및 DB 반영 성공', bookName, bookAuthor });
+      } catch (error) {
+        console.error('DB 저장 중 오류:', error);
+        if (connection) connection.release();
+        return res.status(500).json({ error: 'DB 저장 중 오류가 발생했습니다.' });
+      }
+    });
   });
 
   epub.parse(); // EPUB 파일 파싱 시작
 });
+
 
 // 세션 상태 확인을 위한 엔드포인트
 app.get('/check-session', (req, res) => {
