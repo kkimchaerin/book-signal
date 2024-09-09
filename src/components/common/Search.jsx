@@ -17,11 +17,16 @@ const Search = () => {
   };
 
   return (
-    <form onSubmit={handleSearch} className="flex items-center gap-2">
+    <form onSubmit={handleSearch} className="flex items-center gap-2 mt-1">
       <input
         type="text"
         placeholder="도서명을 입력하세요"
-        className="w-48 border-b border-black p-1 bg-transparent"
+        style={{
+          width: '12rem',
+          borderBottom: '1px solid black',
+          backgroundColor: 'transparent',
+          outline: 'none'
+        }}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
       />

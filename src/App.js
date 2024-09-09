@@ -1,4 +1,4 @@
-import React, { useState, createContext } from 'react';
+import React, { useState, createContext, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import './css/fonts.css';
@@ -21,14 +21,51 @@ import BookDetail from './pages/BookDetail';
 import DeleteUser from './pages/DeleteUser';
 import SearchReport from './pages/searchReport';
 import RankingBookList from './pages/RankingBookList';
-import EyeGazeTest from './pages/EyeGazeTest';
+// import EyeGazeTest from './pages/EyeGazeTest';
+import EyeGaze from './pages/EyeGaze';
+import Modal from './components/Modal';
+import ReaderWrapper from '../src/containers/Reader';
+import Reader from 'components/Reader';
+import EyeGazeCalibration from 'pages/EyeGazeCalibration';
+import Epubjs from 'components/Epubjs';
 
 // 로그인 상태를 관리하기 위한 Context 생성
 export const AuthContext = createContext();
 
+const consoleWarn = console.warn;
+console.warn = (...args) => {
+  if (args[0].includes('ResizeObserver loop completed with undelivered notifications')) {
+    return;
+  }
+  consoleWarn(...args);
+};
+
 function App() {
+  const epubUrl = "files/김유정-동백꽃-조광.epub"; // ePub 파일 경로 설정
   const [isAuthenticated, setIsAuthenticated] = useState(false);  // 로그인 상태 관리
   const [user, setUser] = useState(null);  // 로그인한 사용자 정보 관리
+
+  useEffect(() => {
+    const errorHandler = (e) => {
+      if (
+        e.message.includes("ResizeObserver loop completed with undelivered notifications") ||
+        e.message.includes("ResizeObserver loop limit exceeded")
+      ) {
+        const resizeObserverErr = document.getElementById(
+          "webpack-dev-server-client-overlay"
+        );
+        if (resizeObserverErr) {
+          resizeObserverErr.style.display = "none";
+        }
+      }
+    };
+    
+    window.addEventListener("error", errorHandler);
+    
+    return () => {
+      window.removeEventListener("error", errorHandler);
+    };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, user, setUser }}>
@@ -48,8 +85,14 @@ function App() {
             <Route path="/ranking/best" element={<RankingBookList />} />
             <Route path="/ranking/new" element={<RankingBookList />} />
             <Route path="/detail" element={<BookDetail />} />
+            <Route path="/modal" element={<Modal />} />
+            <Route path="/reader" element={<Reader />} />
+            <Route path="/test" element={<EyeGazeCalibration />} />
+            <Route path="/epubjs" element={<Epubjs />} />
+
           </Route>
 
+          <Route path="/readerwrapper" element={<ReaderWrapper url={epubUrl} />} />
           <Route path='/login' element={<Login />} />
           <Route path='/join' element={<Join />} />
           <Route path="/findid" element={<FindId />} />
@@ -60,7 +103,7 @@ function App() {
           <Route path='/getreview' element={<GetReview />} />
           <Route path='/deleteuser' element={<DeleteUser />} />
           <Route path='/searchreport' element={<SearchReport />} />
-          <Route path='/test' element={<EyeGazeTest />} />
+          <Route path='/test' element={<EyeGaze />} />
         </Routes>
       </ErrorBoundary>
     </AuthContext.Provider>

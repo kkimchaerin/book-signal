@@ -1,66 +1,101 @@
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-  h2{
-    color: white;
-  }
-  .modal-content {
-    background-size: cover;
-    background-position: center;
-    padding: 20px;
-    border-radius: 8px;
-    position: relative;
-    width: 100%;
-    max-width: 600px;
-    height: 800px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    text-align: center;
-    padding: 20px;
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-polaroid{
+  width: 550px;
+  height: 900px;
+  background-color: white;
+  position: relative; /* 자식 요소의 위치 조정을 위해 필요 */
+  display: flex;
+  flex-direction: column; /* 수직 정렬 */
+  justify-content: center; /* 수평 중앙 정렬 */
+  align-items: center;
+}
+
+.modal-content {
+  background-size: cover; /* 배경 이미지가 모달 크기에 맞도록 설정 */
+  background-position: center; /* 배경 이미지를 중앙에 맞춤 */
+  background-repeat: no-repeat; /* 이미지 반복 방지 */
+  padding: 20px;
+  position: absolute;
+  top: 39%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 중앙 정렬 */
+  width: 450px;
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  background-color: transparent; /* 배경색 제거 */
+  margin: 0 auto; /* 중앙 정렬 */
+}
+
+
+.modal-signal {
+  font-family: 'BookkMyungjo-Bd';
+  background-color: rgba(0, 0, 0, 0.5); /* 텍스트 배경을 반투명 흰색으로 설정 */
+  width: 350px;
+  height: auto;
+  min-height: 200px;
+  padding: 20px;
+  border-radius: 8px;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-summ {
+  position: absolute;
+  top: 600px; /* .modal-content 밑 50px */
+  max-width: 480px;
+  padding: 20px;
+  max-height: 300;
+  text-align: center;
+  font-size: 16px;
+  margin-top: 50px; /* 상단에 약간의 여백 추가 */
+  font-family: 'BookkMyungjo-Bd';
+}
+
 .modal-download,
 .modal-close {
   position: absolute;
-  top: 10px;
-  right: 40px; /* 두 버튼 간의 간격을 위해 오른쪽으로 이동 */
   background: none;
-  border: none;
-  font-size: 20px;
   cursor: pointer;
-  color: white;
+  color: black;
+  opacity: 0.7;
 }
 
 .modal-download {
-  top: 50px;
-  right: 70px;
+  font-size: 23px;
+  top : -42px;
+  right: 20px; /* 두 버튼 간의 간격 유지 */
 }
 
 .modal-close {
-  top: 50px;
-  right: 40px; 
+  font-size: 32px;
+  top : -45px;
+  right: -25px;
 }
-  
-  .modal-text {
-    margin-top: 40px;
-    font-size: 20px;
-    line-height: 1.5;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 20px;
-    border-radius: 8px;
-    width: 100%;
-    height: 100%;
-    text-align: center;
-  }
-  
+
+@font-face {
+  font-family: 'BookkMyungjo-Bd';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkMyungjo-Bd.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+

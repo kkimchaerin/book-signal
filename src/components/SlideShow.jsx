@@ -70,7 +70,7 @@ const SlideShow = ({ slides }) => {
   ];
 
   return (
-    <div className="relative h-72 overflow-x-clip">
+    <div className="relative h-64 overflow-x-clip">
       <div
         ref={slideRef}
         className="absolute inset-0 flex"
@@ -85,15 +85,15 @@ const SlideShow = ({ slides }) => {
             className="w-full rounded-lg  flex-shrink-0 flex items-center justify-between px-40"
             style={{
               background: slide.background,
-              height: '100%',
+              height: '100%'
             }}
           >
             <div className="flex-1 text-left">
-              <h2 className="text-[35px] font-bold mb-7 text-white">{slide.title}</h2>
-              <p className="mt-2 text-2xl text-white leading-relaxed" 
+              <h2 className="text-[28px] font-bold mb-7 text-white">{slide.title}</h2>
+              <p className="mt-2 text-[20px] text-white leading-relaxed" 
               dangerouslySetInnerHTML={{ __html: slide.description.replace(/\n/g, '<br />') }}/>
             </div>
-            <div className="flex-shrink-0 relative flex " style={{ top: '44px', width: '256px', height: '320px', perspective: '1000px'}}>
+            <div className="flex-shrink-0 relative flex " style={{ top: '44px', width: '228px', height: '300px', perspective: '1000px'}}>
               <img
                 src={slide.image}
                 alt={slide.title}

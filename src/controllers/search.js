@@ -9,13 +9,12 @@ const textToHash = async (text) => {
         return hash;
     } catch (err) {
         console.error(err);
-        throw err; 
+        throw err;
     }
 };
 
 const searchBooks = (req, res) => {
     const searchQuery = req.query.query;
-    
 
     if (!searchQuery) {
         return res.status(400).json({ message: '검색어가 제공되지 않았습니다.' });
@@ -33,5 +32,6 @@ const searchBooks = (req, res) => {
             res.status(500).json({ message: '서버 오류가 발생했습니다.' });
         });
 };
+
 
 module.exports = { searchBooks };

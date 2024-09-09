@@ -6,11 +6,10 @@
 .book-info-contents span{
   color: #f57e53;
   margin-left: 6px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .book-info-button button{
-  color: #f57e53;
   height: 70px;
   flex-grow: 1;
 }

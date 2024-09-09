@@ -5,7 +5,7 @@ const RankingBookInfo = ({ book, ranking, onClick }) => {
   return (
     <li className='flex flex-grow border rounded-xl shadow-lg cursor-pointer' onClick={onClick}>
       <div className='book-cover-wrapper w-[100px] h-[150px]'>
-        <img src={book?.book_cover} alt={book?.book_name || "도서 이미지"} className='w-full h-full object-cover rounded-xl'/>
+        <img src={book?.book_cover} alt={book?.book_name || "도서 이미지"} className='w-full h-full object-cover rounded-md'/>
       </div>
       <div className='book-info-contents flex flex-col text-md px-5 my-auto'>
         <p className='text-3xl font-bold italic text-primary'>{ranking}</p>
@@ -17,7 +17,7 @@ const RankingBookInfo = ({ book, ranking, onClick }) => {
         <p className='flex items-center'>
           <span className='sr-only'>평점</span>
           <FaRegStar />
-          <strong className='ml-1'>4.5</strong>
+          <strong className='ml-1'>{book.book_avg}</strong>
         </p>
       </div>
     </li>

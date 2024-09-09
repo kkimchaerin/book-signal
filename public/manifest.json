@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Book Signal",
+  "name": "Book Signal & Epub Viewer",
   "icons": [
     {
       "src": "favicon.ico",
@@ -16,6 +16,11 @@
       "src": "logo512.png",
       "type": "image/png",
       "sizes": "512x512"
+    },
+    {
+      "src": "favicons/favicon_96x96.png",
+      "sizes": "96x96 48x48 24x24",
+      "type": "image/x-icon"
     }
   ],
   "start_url": ".",

@@ -1,0 +1,16 @@
+import styled from 'styled-components'
+// lib
+import * as styles from 'lib/styles/styles'
+
+const ViewerWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  // width: 70vw;
+  height: 80vh;
+  // overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  ${styles.scrollbar(0)};
+`;
+
+export default ViewerWrapper
