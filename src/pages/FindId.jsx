@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ErrorPopup } from '../components/ErrorPopup'; 
+import { Link, useNavigate } from 'react-router-dom';
+import { ErrorPopup } from '../components/ErrorPopup';
 import FindIdPopup from '../components/FindIdPopup';
 import '../css/findid.css';
 
@@ -12,6 +12,7 @@ const FindId = () => {
   const [showErrorPopup, setShowErrorPopup] = useState(false); // 오류 팝업 표시 여부
   const [errorMessage, setErrorMessage] = useState(''); // 오류 메시지 저장
 
+  const navigate = useNavigate();
 
   const FindId = async (e) => {
     e.preventDefault();
@@ -22,7 +23,7 @@ const FindId = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ mem_email : memEmail, mem_name : memName }),
+        body: JSON.stringify({ mem_email: memEmail, mem_name: memName }),
       });
 
       const data = await response.json();
@@ -41,9 +42,14 @@ const FindId = () => {
     }
   };
 
+  // 타이틀 컨테이너 클릭 시 Home 페이지로 이동
+  const handleTitleClick = () => {
+    navigate('/');
+  };
+
   return (
     <div className="findid-container">
-      <div className='title-container'>
+      <div className='title-container' onClick={handleTitleClick}>
         <h1 className='title-book'>북</h1>
         <h1 className='title-signal'>시그널</h1>
       </div>
@@ -53,7 +59,7 @@ const FindId = () => {
         <br />
         <form className="findid-form">
           <div className="input-group">
-            <input 
+            <input
               type="text"
               className='input-field'
               id='memEmail'
@@ -63,7 +69,7 @@ const FindId = () => {
               onChange={(e) => setMemEmail(e.target.value)} />
           </div>
           <div className="input-group">
-            <input 
+            <input
               type="text"
               className='input-field'
               id='memName'
@@ -78,19 +84,19 @@ const FindId = () => {
       <div className="findid-footer">
         <Link to="/FindPw">비밀번호 찾기</Link> | <Link to="/Login">로그인</Link> | <Link to="/Join">회원가입</Link>
       </div>
-        {/* 아이디 찾기 성공 시 팝업 표시 */}
-        {showPopup && (
+      {/* 아이디 찾기 성공 시 팝업 표시 */}
+      {showPopup && (
         <FindIdPopup
           memName={memName}
-          memId={foundId} 
-          onClose={() => setShowPopup(false)} 
+          memId={foundId}
+          onClose={() => setShowPopup(false)}
         />
       )}
-       {/* 오류 발생 시 팝업 표시 */}
-       {showErrorPopup && (
+      {/* 오류 발생 시 팝업 표시 */}
+      {showErrorPopup && (
         <ErrorPopup
-          message={errorMessage} 
-          onClose={() => setShowErrorPopup(false)} 
+          message={errorMessage}
+          onClose={() => setShowErrorPopup(false)}
         />
       )}
     </div>

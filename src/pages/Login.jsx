@@ -47,9 +47,14 @@ const Login = () => { // 'async' 키워드를 제거
     }
   };
 
+  // 타이틀 컨테이너 클릭 시 Home 페이지로 이동
+  const handleTitleClick = () => {
+    navigate('/');
+  };
+
   return (
     <div className='page-container'>
-      <div className='title-container'>
+      <div className='login-title-container' onClick={handleTitleClick}>
         <h1 className='title-book'>북</h1>
         <h1 className='title-signal'>시그널</h1>
       </div>
@@ -82,6 +87,7 @@ const Login = () => { // 'async' 키워드를 제거
           </div>
           <div className='auto-login'>
             <input
+              className='auto-login-input'
               type='checkbox'
               id='autologin'
               checked={autologin}
@@ -95,7 +101,7 @@ const Login = () => { // 'async' 키워드를 제거
       </div>
       <div className='footer-wrapper'>
         <div className='login-footer'>
-          <Link to='/find-id'>아이디 찾기</Link> | <Link to='/find-pw'>비밀번호 찾기</Link> | <Link to='/join'>회원가입</Link>
+          <Link to='/findid'>아이디 찾기</Link> | <Link to='/findpw'>비밀번호 찾기</Link> | <Link to='/join'>회원가입</Link>
         </div>
       </div>
     </div>

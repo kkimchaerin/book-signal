@@ -1,5 +1,65 @@
-.page-container{
+.page-container {
     min-height: 100vh;
+}
+
+.login-title-container {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    font-family: 'Cafe24Moyamoya-Regular-v1.0', cursive;
+    cursor: pointer;
+    /* 마우스를 올리면 클릭 손가락으로 변경 */
+}
+
+.auto-login {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    margin-left: 5px;
+    /* input과 label을 세로축으로 가운데 정렬 */
+}
+
+.auto-login label {
+    margin-left: 10px;
+}
+
+.auto-login-input {
+    appearance: none;
+    -webkit-appearance: none;
+    /* 브라우저 기본 체크박스 스타일 제거 */
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    /* 원형으로 만들기 */
+    position: relative;
+    cursor: pointer;
+    outline: none;
+}
+
+.auto-login-input:checked {
+    background-color: #28a745;
+    /* 체크 시 초록색 배경 */
+    border-color: #28a745;
+    /* 경계선도 초록색 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.auto-login-input:checked::before {
+    content: '✔';
+    /* 체크 표시 */
+    font-size: 12px;
+    color: white;
+    /* 체크 표시 색상 */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* 체크 표시 가운데 정렬 */
 }
 
 /* 타이틀 컨테이너 */
@@ -39,7 +99,8 @@
     text-align: left;
     font-size: 1.5rem;
     margin-bottom: 20px;
-    font-weight: 400px; /* 글씨를 두껍게 설정 */
+    font-weight: 400px;
+    /* 글씨를 두껍게 설정 */
 }
 
 /* 폼 레이아웃 */
@@ -134,7 +195,8 @@
 .login-footer {
     text-align: center;
     font-size: 0.875rem;
-    margin-top: 20px; /* 위쪽 여백 추가 */
+    margin-top: 20px;
+    /* 위쪽 여백 추가 */
 }
 
 .login-footer a {
@@ -150,10 +212,10 @@
 .footer-wrapper {
     text-align: center;
 }
+
 /* 애러 메세지 */
 .error-message {
     color: red;
     font-size: 0.875rem;
     margin-top: 10px;
-  }
-  
+}
