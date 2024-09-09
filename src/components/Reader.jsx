@@ -31,28 +31,6 @@ const EpubReader = ({ url, book, location }) => {
   const audioRef = useRef(new Audio());
   const [fontSize, setFontSize] = useState(16); // 기본 글씨 크기
 
-  // ResizeObserver 오류 무시 코드 추가
-  useEffect(() => {
-    const resizeObserverErrorHandler = () => {
-      requestAnimationFrame(() => {
-        try {
-          // `ResizeObserver`의 에러를 잡아냄
-        } catch (e) {
-          if (e.message.includes('ResizeObserver')) {
-            console.warn('ResizeObserver 오류 무시됨:', e);
-          }
-        }
-      });
-    };
-  
-    window.addEventListener('error', resizeObserverErrorHandler);
-  
-    return () => {
-      window.removeEventListener('error', resizeObserverErrorHandler);
-    };
-  }, []);  
-
-
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
   const [gender, setGender] = useState("MALE");
@@ -109,6 +87,7 @@ const EpubReader = ({ url, book, location }) => {
 
   useEffect(() => {
     if (renditionRef.current) {
+      console.log("폰트 크기 변경됨:", fontSize);  // 로그 추가
       renditionRef.current.themes.register("customTheme", {
         "*": {
           "font-size": `${fontSize}px !important`,
@@ -141,17 +120,16 @@ const EpubReader = ({ url, book, location }) => {
 
   const fetchBookmarks = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/getBookPath/getUserBookmark', {
+      const response = await axios.get('http://localhost:3001/getBookPath/getBookmarks', {
         params: { book_idx: book.book_idx, mem_id: userInfo.mem_id },
       });
-      console.log('Fetched bookmark and font size:', response.data); // 로그에서 구조 확인
-      return response.data; // 북마크와 폰트 크기 반환
+      console.log('Fetched bookmarks:', response.data); // 이 부분에서 데이터 구조를 확인하세요
+      return response.data; // 성공적으로 북마크를 가져오면 반환
     } catch (error) {
       console.error('북마크를 가져오는 중 오류 발생:', error);
-      return {};
+      return [];
     }
   };
-
 
   const handleBookmarkRemove = async (book_mark) => {
     const book_idx = book?.book_idx;
@@ -205,14 +183,7 @@ const EpubReader = ({ url, book, location }) => {
             params: { book_idx, mem_id },
           });
 
-          const { bookmark, fontSize } = response.data;
-
-          // 폰트 크기 설정
-          if (fontSize) {
-            setFontSize(fontSize);
-            console.log(fontSize);
-
-          }
+          const bookmark = response.data.bookmark;
 
           if (bookmark) {
             console.log("북마크 위치로 이동:", bookmark);
@@ -478,10 +449,6 @@ const EpubReader = ({ url, book, location }) => {
     if (userInfo && book) {
       const mem_id = userInfo.mem_id;
       const book_idx = book.book_idx;
-      const fontsize = fontSize
-
-      console.log('독서종료', fontsize);
-
 
       const currentLocation = renditionRef.current?.currentLocation();
       if (currentLocation && currentLocation.start) {
@@ -491,7 +458,6 @@ const EpubReader = ({ url, book, location }) => {
             mem_id,
             book_idx,
             cfi,
-            fontsize
           });
           console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
         } catch (error) {
@@ -681,7 +647,6 @@ const EpubReader = ({ url, book, location }) => {
           onFontSizeChange={onFontSizeChange} // 폰트 크기 변경 함수 전달
           increaseFontSize={increaseFontSize}  // 전달
           decreaseFontSize={decreaseFontSize}  // 전달
-          initialFontSize={fontSize}
         />
 
         <div

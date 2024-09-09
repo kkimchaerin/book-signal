@@ -1,4 +1,5 @@
 require('dotenv').config({ path: './src/tts.env' });
+console.log('GOOGLE_APPLICATION_CREDENTIALS:', process.env.GOOGLE_APPLICATION_CREDENTIALS); // 환경 변수 출력 확인
 const express = require('express');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');

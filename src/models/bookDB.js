@@ -192,7 +192,7 @@ exports.saveBookmark = async (book_name, book_idx, mem_id, cfi, page_text) => {
   }
 };
 
-// 사용자의 수동 북마크를 가져오는 함수
+// 사용자의 북마크를 가져오는 함수
 exports.getBookmarks = async (book_idx, mem_id) => {
   try {
     // book_reading 테이블에서 북마크 가져오기
@@ -229,8 +229,7 @@ exports.getBookmarks = async (book_idx, mem_id) => {
 // 특정 사용자와 책의 북마크를 가져오는 함수
 exports.getUserBookmarkForBook = async (book_idx, mem_id) => {
   try {
-    // 북마크 쿼리
-    const bookmarkSql = `
+    const sql = `
       SELECT book_mark
       FROM book_reading
       WHERE book_idx = ? 
@@ -240,30 +239,17 @@ exports.getUserBookmarkForBook = async (book_idx, mem_id) => {
       ORDER BY book_latest DESC
       LIMIT 1
     `;
-    const [bookmarkResults] = await conn.query(bookmarkSql, [book_idx, mem_id]);
-    const bookmark = bookmarkResults.length > 0 ? bookmarkResults[0].book_mark : null;
+    const [results] = await conn.query(sql, [book_idx, mem_id]);
 
-    // 폰트 크기 쿼리
-    const fontSizeSql = `
-      SELECT font_size
-      FROM setting
-      WHERE mem_id = ?
-    `;
-    const [fontSizeResults] = await conn.query(fontSizeSql, [mem_id]);
-    const fontSize = fontSizeResults.length > 0 ? fontSizeResults[0].font_size : null;
-
-    // 북마크와 폰트 크기를 함께 반환
-    return { bookmark, fontSize };
+    return results.length > 0 ? results[0].book_mark : null;
   } catch (err) {
-    console.error('북마크 또는 폰트 크기를 가져오는 중 오류 발생:', err);
-    throw new Error('북마크 또는 폰트 크기를 가져오는 중 오류가 발생했습니다.');
+    console.error('북마크를 가져오는 중 오류 발생:', err);
+    throw new Error('북마크를 가져오는 중 오류가 발생했습니다.');
   }
 };
 
-
 // 독서 종료 시 북마크 저장 함수
-exports.saveEndReading = async (book_idx, mem_id, cfi, fontsize) => {
-
+exports.saveEndReading = async (book_idx, mem_id, cfi) => {
   try {
     const getBookNameSql = `
       SELECT book_name 
@@ -284,15 +270,6 @@ exports.saveEndReading = async (book_idx, mem_id, cfi, fontsize) => {
       VALUES (?, ?, ?, ?, NOW())
     `;
     const [result] = await conn.query(saveBookmarkSql, [book_idx, mem_id, cfi, book_name]);
-
-    // 폰트 크기를 setting 테이블에 저장하는 쿼리 추가
-    const saveFontSizeSql = `
-        UPDATE setting
-        SET font_size = ?
-        WHERE mem_id = ?
-      `;
-
-    await conn.query(saveFontSizeSql, [fontsize, mem_id]);
 
     return { message: '북마크가 저장되었습니다.', bookmarkId: result.insertId };
   } catch (err) {
@@ -334,7 +311,7 @@ exports.removeEyegazeBookmark = async (book_idx, mem_id) => {
     `;
     const [result] = await conn.query(sql, [book_idx, mem_id]);
     console.log(result);
-
+    
 
     if (result.affectedRows > 0) {
       return { message: 'eyegaze 북마크가 삭제되었습니다.' };

@@ -46,30 +46,27 @@ router.get('/getBookmarks', async (req, res) => {
 
 
 // 최근 읽은 도서용 북마크
-// 최근 읽은 도서용 북마크
 router.get('/getUserBookmark', async (req, res) => {
     const { book_idx, mem_id } = req.query;
 
     try {
-        const { bookmark, fontSize } = await getUserBookmarkForBook(book_idx, mem_id);
-
+        const bookmark = await getUserBookmarkForBook(book_idx, mem_id);
         if (bookmark) {
-            res.status(200).json({ bookmark, fontSize });
+            res.status(200).json({ bookmark });
         } else {
-            res.status(404).json({ message: '북마크가 존재하지 않습니다.', fontSize });
+            res.status(404).json({ message: '북마크가 존재하지 않습니다.' });
         }
     } catch (error) {
         res.status(500).json({ error: '북마크를 가져오는 중 오류가 발생했습니다.' });
     }
 });
 
-
 // 독서 종료 API
 router.post('/endReading', async (req, res) => {
-    const { book_idx, mem_id, cfi, fontsize } = req.body;
+    const { book_idx, mem_id, cfi } = req.body;
 
     try {
-        const result = await saveEndReading(book_idx, mem_id, cfi, fontsize);
+        const result = await saveEndReading(book_idx, mem_id, cfi);
         res.status(201).json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -92,7 +89,7 @@ router.post('/removeBookmark', async (req, res) => {
 router.post('/removeEyegazeBookmark', async (req, res) => {
     const { book_idx, mem_id } = req.body;
     console.log(book_idx, mem_id);
-
+    
 
     try {
         const result = await removeEyegazeBookmark(book_idx, mem_id);
