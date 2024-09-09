@@ -3,6 +3,7 @@ import Modal from 'react-modal';
 import Rating from 'react-rating-stars-component';
 import axios from 'axios';
 import '../css/getreview.css';
+import { alertMessage } from "../../src/utils/alertMessage";
 
 const GetReview = ({ book, onReviewSubmit }) => {
   const [rating, setRating] = useState(0);
@@ -24,23 +25,27 @@ const GetReview = ({ book, onReviewSubmit }) => {
 
   const handleSubmit = async () => {
     try {
+      console.log('book object:', book);
       // 세션 정보에서 사용자 ID 가져오기
       const sessionResponse = await axios.get('http://localhost:3001/check-session', { withCredentials: true });
       const mem_id = sessionResponse.data.user.mem_id; // 세션에서 사용자 ID 가져오기
+      const book_name = book.book_name;
+      const book_idx = book.book_idx;
+      const book_score = rating;
+      const book_review = review;
 
-      await axios.post('http://localhost:3001/review', {
+      await axios.post('http://localhost:3001/review/addReview', {
         mem_id, // 세션에서 가져온 사용자 ID
-        book_idx: book.book_idx, // 부모 컴포넌트에서 전달된 책 정보
-        book_name: book.book_name, // 부모 컴포넌트에서 전달된 책 정보
-        book_score: rating,
-        book_review: review,
+        book_idx, // 부모 컴포넌트에서 전달된 책 정보
+        book_name, // 부모 컴포넌트에서 전달된 책 정보
+        book_score,
+        book_review,
       });
-
-      alert('리뷰가 성공적으로 등록되었습니다.');
+      alertMessage('리뷰가 등록되었습니다.');
       closeModal(); // 리뷰 등록 후 모달 닫기
     } catch (error) {
       console.error('리뷰 등록 실패:', error);
-      alert('리뷰 등록에 실패했습니다.');
+      alertMessage('리뷰 등록에 실패했습니다.','❗');
     }
   };
 

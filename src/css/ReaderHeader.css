@@ -1,0 +1,117 @@
+.Header-custom-button {
+    background-color: white;
+    color: black;
+    padding: 10px;
+    margin: 5px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    border: 2px solid transparent;
+    margin-right: 10px;
+}
+
+.Header-custom-button:hover {
+    border-color: #5b8cff;
+}
+
+.Header-bookmark-settings {
+    padding: 20px;
+}
+
+.Header-remove-button {
+    background-color: transparent;
+    border: none;
+    color: red;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 14px;
+    height: 14px;
+}
+
+.Header-remove-button:hover {
+    color: darkred;
+}
+
+.Header-bookmark-list {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.Header-custom-button:active {
+    background-color: #004085;
+    transform: translateY(0);
+}
+
+.Header-bookmark-list button {
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.Header-bookmark-list button:hover {
+    background-color: #f0f0f0;
+}
+
+.Header-bookmark-settings,
+.Header-font-settings {
+    padding: 20px;
+}
+
+.Header-bookmark-settings h3,
+.Header-font-settings h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.Header-font-settings button {
+    margin: 5px 0;
+    width: 40px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.Header-font-settings button:hover {
+    background-color: #e2e6ea;
+}
+
+.Header-font-settings button:active {
+    background-color: #dae0e5;
+}
+
+.Header-bookmark-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.Header-bookmark-list p {
+    padding-left: 20px;
+    color: #6c757d;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.font-size-control {
+    display: flex;
+    align-items: center;
+    /* 세로 가운데 정렬 */
+    gap: 10px;
+    /* 버튼과 슬라이더 사이 간격 */
+}
+
+.font-size-slider {
+    flex-grow: 1;
+    /* 슬라이더가 남는 공간을 채우도록 */
+}
+
+.current-font{
+    color: blue;
+}

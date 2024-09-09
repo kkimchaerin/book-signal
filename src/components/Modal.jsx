@@ -4,7 +4,6 @@ import { FaArrowDown } from "react-icons/fa6";
 import { RxCross2 } from "react-icons/rx";
 
 const Modal = ({ isOpen, onClose, onDownload, backgroundImage, children }) => {
-  console.log(backgroundImage);
   if (!isOpen) return null;
 
   // children을 배열로 취급합니다.
@@ -21,9 +20,9 @@ const Modal = ({ isOpen, onClose, onDownload, backgroundImage, children }) => {
         <div
           className="modal-content"
           onClick={(e) => e.stopPropagation()}
-          style={{ 
-            backgroundImage: `url('${backgroundImage}')`, 
-            backgroundSize:  'cover',
+          style={{
+            backgroundImage: `url('${backgroundImage}')`,
+            backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
             justifyContent: 'center',

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import '../css/join.css';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import JoinPopup from '../components/JoinPopup'; // 팝업 컴포넌트 불러오기
+import { alertMessage } from "../../src/utils/alertMessage";
 
 const Join = () => {
   const [memId, setMemId] = useState('');
@@ -164,7 +165,7 @@ const Join = () => {
 
     // 중복 확인을 완료하지 않았을 때 처리
     if (!idCheckClicked || !nickCheckClicked || !emailCheckClicked) {
-      alert('중복 확인을 완료해주세요.');
+      alertMessage('중복 확인을 완료해주세요.','❗');
       return;
     }
 
@@ -173,7 +174,7 @@ const Join = () => {
       nickCheck?.status === 'error' ||
       emailCheck?.status === 'error'
     ) {
-      alert('중복 확인을 완료해주세요.');
+      alertMessage('중복 확인을 완료해주세요.','❗');
       return;
     }
 
@@ -202,7 +203,7 @@ const Join = () => {
       setJoinComplete(true);
     } catch (err) {
       console.log(err);
-      alert('회원가입에 실패했습니다. 입력한 정보를 확인해 주세요.');
+      alertMessage('회원가입에 실패했습니다. 입력한 정보를 확인해 주세요','❗');
     }
   };
 
@@ -315,7 +316,7 @@ const Join = () => {
               {idCheck.message}
             </p>
           )}
-          <div className={`input-group ${errors.memPw ? 'error-border' : ''}`}>
+          <div className={`join-input-group ${errors.memPw ? 'error-border' : ''}`}>
             <input
               type="password"
               id="memPw"
@@ -330,7 +331,7 @@ const Join = () => {
               }}
             />
           </div>
-          <div className={`input-group ${errors.confirmPw ? 'error-border' : ''}`}>
+          <div className={`join-input-group ${errors.confirmPw ? 'error-border' : ''}`}>
             <input
               type="password"
               id="confirmPw"
@@ -350,8 +351,8 @@ const Join = () => {
               </span>
             )}
           </div>
-          <div className={`input-group ${errors.memBirth ? 'error-border' : ''}`}>
-            <label htmlFor="memBirth" className="input-label">생년월일</label>
+          <div className={`join-input-group ${errors.memBirth ? 'error-border' : ''}`}>
+            <label htmlFor="memBirth" className="join-input-label">생년월일</label>
             <input
               type="date"
               id="memBirth"

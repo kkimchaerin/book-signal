@@ -8,9 +8,10 @@ interface TTSWrapperProps {
   show: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  title: string;
 }
 
-const TTSWrapper: React.FC<TTSWrapperProps> = ({ show, onClose, children }) => {
+const TTSWrapper: React.FC<TTSWrapperProps> = ({ show, onClose, children, title }) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ const TTSWrapper: React.FC<TTSWrapperProps> = ({ show, onClose, children }) => {
   return (
     <Wrapper show={show} ref={wrapperRef}>
       <Header>
-        <Title>Sound</Title>
+        <Title>{title}</Title>
         <CloseButton onClick={onClose}>✕</CloseButton>
       </Header>
       <Content>

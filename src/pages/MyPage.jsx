@@ -6,6 +6,8 @@ import { BsPersonCircle } from "react-icons/bs";
 import { MdEmail } from "react-icons/md";
 import { PiHandCoinsDuotone } from "react-icons/pi";
 import axios from 'axios';
+import CalibrationButton from '../components/book/CalibrationButton';
+import { alertMessage } from "../../src/utils/alertMessage";
 
 const MyPage = () => {
   const [userInfo, setUserInfo] = useState(null);
@@ -19,7 +21,6 @@ const MyPage = () => {
         const sessionResponse = await axios.get('http://localhost:3001/check-session', { withCredentials: true });
         if (sessionResponse.data.user) {
           const userInfoResponse = await axios.get(`http://localhost:3001/user-info/${sessionResponse.data.user.mem_id}`, { withCredentials: true });
-          console.log('사용자 정보:', userInfoResponse.data);
           setUserInfo(userInfoResponse.data);
 
           const reviewsResponse = await axios.get(`http://localhost:3001/review/${sessionResponse.data.user.mem_id}`, { withCredentials: true });
@@ -29,7 +30,7 @@ const MyPage = () => {
         }
       } catch (error) {
         if (error.response && error.response.status === 401) {
-          alert('로그인이 필요합니다.');
+          alertMessage('로그인이 필요합니다.', '❗');
           navigate('/login');
         } else if (error.response && error.response.status === 404) {
           console.log('리뷰가 존재하지 않습니다.');
@@ -42,26 +43,40 @@ const MyPage = () => {
     fetchData();
   }, [navigate]);
 
-  const handleDeleteUser = () => {
+  const handleDeleteUser = () => {  
     navigate('/deleteuser'); // 회원탈퇴 페이지로 이동
   };
 
-  const handleDeleteReview = async (reviewId) => {
+  const handleDeleteReview = async (reviewId,book_idx) => {
     const mem_id = userInfo.mem_id;
 
     try {
       await axios.delete(`http://localhost:3001/review/${reviewId}`, {
-        data: { mem_id },
+        data: { mem_id, book_idx },
         withCredentials: true
       });
       setReviews(prevReviews => prevReviews.filter(review => review.end_idx !== reviewId));
 
+      // 최신 유저 데이터 다시 가져오기 (이전 방식)
+      // const updatedUserInfo = await axios.get('http://localhost:3001/user-info/' + mem_id, { withCredentials: true });
+      // if (updatedUserInfo.data) {
+      //   setUserInfo(updatedUserInfo.data); // 최신 포인트 반영
+      // }
+      
+
+      // 포인트를 즉시 업데이트 (포인트 차감 15 적용)
+      setUserInfo(prevUserInfo => ({
+        ...prevUserInfo,
+        mem_point: prevUserInfo.mem_point - 15
+      }));
+
+      
       // 최신 유저 데이터 다시 가져오기
       const updatedUserInfo = await axios.get('http://localhost:3001/user-info/' + mem_id, { withCredentials: true });
       if (updatedUserInfo.data) {
         setUserInfo(updatedUserInfo.data); // 최신 포인트 반영
       }
-      alert('리뷰가 성공적으로 삭제되었습니다.');
+      alertMessage('리뷰가 성공적으로 삭제되었습니다.');
     } catch (error) {
       console.error('리뷰 삭제에 실패했습니다.', error);
     }
@@ -90,6 +105,7 @@ const MyPage = () => {
           <PiHandCoinsDuotone className='icon' />
           <p>포인트: <span className="points">{userInfo.mem_point}</span>점</p>
         </div>
+        <CalibrationButton />
         <br />
         <button onClick={handleDeleteUser}>회원탈퇴</button>
       </div>
@@ -105,17 +121,22 @@ const MyPage = () => {
           </div>
         ) : (
           <div className="reviews-list">
-            {reviews.map((review) => (
-              <div key={review.end_idx} className="review-item">
-                <img src={`/images/${review.book_cover}`} alt={review.book_name} className="book-cover" />
-                <div className="review-content">
-                  <h4>{review.book_name}</h4>
-                  <p>★ {review.book_score}</p>
-                  <h5>리뷰: {review.book_review}</h5>
-                  <button onClick={() => handleDeleteReview(review.end_idx)}>삭제하기</button>
+            {reviews
+             .filter((review) => review.book_score !== null && review.book_review !== null) // 리뷰가 있는 도서만 렌더링
+             .map((review) => {
+              
+              return (
+                <div key={review.end_idx} className="review-item">
+                  <img src={`/images/${review.book_cover}`} alt={review.book_name} className="book-cover" />
+                  <div className="review-content">
+                    <h4>{review.book_name}</h4>
+                    <p>★ {review.book_score}</p>
+                    <h5>리뷰: {review.book_review}</h5>
+                    <button onClick={() => handleDeleteReview(review.end_idx,review.book_idx)}>삭제하기</button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

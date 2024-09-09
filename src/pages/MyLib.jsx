@@ -5,6 +5,7 @@ import axios from 'axios';
 import Modal from '../components/Modal';
 import GetReview from './GetReview'; // GetReview 컴포넌트 import
 import html2canvas from 'html2canvas';
+import { alertMessage } from "../../src/utils/alertMessage";
 
 const MyLib = () => {
   const [activeTab, setActiveTab] = useState('recent'); // 기본 활성 탭
@@ -12,18 +13,24 @@ const MyLib = () => {
   const [recentBooks, setRecentBooks] = useState([]); // 최근 읽은 도서 상태
   const [wishlistBooks, setWishlistBooks] = useState([]); // 찜한 도서 상태
   const [completedBooks, setCompletedBooks] = useState([]); // 완독 도서 상태
-  const [selectedBook, setSelectedBook] = useState(null); // 리뷰 모달 관련 상태
-  const [isModalOpen, setIsModalOpen] = useState(false); // 리뷰 모달 관련 상태
-  const [backgroundImage, setBackgroundImage] = useState(''); // 리뷰 모달 배경 이미지 상태
-  const [reviewModalOpen, setReviewModalOpen] = useState(false); // 리뷰 모달 상태
+  const [selectedBook, setSelectedBook] = useState(null); // 리뷰모달 관련 상태
+  const [isModalOpen, setIsModalOpen] = useState(false); // 리뷰모달 관련 상태
+  const [backgroundImage, setBackgroundImage] = useState(''); // 리뷰모달 배경 이미지 상태
+  const [reviewModalOpen, setReviewModalOpen] = useState(false); // 리뷰모달 상태
   const [signalBooks, setSignalBooks] = useState([]);
   const [signalTitle, setSignalTitle] = useState(null); // 시그널 모달 관련 상태
   const [signalText, setSignalText] = useState('');
   const [signalSumm, setSignalSumm] = useState('');
   const [isSignalOpen, setSignalOpen] = useState(false); // 시그널 모달 열림 닫힘
   const [signalBackground, setSignalBackground] = useState(''); // 시그널 모달 배경 이미지 상태
+  const [reviewExists, setReviewExists] = useState(false); // 리뷰 존재 여부 상태
+  const [reviewStatus, setReviewStatus] = useState({}); // 각 책의 리뷰 여부를 저장하는 상태
+  const [uploadedBooks, setUploadedBooks] = useState([]); // 업로드한 도서 상태
+
+
 
   const navigate = useNavigate();
+
 
   useEffect(() => {
     // 서버에서 세션 정보를 가져옴
@@ -34,13 +41,84 @@ const MyLib = () => {
       .catch(error => {
         if (error.response && error.response.status === 401) {
           // 로그인이 필요하면 로그인 페이지로 이동
-          alert('로그인이 필요합니다.');
+          alertMessage('로그인이 필요합니다.', '❗');
           navigate('/login');
         } else {
           console.error('', error);
         }
       });
   }, [navigate]);
+
+  const handleBookClickWithUploadPath = async (book) => {
+    try {
+      // book 객체 출력
+      console.log('book 객체:', book);
+
+      // upload_idx를 사용하여 서버에 요청
+      const response = await axios.post('http://localhost:3001/getBookPath/getUploadBookPath', {
+        upload_idx: book.upload_idx,  // upload_idx 사용
+      });
+
+      const bookPath = response.data.book_path || book.book_file_path; // 서버에서 경로를 못 가져오면 book_file_path 사용
+      console.log('bookPath:', bookPath);
+
+      if (bookPath) {
+        navigate(`/reader`, { state: { book, bookPath } }); // bookPath를 넘겨줌
+      } else {
+        alertMessage('책 경로를 찾을 수 없습니다.', '❗');
+      }
+    } catch (error) {
+      console.error('책 경로를 가져오는 중 오류가 발생했습니다.', error);
+    }
+  };
+
+
+
+  // 업로드 도서 탭에서 이 함수로 책 클릭 처리
+  const handleBookClickWithBookmark = (book) => {
+    if (activeTab === 'upload') {
+      // 업로드된 도서일 경우
+      handleBookClickWithUploadPath(book);
+    } else {
+      // 나머지 탭에서도 reader 페이지로 이동
+      navigate(`/reader`, { state: { book, from: 'mylib' } });
+    }
+  };
+
+
+
+  // 리뷰 존재 여부 확인 함수
+  const checkIfReviewExists = async (book) => {
+    if (userInfo && book) {
+      try {
+
+        const response = await axios.get(`http://localhost:3001/review/check`, {
+          params: { mem_id: userInfo.mem_id, book_idx: book.book_idx }, // 파라미터 전달
+          withCredentials: true,
+        });
+
+        // 책 리스트에서 book.book_idx와 일치하는 객체를 찾음
+        const bookData = response.data.find(item => item.book_idx === book.book_idx);
+
+        if (bookData) {
+          // 서버에서 받은 reviewExists 값 사용
+          const reviewExists = bookData.book_score !== null || bookData.book_review !== null;
+
+          // 상태 업데이트
+          setReviewStatus(prevStatus => ({
+            ...prevStatus,
+            [book.book_idx]: reviewExists, // 책 별로 리뷰 존재 여부 저장
+          }));
+        } else {
+        }
+
+      } catch (error) {
+        console.error('리뷰 확인 중 오류 발생:', error);
+      }
+    }
+  };
+
+
 
   // 세션 확인 후 처리
   useEffect(() => {
@@ -65,8 +143,14 @@ const MyLib = () => {
 
       // 완독 도서 데이터를 가져옴
       axios.get('http://localhost:3001/completed-books', { withCredentials: true })
-        .then(response => {
-          setCompletedBooks(response.data); // 서버에서 가져온 데이터를 상태에 저장
+        .then(async (response) => {
+          const books = response.data;
+          setCompletedBooks(books); // 서버에서 가져온 데이터를 상태에 저장
+
+          // 각 책에 대해 리뷰 존재 여부 확인
+          for (const book of books) {
+            await checkIfReviewExists(book); // 리뷰 존재 여부 확인
+          }
         })
         .catch(error => {
           console.error('완독 도서를 가져오는데 실패했습니다.', error);
@@ -80,6 +164,15 @@ const MyLib = () => {
         .catch(error => {
           console.error('북 시그널 도서를 가져오는데 실패했습니다.', error);
         });
+
+      // 사용자 업로드한 도서 데이터를 가져옴
+      axios.get(`http://localhost:3001/upload-books?mem_id=${userInfo.mem_id}`, { withCredentials: true })
+        .then(response => {
+          setUploadedBooks(response.data); // 서버에서 가져온 데이터를 상태에 저장
+        })
+        .catch(error => {
+          console.error('업로드한 도서를 가져오는데 실패했습니다.', error);
+        });
     }
   }, [userInfo]);
 
@@ -91,12 +184,14 @@ const MyLib = () => {
     navigate(`/detail`, { state: { book } }); // 선택한 책의 전체 객체를 상태로 전달하여 이동
   };
 
-  const openReviewModal = (book) => {
+  // 리뷰 모달 열기 함수
+  const openReviewModal = async (book) => {
     setSelectedBook(book);
+    await checkIfReviewExists(book); // 리뷰 존재 여부 확인
     setReviewModalOpen(true);
   };
 
-
+  // 리뷰 모달 닫기 함수
   const closeReviewModal = () => {
     setReviewModalOpen(false);
     setSelectedBook(null);
@@ -137,7 +232,7 @@ const MyLib = () => {
           <div className="mylib-books-grid">
             {recentBooks.length > 0 ? (
               recentBooks.map((book, index) => (
-                <div className="mylib-book-card" key={index} >
+                <div className="mylib-book-card" key={index} onClick={() => handleBookClickWithBookmark(book)} >
                   <img src={book.book_cover} alt={`${book.book_name} Cover`} className="mylib-book-cover" />
                   <div className="book-info">
                     <p className="book-title">{book.book_name}</p>
@@ -183,7 +278,7 @@ const MyLib = () => {
                 >
                   <p className='signalName'>{book.book_name}</p>
                   <br />
-                  <p className='w-[1000px] signalRepre'>{book.book_repre}</p>
+                  <p className='w-[1000px] signalSumm'>{book.book_repre}</p>
                 </div>
               ))
             ) : (
@@ -206,7 +301,7 @@ const MyLib = () => {
                     </div>
                   </div>
                   <button className="write-review-button" onClick={() => openReviewModal(book)}>
-                    리뷰 작성 및 수정
+                    {reviewStatus[book.book_idx] ? '리뷰 수정' : '리뷰 작성'}
                   </button>
                 </div>
               ))
@@ -215,6 +310,25 @@ const MyLib = () => {
             )}
           </div>
         );
+
+      case 'upload':
+        return (
+          <div className="mylib-books-grid">
+            {uploadedBooks.length > 0 ? (
+              uploadedBooks.map((book, index) => (
+                <div className="mylib-book-card" key={index} onClick={() => handleBookClickWithBookmark(book)}>
+                  <img src={book.book_cover} alt={`${book.book_name} Cover`} className="mylib-book-cover" />
+                  <div className="book-info">
+                    <p className="book-title">{book.book_name}</p>
+                    <p className="book-author">{book.book_writer}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="mylib-no-readingbooks-message">업로드한 도서가 없습니다.</p>
+            )}
+          </div>
+        )
       default:
         return null;
     }
@@ -223,6 +337,13 @@ const MyLib = () => {
   return (
     <div className="mylib-container">
       <h1 className="mylib-title">{userInfo?.mem_nick} 님의 서재</h1>
+
+      {/* 최근 읽은 도서 갯수에 따른 멘트 */}
+      <p className="mylib-welcome-message">
+        올해 {recentBooks.length}권을 읽으셨어요!
+      </p>
+      <br />
+
       <div className="tabs">
         <div
           className={`tab ${activeTab === 'recent' ? 'active' : ''}`}
@@ -247,6 +368,12 @@ const MyLib = () => {
           onClick={() => handleTabClick('completed')}
         >
           완독 도서
+        </div>
+        <div
+          className={`tab ${activeTab === 'upload' ? 'active' : ''}`}
+          onClick={() => handleTabClick('upload')}
+        >
+          업로드한 도서
         </div>
       </div>
 

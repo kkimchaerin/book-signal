@@ -39,7 +39,7 @@ exports.join = async (req, res) => {
       enroll_at: new Date()
     });
 
-   // 회원가입이 완료된 후 기본 세팅값을 설정
+    // 회원가입이 완료된 후 기본 세팅값을 설정
     const settingResult = await userDB.createUserSetting(mem_id);
     if (!settingResult) {
       throw new Error('기본 세팅값 설정 중 오류가 발생했습니다.');
@@ -295,4 +295,15 @@ exports.getUserInfo = async (req, res) => {
   }
 };
 
+// 업로드한 도서를 가져오는 함수
+exports.getUploadBooks = async (req, res) => {
+  const mem_id = req.query.mem_id;
 
+  try {
+    const uploadBooks = await userDB.getUploadBooks(mem_id); // 모델에서 데이터 가져옴
+    res.status(200).json(uploadBooks);
+  } catch (error) {
+    console.error('업로드한 도서를 가져오는 중 오류 발생:', error);
+    res.status(500).json({ message: '업로드한 도서를 가져오는 중 오류가 발생했습니다.' });
+  }
+};
