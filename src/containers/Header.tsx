@@ -26,14 +26,15 @@ const Header: React.FC<Props> = ({
   fetchBookmarks,
   goToBookmark,
   onReadingComplete,
-  onReadingQuit,
+  onReadingQuit = () => { },
   onBookmarkRemove,
   onFontSizeChange,  // 폰트 크기 변경 함수
+  initialFontSize,
 }: Props) => {
   const [showTTSSettings, setShowTTSSettings] = useState(false);
   const [showBookmarkSettings, setShowBookmarkSettings] = useState(false);
   const [showFontSettings, setShowFontSettings] = useState(false);
-  const [fontSize, setFontSize] = useState(16); // 초기값 16
+  const [fontSize, setFontSize] = useState<number>(initialFontSize ?? 16);
   const [bookmarkMessage, setBookmarkMessage] = useState('');
   const [bookmarks, setBookmarks] = useState<{ book_mark: string; book_text: string }[]>([]);
   const [showBookmarksList, setShowBookmarksList] = useState(false);
@@ -45,7 +46,7 @@ const Header: React.FC<Props> = ({
   // 폰트 크기 증가 함수
   const increaseFontSize = () => {
     if (fontSize < 32) {
-      setFontSize((prev) => {
+      setFontSize((prev: number) => {  // 'prev'에 'number' 타입 지정
         const newSize = prev + 2;
         if (onFontSizeChange) onFontSizeChange('increase');
         return newSize;
@@ -53,16 +54,16 @@ const Header: React.FC<Props> = ({
     }
   };
 
-  // 폰트 크기 감소 함수
   const decreaseFontSize = () => {
     if (fontSize > 12) {
-      setFontSize((prev) => {
+      setFontSize((prev: number) => {  // 'prev'에 'number' 타입 지정
         const newSize = prev - 2;
         if (onFontSizeChange) onFontSizeChange('decrease');
         return newSize;
       });
     }
   };
+
 
   // 슬라이더 값 변경 함수
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -248,7 +249,7 @@ const Header: React.FC<Props> = ({
             <ControlBtn message="Bookmark" onClick={handleBookmarkToggle} />
             <ControlBtn message="Font Settings" onClick={handleFontClick} />
             <ControlBtn message="독서 완료" onClick={handleReadingComplete} />
-            <ControlBtn message="독서 종료" onClick={handleReadingQuit} />
+            <ControlBtn message="독서 종료" onClick={onReadingQuit} />
           </div>
         </AutoLayout>
       </Layout>
@@ -321,7 +322,7 @@ const Header: React.FC<Props> = ({
             <label htmlFor="font-size-slider">Font Size</label>
             <br />
             <div className="font-size-control">
-              <p className='current-font'>{fontSize}</p> {/* 현재 선택된 폰트 크기 표시 */}
+              <p className='current-font'>{fontSize}</p> {/* 전달받은 fontSize 표시 */}
               <button className="font-minus" onClick={decreaseFontSize} disabled={fontSize <= 12}>-</button>
               <input
                 type="range"
@@ -337,6 +338,7 @@ const Header: React.FC<Props> = ({
           </div>
         </div>
       </TTSWrapper>
+
     </Wrapper>
   );
 };
@@ -364,6 +366,7 @@ interface Props {
   onReadingQuit?: () => void;
   onBookmarkRemove?: (book_mark: string) => void;
   onFontSizeChange?: (action: 'increase' | 'decrease') => void;
+  initialFontSize?: number;
 }
 
 export default Header;
