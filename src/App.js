@@ -7,7 +7,6 @@ import Home from './pages/Home';
 import MyLib from './pages/MyLib';
 import MyPage from './pages/MyPage';
 import RootLayout from './pages/RootLayout';
-import Chatbot from './components/Chatbot';
 import Login from './pages/Login';
 import Join from './pages/Join';
 import BookViewTest from './pages/BookViewPDF';
@@ -78,7 +77,6 @@ function App() {
             <Route index element={<Home />} />
             <Route path='/mylib' element={<MyLib />} />
             <Route path='/mypage' element={<MyPage />} />
-            <Route path='/chatbot' element={<Chatbot />} />
             <Route path="/bookviewtest" element={<BookViewTest />} />
             <Route path='/deleteuser' element={<DeleteUser />} />
             <Route path='/searchreport' element={<SearchReport />} />
