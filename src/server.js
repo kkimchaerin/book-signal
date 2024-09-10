@@ -285,6 +285,24 @@ app.post('/summarize', async (req, res) => {
         const summary = summaryResponse.data.choices[0].message.content.trim();
         summaries.push(summary);
 
+        // OpenAI API를 사용하여 대표 문장 추출
+        const repreResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
+          model: 'gpt-3.5-turbo',
+          messages: [{
+            role: "user",
+            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분에서 가장 중요한 대표 문장을 하나 뽑아 주세요.`
+          }],
+          max_tokens: 200,
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+          }
+        });
+
+        const representativeSentence = repreResponse.data.choices[0].message.content.trim();
+        console.log('대표 문장 생성 성공:', representativeSentence);
+
         // 요약을 기반으로 텍스트 프롬프트를 생성
         const promptForImage = `
         책 "${bookName}"의 한 부분을 시각적으로 묘사한 이미지입니다. 
@@ -325,7 +343,7 @@ app.post('/summarize', async (req, res) => {
         await connection.query(`
           INSERT INTO book_extract_data (mem_id, book_idx, book_name, book_extract, dalle_path, book_repre)
           VALUES (?, ?, ?, ?, ?, ?)
-        `, [memId, bookIdx, bookName, summary, imagePaths[imagePaths.length - 1], null]); // 대표 문장은 null 처리
+        `, [memId, bookIdx, bookName, summary, imagePaths[imagePaths.length - 1], representativeSentence]); // 대표 문장 저장
 
       } catch (err) {
         console.error('요약 또는 이미지 생성 중 오류 발생:', err.response ? err.response.data : err.message);
@@ -343,6 +361,7 @@ app.post('/summarize', async (req, res) => {
     if (connection) connection.release();
   }
 });
+
 
 // 정적 파일 서빙
 app.use(express.static('public'));
