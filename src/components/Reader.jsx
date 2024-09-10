@@ -46,6 +46,7 @@ const EpubReader = ({ url, book, location, from }) => {
     };
   }, []);
 
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
   const [gender, setGender] = useState("MALE");
@@ -206,7 +207,7 @@ const EpubReader = ({ url, book, location, from }) => {
 
         // 'recent' 또는 'upload'에서 넘어온 경우에만 북마크와 폰트 크기 가져오기
         if (location.state?.from === 'mylib' || location.state?.from === 'upload') {
-          
+
           const response = await axios.get('http://localhost:3001/getBookPath/getUserBookmark', {
             params: { book_idx, mem_id, isUploadBook, upload_idx },
           });
@@ -758,9 +759,9 @@ const EpubReader = ({ url, book, location, from }) => {
       </ViewerWrapper>
 
       <Nav
-        control={() => {}}
-        onToggle={() => {}}
-        onLocation={() => {}}
+        control={() => { }}
+        onToggle={() => { }}
+        onLocation={() => { }}
         ref={null}
       />
 
@@ -774,9 +775,9 @@ const EpubReader = ({ url, book, location, from }) => {
         bookText={currentBookText}
         currentPage={currentPage}
         cfi={cfi}
-        // onStopGazeTracking={(stopGazeTracking) => {
-        //   stopGazeTrackingRef.current = stopGazeTracking;
-        // }}
+      // onStopGazeTracking={(stopGazeTracking) => {
+      //   stopGazeTrackingRef.current = stopGazeTracking;
+      // }}
       />
     </div>
   );
@@ -811,6 +812,5 @@ const Reader = () => {
     </Provider>
   );
 };
-
 
 export default Reader;
