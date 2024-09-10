@@ -15,6 +15,7 @@ const Header: React.FC<Props> = ({
   gender,
   onRateChange,
   onVoiceChange,
+  onSummarizePage,
   onTTSToggle,
   onTTSPause,
   onTTSStop,
@@ -159,6 +160,12 @@ const Header: React.FC<Props> = ({
     }
   };
 
+    // 요약 요청 함수
+    const handleBookSignalClick = async () => {
+      if (onSummarizePage) {
+        await onSummarizePage(); // 페이지 요약 함수 호출
+      }
+    };
 
   const handleReadingQuit = () => {
     console.log("독서 중단 처리"); // 함수 호출 시작 로그
@@ -256,6 +263,7 @@ const Header: React.FC<Props> = ({
             <ControlBtn message="Font Settings" onClick={handleFontClick} />
             <ControlBtn message="독서 완료" onClick={handleReadingComplete} />
             <ControlBtn message="독서 종료" onClick={onReadingQuit} />
+            <ControlBtn message="BookSignal" onClick={handleBookSignalClick} /> 
           </div>
         </AutoLayout>
       </Layout>
@@ -372,6 +380,7 @@ interface Props {
   onBookmarkRemove?: (book_mark: string) => void;
   onFontSizeChange?: (action: 'increase' | 'decrease') => void;
   initialFontSize?: number;
+  onSummarizePage?: () => void;
 }
 
 export default Header;

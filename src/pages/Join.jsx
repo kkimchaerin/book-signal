@@ -352,7 +352,7 @@ const Join = () => {
             )}
           </div>
           <div className={`join-input-group ${errors.memBirth ? 'error-border' : ''}`}>
-            <label htmlFor="memBirth" className="join-input-label">생년월일</label>
+            <label htmlFor="memBirth" className="input-label">생년월일</label>
             <input
               type="date"
               id="memBirth"

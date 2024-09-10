@@ -16,6 +16,24 @@ exports.getUserReviewsWithBooks = async (mem_id) => {
   }
 };
 
+// 특정 책의 리뷰를 가져오는 함수
+exports.getReviewsByBookId = async (book_idx) => {
+  try {
+    const query = `
+      SELECT book_end.*, member.mem_nick 
+      FROM book_end
+      JOIN member ON book_end.mem_id = member.mem_id 
+      WHERE book_end.book_idx = ?;
+    `;
+    const [results] = await db.query(query, [book_idx]); 
+
+    return results;
+  } catch (err) {
+    console.error('리뷰를 가져오는 중 오류 발생:', err);
+    throw err;
+  }
+};
+
 // 리뷰 삭제 기능
 exports.deleteReview = async (reviewId, mem_id) => {
 
