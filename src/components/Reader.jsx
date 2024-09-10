@@ -210,21 +210,39 @@ const EpubReader = ({ url, book, location, from }) => {
           console.warn("사용자 정보 또는 책 정보가 없습니다.");
           return;
         }
-        const response = await fetchBookmarks();
 
-        const { bookmark, fontSize } = response;
+        // 'recent' 또는 'upload'에서 넘어온 경우에만 북마크와 폰트 크기 가져오기
+        if (location.state?.from === 'mylib' || location.state?.from === 'upload') {
+          
+          const response = await axios.get('http://localhost:3001/getBookPath/getUserBookmark', {
+            params: { book_idx, mem_id, isUploadBook, upload_idx },
+          });
 
-        // 폰트 크기 설정
-        if (fontSize) {
-          setFontSize(fontSize);
-        }
+          const { bookmark, fontSize } = response.data;
 
-        // 북마크가 있으면 북마크 위치로, 없으면 첫 페이지로 이동
-        if (bookmark) {
-          console.log("북마크 위치로 이동:", bookmark);
-          renditionRef.current.display(bookmark);
+          // 폰트 크기 설정
+          if (fontSize) {
+            setFontSize(fontSize);
+          }
+
+          // 책이 로드된 후 북마크 위치로 이동하도록 함
+          renditionRef.current.display().then(() => {
+            // 폰트 크기를 적용
+            renditionRef.current.themes.fontSize(`${fontSize}px`);
+
+            // 북마크 위치로 이동
+            if (bookmark) {
+              console.log("북마크 위치로 이동:", bookmark);
+              renditionRef.current.display(bookmark);  // DB에서 가져온 cfi로 이동
+            } else {
+              // 북마크가 없으면 첫 페이지로 이동
+              console.log("북마크가 없으므로 첫 페이지로 이동합니다.");
+              renditionRef.current.display();
+            }
+          });
         } else {
-          console.log("북마크가 없으므로 첫 페이지로 이동합니다.");
+          // 메인 페이지에서 열면 항상 첫 페이지로 이동
+          console.log("메인 페이지에서 열었으므로 첫 페이지로 이동합니다.");
           renditionRef.current.display();
         }
       } catch (error) {
@@ -234,7 +252,7 @@ const EpubReader = ({ url, book, location, from }) => {
 
     if (viewerRef.current && userInfo && book) {  // userInfo와 book이 로드된 후 실행
       setLoading(true);
-      const bookInstance = ePub(url);  // const book에서 bookInstance로 이름 변경
+      const bookInstance = ePub(url);
       bookRef.current = bookInstance;
 
       const rendition = bookInstance.renderTo(viewerRef.current, {
@@ -291,7 +309,6 @@ const EpubReader = ({ url, book, location, from }) => {
       };
     }
   }, [url, dispatch, userInfo, book, location.state]);
-
 
   const onPageMove = useCallback(
     (type) => {
