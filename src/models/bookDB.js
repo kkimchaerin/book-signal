@@ -3,21 +3,51 @@ const conn = require('../config/database');
 // 도서 정보 검색 함수
 exports.searchBooks = async (searchQuery) => {
   try {
-    const sql = `SELECT * FROM book_db WHERE book_name LIKE ?`;
+    // 책 이름과 장르에서 모두 검색
+    const sql = `
+      SELECT * FROM book_db 
+      WHERE book_name LIKE ? OR book_genre LIKE ?
+    `;
     const formattedQuery = `%${searchQuery}%`;
-    const [results] = await conn.query(sql, [formattedQuery]);
+    const [results] = await conn.query(sql, [formattedQuery, formattedQuery]);
 
-    const updatedResults = results.map(book => {
-      book.book_cover = decodeURIComponent(book.book_cover);
-      book.book_cover = book.book_cover ? `images/${book.book_cover}` : './files/default.jpg';
-      return book;
-    });
+    // 결과를 전체, 도서, 장르로 나누기
+    const allResults = results;  // 전체 결과 (책 이름과 장르 둘 다)
+    const bookResults = results.filter(book => book.book_name.includes(searchQuery));  // 도서 결과
+    const genreResults = results.filter(book => book.book_genre.includes(searchQuery));  // 장르 결과
+
+    // 이미지 경로 업데이트 (중복 방지)
+    const updatedResults = {
+      all: allResults.map(book => {
+        book.book_cover = decodeURIComponent(book.book_cover);
+        // 경로가 '/images/'로 시작하지 않는 경우에만 추가
+        book.book_cover = book.book_cover.startsWith('/images/') ? book.book_cover : `/images/${book.book_cover}`;
+        // 값이 없을 경우 기본 경로 설정
+        book.book_cover = book.book_cover || '/images/default.jpg';
+        return book;
+      }),
+      books: bookResults.map(book => {
+        book.book_cover = decodeURIComponent(book.book_cover);
+        book.book_cover = book.book_cover.startsWith('/images/') ? book.book_cover : `/images/${book.book_cover}`;
+        book.book_cover = book.book_cover || '/images/default.jpg';
+        return book;
+      }),
+      genres: genreResults.map(book => {
+        book.book_cover = decodeURIComponent(book.book_cover);
+        book.book_cover = book.book_cover.startsWith('/images/') ? book.book_cover : `/images/${book.book_cover}`;
+        book.book_cover = book.book_cover || '/images/default.jpg';
+        return book;
+      })
+    };
 
     return updatedResults;
   } catch (err) {
     throw err;
   }
 };
+
+
+
 
 // book_path를 가져오는 함수
 exports.getBookPath = async (bookName) => {
