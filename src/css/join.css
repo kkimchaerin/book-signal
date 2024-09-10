@@ -286,6 +286,11 @@ button[type="submit"]:hover {
     color: red;
 }
 
+#memBirth{
+    margin-left: 10px;
+}
+
+
 /* 모든 항목을 입력해주세요 메시지 스타일 */
 .all-fields-error {
     color: #ff4d4f;

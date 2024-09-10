@@ -332,11 +332,11 @@ exports.getUploadBooks = async (mem_id) => {
     `, [mem_id]);
 
     const updatedResults = rows.map(book => {
-      book.book_cover = decodeURIComponent(book.book_cover);  // book_cover 디코딩
-      if (book.book_cover) {
-        book.book_cover = `/images/${book.book_cover}`;  // book_cover가 존재하면 경로 추가
+      // null이나 undefined 또는 빈 문자열일 경우 기본 이미지 경로 설정
+      if (!book.book_cover) {
+        book.book_cover = '/images/default.png';
       } else {
-        book.book_cover = '/images/default.jpg';  // 존재하지 않으면 기본 이미지 경로 설정
+        book.book_cover = `/images/${book.book_cover}`;  // book_cover가 존재하면 경로 추가
       }
       return book;
     });
@@ -347,5 +347,6 @@ exports.getUploadBooks = async (mem_id) => {
     throw new Error('업로드한 도서를 가져오는 중 오류가 발생했습니다.');
   }
 };
+
 
 

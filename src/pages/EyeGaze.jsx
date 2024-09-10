@@ -17,6 +17,7 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book, currentPage, cfi }
 
   const [calibrationData, setCalibrationData] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false); // SDK 초기화 상태 관리
+  const [hasShownWebcamWarning, setHasShownWebcamWarning] = useState(false); // 플래그 변수
   
   const canvasRef = useRef(null);
   const seesoRef = useRef(null);
@@ -162,12 +163,6 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book, currentPage, cfi }
               }, 1000);
             }
           }
-
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = '#FF0000';
-          ctx.beginPath();
-          ctx.arc(x, y, 10, 0, Math.PI * 2, true);
-          ctx.fill();
       }
   }
 }
@@ -216,6 +211,10 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book, currentPage, cfi }
 
   function afterFailed() {
     console.log('SeeSo SDK 초기화 실패!');
+    if (!hasShownWebcamWarning) {
+      alertMessage("웹캠이 감지되지 않았습니다. 기능을 사용하려면 웹캠을 연결하세요.", "⚠️");
+      setHasShownWebcamWarning(true); // 경고 메시지를 표시한 상태로 설정
+    }
   }
 
   function onGaze(gazeInfo) {

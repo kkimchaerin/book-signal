@@ -23,9 +23,8 @@ const axios = require('axios');
 const multer = require('multer');
 const EPub = require('epub'); // 'epub' 패키지 사용
 
-
 // 세션 설정 (기본 설정)
-app.use(session({
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'MyKey',
   resave: false,
   saveUninitialized: false,
@@ -34,7 +33,7 @@ app.use(session({
     secure: false,
     maxAge: null,
   }
-}));
+});
 
 app.use(express.json());
 app.use(cors({
@@ -42,8 +41,20 @@ app.use(cors({
   credentials: true,
 }));
 
+
+// 세션 미들웨어 설정 전에 특정 경로에 대해 세션 체크를 비활성화
+app.use('/review/book', (req, res, next) => next()); // '/review/book' 경로에 대해서는 세션 미들웨어를 비활성화
+
+// 나머지 경로에 대해서만 세션 미들웨어 적용
+app.use(sessionMiddleware);
+
+
 // 정적 파일 제공을 위한 경로 설정
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
+
+// 정적 파일 제공을 위한 경로 설정
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
 
 // Multer 설정 (파일을 임시 이름으로 서버의 'uploads' 폴더에 저장)
 const storage = multer.diskStorage({
@@ -73,7 +84,7 @@ app.post('/upload-epub', upload.single('file'), (req, res) => {
 
   // EPUB 파일을 파싱
   const epub = new EPub(filePath, "/imagewebroot/", "/articlewebroot/");
-  
+
   epub.on("error", (err) => {
     console.error('EPUB 처리 중 오류:', err);
     return res.status(500).json({ error: 'EPUB 처리 중 오류가 발생했습니다.' });
@@ -87,9 +98,10 @@ app.post('/upload-epub', upload.single('file'), (req, res) => {
     const memId = req.session.user.mem_id; // 세션에서 사용자 ID 가져오기
 
     // 책 제목을 파일명으로 사용할 수 있도록 특수문자와 공백 제거
-    const safeBookName = bookName.replace(/[^a-zA-Z0-9가-힣]/g, '_'); // 특수문자는 '_'로 치환
+    const safeBookName = bookName.replace(/[^a-zA-Z0-9가-힣]/g, ''); // 특수문자는 '_'로 치환
     const newFileName = `${safeBookName}${path.extname(req.file.originalname)}`;
     const newFilePath = path.join('public/uploads', newFileName);
+    
 
     // 파일명을 책 제목으로 변경
     fs.rename(filePath, newFilePath, async (err) => {
@@ -104,7 +116,7 @@ app.post('/upload-epub', upload.single('file'), (req, res) => {
         connection = await pool.getConnection();
         await connection.query(
           'INSERT INTO book_upload (mem_id, book_name, book_writer, book_file_path) VALUES (?, ?, ?, ?)',
-          [memId, bookName, bookAuthor, newFilePath]
+          [memId, bookName, bookAuthor, newFileName]
         );
         connection.release();
 
@@ -137,7 +149,7 @@ app.use('/ranking', rankingRoutes);
 app.use('/wishlist', wishListRoutes);
 app.use('/getBookPath', bookRoutes);
 app.use('/main', mainRoutes);
-app.use('/review', reviewRoutes)
+app.use('/review', reviewRoutes);
 app.use('/sameBook', sameBookRoutes);
 
 app.post('/tts', async (req, res) => {
@@ -171,7 +183,7 @@ app.post('/tts', async (req, res) => {
 // 독서 완료 API 엔드포인트
 app.post('/completeReading', async (req, res) => {
   const { memId, bookIdx, bookName } = req.body;
-  
+
   let connection;
   try {
     connection = await pool.getConnection();
@@ -367,6 +379,12 @@ app.post('/summarize', async (req, res) => {
   } finally {
     if (connection) connection.release();
   }
+});
+
+
+app.use((req, res, next) => {
+  console.log('요청 경로:', req.path); // 서버로 들어오는 모든 요청의 경로를 로그로 출력
+  next();
 });
 
 // 정적 파일 서빙

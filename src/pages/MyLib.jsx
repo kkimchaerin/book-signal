@@ -27,10 +27,49 @@ const MyLib = () => {
   const [reviewStatus, setReviewStatus] = useState({}); // 각 책의 리뷰 여부를 저장하는 상태
   const [uploadedBooks, setUploadedBooks] = useState([]); // 업로드한 도서 상태
 
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // 업로드 모달 상태
+  const [file, setFile] = useState(null); // 선택한 파일 상태
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);  // 선택한 파일을 상태에 저장
+    console.log('거');
+    
+  };
+
+  const handleFileUpload = async () => {
+    console.log('지');
+    
+    if (!file) {
+      alert('파일을 선택해주세요');
+      return;
+    }
+
+    const formData = new FormData();  // FormData 생성
+    formData.append('file', file);  // 선택한 파일을 추가
+
+    try {
+      // 서버로 파일 전송
+      const response = await axios.post('http://localhost:3001/upload-epub', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',  // 멀티파트 데이터로 전송
+        },
+        withCredentials: true,  // 세션 정보 포함
+      });
+
+      // 서버로부터 응답을 받았을 때
+      alert(response.data.message);  // 성공 메시지 표시
+      console.log('같');
+      
+      setIsUploadModalOpen(false);  // 업로드 완료 후 모달 닫기
+    } catch (error) {
+      // 파일 업로드 실패 시 에러 처리
+      console.error('파일 업로드 실패:', error);
+      alert('파일 업로드에 실패했습니다.');
+    }
+  };
 
 
   const navigate = useNavigate();
-
 
   useEffect(() => {
     // 서버에서 세션 정보를 가져옴
@@ -49,21 +88,26 @@ const MyLib = () => {
       });
   }, [navigate]);
 
+  // 업로드한 도서
   const handleBookClickWithUploadPath = async (book) => {
     try {
-      // book 객체 출력
-      console.log('book 객체:', book);
 
       // upload_idx를 사용하여 서버에 요청
       const response = await axios.post('http://localhost:3001/getBookPath/getUploadBookPath', {
         upload_idx: book.upload_idx,  // upload_idx 사용
       });
 
-      const bookPath = response.data.book_path || book.book_file_path; // 서버에서 경로를 못 가져오면 book_file_path 사용
-      console.log('bookPath:', bookPath);
+      let bookPath = response.data.book_path || book.book_file_path; // 서버에서 경로를 못 가져오면 book_file_path 사용
 
-      if (bookPath) {
-        navigate(`/reader`, { state: { book, bookPath } }); // bookPath를 넘겨줌
+      // 백슬래시(\)를 슬래시(/)로 변환하여 경로 수정
+      bookPath = bookPath.replace(/\\/g, '/');
+
+      // 확장자를 제거한 경로 생성
+      const bookPathWithoutExtension = bookPath.replace(/\.epub$/, '');
+
+      if (bookPathWithoutExtension) {
+        // 업로드에서 왔다는 정보도 함께 넘겨줌
+        navigate(`/reader`, { state: { book, bookPath: bookPathWithoutExtension, from: 'upload' } });
       } else {
         alertMessage('책 경로를 찾을 수 없습니다.', '❗');
       }
@@ -71,7 +115,6 @@ const MyLib = () => {
       console.error('책 경로를 가져오는 중 오류가 발생했습니다.', error);
     }
   };
-
 
 
   // 업로드 도서 탭에서 이 함수로 책 클릭 처리
@@ -84,7 +127,6 @@ const MyLib = () => {
       navigate(`/reader`, { state: { book, from: 'mylib' } });
     }
   };
-
 
 
   // 리뷰 존재 여부 확인 함수
@@ -379,6 +421,16 @@ const MyLib = () => {
 
       {renderContent()}
 
+      {/* 업로드한 도서 탭일 때만 + 버튼 렌더링 */}
+      {activeTab === 'upload' && (
+        <button
+          className="upload-button"
+          onClick={() => setIsUploadModalOpen(true)}
+        >
+          업로드
+        </button>
+      )}
+
       {/* GetReview 모달 */}
       {selectedBook && (
         <GetReview
@@ -392,6 +444,7 @@ const MyLib = () => {
       <Modal
         isOpen={isSignalOpen}
         onClose={() => setSignalOpen(false)}
+        className={"signal-modal"}
         backgroundImage={signalBackground}
         onDownload={handleDownload}
       >
@@ -399,6 +452,16 @@ const MyLib = () => {
         <p>{signalText}</p>
         <p>{signalSumm}</p>
 
+      </Modal>
+
+      <Modal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)} // 모달 닫기
+        className="upload-modal"
+      >
+        <h2>EPUB 파일 업로드</h2>
+        <input type="file" onChange={handleFileChange} />
+        <button onClick={handleFileUpload}> 업로드</button>
       </Modal>
     </div>
   );
