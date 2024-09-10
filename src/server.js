@@ -23,9 +23,8 @@ const axios = require('axios');
 const multer = require('multer');
 const EPub = require('epub'); // 'epub' 패키지 사용
 
-
 // 세션 설정 (기본 설정)
-app.use(session({
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'MyKey',
   resave: false,
   saveUninitialized: false,
@@ -34,13 +33,21 @@ app.use(session({
     secure: false,
     maxAge: null,
   }
-}));
+});
 
 app.use(express.json());
 app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true,
 }));
+
+
+// 세션 미들웨어 설정 전에 특정 경로에 대해 세션 체크를 비활성화
+app.use('/review/book', (req, res, next) => next()); // '/review/book' 경로에 대해서는 세션 미들웨어를 비활성화
+
+// 나머지 경로에 대해서만 세션 미들웨어 적용
+app.use(sessionMiddleware);
+
 
 // 정적 파일 제공을 위한 경로 설정
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
@@ -137,7 +144,7 @@ app.use('/ranking', rankingRoutes);
 app.use('/wishlist', wishListRoutes);
 app.use('/getBookPath', bookRoutes);
 app.use('/main', mainRoutes);
-app.use('/review', reviewRoutes)
+app.use('/review', reviewRoutes);
 app.use('/sameBook', sameBookRoutes);
 
 app.post('/tts', async (req, res) => {
@@ -367,6 +374,12 @@ app.post('/summarize', async (req, res) => {
   } finally {
     if (connection) connection.release();
   }
+});
+
+
+app.use((req, res, next) => {
+  console.log('요청 경로:', req.path); // 서버로 들어오는 모든 요청의 경로를 로그로 출력
+  next();
 });
 
 // 정적 파일 서빙

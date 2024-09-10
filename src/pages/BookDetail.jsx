@@ -17,6 +17,7 @@ const BookDetail = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [memId, setMemId] = useState(null);
   const [sameBooks, setSameBooks] = useState([]);
+  const [reviews, setReviews] = useState([]); // 리뷰 상태 추가
   const [modalIsOpen, setModalIsOpen] = useState(false); // 모달 상태 추가
 
   useEffect(() => {
@@ -119,6 +120,24 @@ const BookDetail = () => {
     // 페이지를 다시 로드하거나, 다른 로직 추가 가능
   };
 
+  // 리뷰 가져오기 API 호출 수정
+  useEffect(() => {
+    if (!book || !book.book_idx) {
+      console.error('유효한 책 정보가 없습니다.');
+      return;
+    }
+  
+    // 백엔드 요청 URL을 올바르게 설정
+    axios.get(`http://localhost:3001/review/book/${book.book_idx}`)
+      .then(response => {
+        const { reviews } = response.data;
+        setReviews(reviews); // 리뷰 데이터를 상태에 저장
+      })
+      .catch(error => {
+        console.error('리뷰 데이터 가져오기 실패:', error);
+      });
+  }, [book]);
+
   return (
     <div className='book-info-wrapper flex flex-col gap-10 max-w-screen-xl m-auto'>
       <section className='flex gap-6 w-30 h-96 justify-between'>
@@ -161,6 +180,25 @@ const BookDetail = () => {
           <p className='font-normal'>{book.book_explanation}</p>
         </div>
       </section>
+      <section>
+        <h2 className='text-2xl text-black'>리뷰</h2>
+        <div className='review-container bg-background p-6 mt-3 rounded-xl overflow-y-auto'>
+          {reviews.length > 0 ? (
+            reviews.map((review, index) => (
+              <div key={index} className='review-item mb-4 p-4 border rounded'>
+                <p className='review-content text-md'>{review.book_review}</p>
+                <p className='review-author text-sm text-gray-500'>작성자: {review.mem_nick}</p>
+                <p className='review-score text-xs text-yellow-500'>평점: {review.book_score}</p>
+                <p className='review-date text-xs text-gray-400'>작성일: {new Date(review.end_at).toLocaleDateString()}</p>
+                
+              </div>
+            ))
+          ) : (
+            <p className='text-gray-500'>아직 리뷰가 없습니다.</p>
+          )}
+        </div>
+      </section>
+
       <section>
         <h2 className='text-2xl mb-6 text-black'>관련 도서</h2>
         <div className='flex gap-4'>
