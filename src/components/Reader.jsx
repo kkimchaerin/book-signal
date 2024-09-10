@@ -34,24 +34,19 @@ const EpubReader = ({ url, book, location, from }) => {
 
   // ResizeObserver 오류 무시 코드 추가
   useEffect(() => {
-    const resizeObserverErrorHandler = () => {
-      requestAnimationFrame(() => {
-        try {
-          // `ResizeObserver`의 에러를 잡아냄
-        } catch (e) {
-          if (e.message.includes('ResizeObserver')) {
-            console.warn('ResizeObserver 오류 무시됨:', e);
-          }
-        }
-      });
+    const resizeObserverErrorHandler = (e) => {
+      if (e.message.includes("ResizeObserver loop")) {
+        e.stopImmediatePropagation(); // ResizeObserver 오류를 무시
+      }
     };
 
-    window.addEventListener('error', resizeObserverErrorHandler);
+    window.addEventListener("error", resizeObserverErrorHandler);
 
     return () => {
-      window.removeEventListener('error', resizeObserverErrorHandler);
+      window.removeEventListener("error", resizeObserverErrorHandler);
     };
   }, []);
+
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
@@ -201,25 +196,57 @@ const EpubReader = ({ url, book, location, from }) => {
         const book_idx = isUploadBook ? null : book?.book_idx;
         const upload_idx = isUploadBook ? book?.upload_idx : null;
 
+        // 콘솔에 입력 값들을 출력해서 값이 제대로 전달되는지 확인
+        console.log("mem_id:", mem_id);
+        console.log("isUploadBook:", isUploadBook);
+        console.log("book_idx:", book_idx);
+        console.log("upload_idx:", upload_idx);
+        console.log("location.state?.from:", location.state?.from);
+
         if (!mem_id || (!book_idx && !upload_idx)) {
           console.warn("사용자 정보 또는 책 정보가 없습니다.");
           return;
         }
-        const response = await fetchBookmarks();
 
-        const { bookmark, fontSize } = response;
+        // 'recent' 또는 'upload'에서 넘어온 경우에만 북마크와 폰트 크기 가져오기
+        if (location.state?.from === 'mylib' || location.state?.from === 'upload') {
+          console.log('요청시작');
+          
+          const response = await axios.get('http://localhost:3001/getBookPath/getUserBookmark', {
+            params: { book_idx, mem_id, isUploadBook, upload_idx },
+          });
 
-        // 폰트 크기 설정
-        if (fontSize) {
-          setFontSize(fontSize);
-        }
+          console.log('API 응답:', response.data);
 
-        // 북마크가 있으면 북마크 위치로, 없으면 첫 페이지로 이동
-        if (bookmark) {
-          console.log("북마크 위치로 이동:", bookmark);
-          renditionRef.current.display(bookmark);
+          const { bookmark, fontSize } = response.data;
+
+          // 여기서 bookmark와 fontSize를 출력
+          console.log("가져온 bookmark (cfi):", bookmark);
+          console.log("가져온 fontSize:", fontSize);
+
+          // 폰트 크기 설정
+          if (fontSize) {
+            setFontSize(fontSize);
+          }
+
+          // 책이 로드된 후 북마크 위치로 이동하도록 함
+          renditionRef.current.display().then(() => {
+            // 폰트 크기를 적용
+            renditionRef.current.themes.fontSize(`${fontSize}px`);
+
+            // 북마크 위치로 이동
+            if (bookmark) {
+              console.log("북마크 위치로 이동:", bookmark);
+              renditionRef.current.display(bookmark);  // DB에서 가져온 cfi로 이동
+            } else {
+              // 북마크가 없으면 첫 페이지로 이동
+              console.log("북마크가 없으므로 첫 페이지로 이동합니다.");
+              renditionRef.current.display();
+            }
+          });
         } else {
-          console.log("북마크가 없으므로 첫 페이지로 이동합니다.");
+          // 메인 페이지에서 열면 항상 첫 페이지로 이동
+          console.log("메인 페이지에서 열었으므로 첫 페이지로 이동합니다.");
           renditionRef.current.display();
         }
       } catch (error) {
@@ -229,7 +256,7 @@ const EpubReader = ({ url, book, location, from }) => {
 
     if (viewerRef.current && userInfo && book) {  // userInfo와 book이 로드된 후 실행
       setLoading(true);
-      const bookInstance = ePub(url);  // const book에서 bookInstance로 이름 변경
+      const bookInstance = ePub(url);
       bookRef.current = bookInstance;
 
       const rendition = bookInstance.renderTo(viewerRef.current, {
@@ -286,7 +313,6 @@ const EpubReader = ({ url, book, location, from }) => {
       };
     }
   }, [url, dispatch, userInfo, book, location.state]);  // userInfo와 book을 의존성 배열에 추가
-
 
   const onPageMove = useCallback((type) => {
     if (saveGazeTimeRef.current) {
