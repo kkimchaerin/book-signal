@@ -111,7 +111,6 @@ router.post('/getUploadBookPath', async (req, res) => {
 
     try {
         const bookPath = await getBookUploadPath(upload_idx);
-        console.log(bookPath);
 
         if (!bookPath) {
             return res.status(404).json({ error: 'Book path not found' });

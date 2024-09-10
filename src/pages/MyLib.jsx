@@ -382,6 +382,16 @@ const MyLib = () => {
 
       {renderContent()}
 
+      {/* 업로드한 도서 탭일 때만 + 버튼 렌더링 */}
+      {activeTab === 'upload' && (
+        <button
+          className="upload-button"
+          onClick={() => navigate('/uploadepub')}
+        >
+          업로드
+        </button>
+      )}
+
       {/* GetReview 모달 */}
       {selectedBook && (
         <GetReview
