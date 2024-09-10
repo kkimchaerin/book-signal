@@ -8,13 +8,11 @@ import { PiHandCoinsDuotone } from "react-icons/pi";
 import axios from 'axios';
 import CalibrationButton from '../components/book/CalibrationButton';
 import { alertMessage } from "../../src/utils/alertMessage";
-import RingLoader from "react-spinners/RingLoader";
 
 const MyPage = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [reviews, setReviews] = useState([]); // 리뷰 데이터를 저장하는 상태
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // 사용자 정보와 리뷰 정보를 가져오는 함수
@@ -84,15 +82,8 @@ const MyPage = () => {
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center">
-      <RingLoader
-        color="#f57e53"
-        loading={loading}
-        size={60}
-        aria-label="Loading Spinner"
-      />
-  </div>
+  if (!userInfo) {
+    return <p>로딩 중...</p>;
   }
 
   return (
