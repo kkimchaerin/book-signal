@@ -32,20 +32,99 @@ const EpubReader = ({ url, book, location, from }) => {
   const [fontSize, setFontSize] = useState(16); // 기본 글씨 크기
   const { bookPath, setBookPath } = location.state || {};
 
-  // ResizeObserver 오류 무시 코드 추가
+  const [isCameraAvailable, setIsCameraAvailable] = useState(false); // 카메라 사용 가능 여부 상태
+
   useEffect(() => {
-    const resizeObserverErrorHandler = (event) => {
-      if (event.message.includes("ResizeObserver")) {
+    const observer = new MutationObserver(() => {
+      const resizeObserverError = document.querySelector('[message*="ResizeObserver loop completed"]');
+      if (resizeObserverError) {
+        resizeObserverError.remove();
+      }
+    });
+  
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  
+    return () => observer.disconnect();
+  }, []);
+  
+
+  // 카메라가 연결되어 있는지 확인하는 함수
+  const checkCameraAvailability = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter((device) => device.kind === "videoinput");
+      setIsCameraAvailable(videoDevices.length > 0);
+    } catch (error) {
+      console.error("카메라 확인 중 오류 발생:", error);
+      setIsCameraAvailable(false);
+    }
+  };
+
+  useEffect(() => {
+    // 카메라 연결 여부를 확인
+    checkCameraAvailability();
+
+    // 전역 에러 처리
+    const errorHandler = (event) => {
+      if (
+        event.message &&
+        (event.message.includes("ResizeObserver") ||
+          event.message.includes("Could not start video source") ||
+          event.message.includes("Requested device not found"))
+      ) {
+        event.preventDefault();
+        return true; // prevent the error from propagating
+      }
+    };
+  
+    // 전역 에러 리스너 등록
+    window.addEventListener('error', errorHandler);
+  
+    // Promise rejection도 무시 (예: getUserMedia)
+    const unhandledRejectionHandler = (event) => {
+      if (
+        event.reason &&
+        (event.reason.message.includes("Requested device not found") ||
+         event.reason.message.includes("Could not start video source"))
+      ) {
         event.preventDefault();
       }
     };
-
-    window.addEventListener("error", resizeObserverErrorHandler);
+    window.addEventListener('unhandledrejection', unhandledRejectionHandler);
+  
+    // 콘솔 에러 무시
+    const originalConsoleError = console.error;
+    console.error = (message, ...args) => {
+      if (
+        message.includes(
+          "ResizeObserver loop completed with undelivered notifications."
+        ) ||
+        message.includes("Could not start video source") ||
+        message.includes("Requested device not found")
+      ) {
+        return;
+      }
+      originalConsoleError(message, ...args);
+    };
+  
     return () => {
-      window.removeEventListener("error", resizeObserverErrorHandler);
+      window.removeEventListener('error', errorHandler);
+      window.removeEventListener('unhandledrejection', unhandledRejectionHandler);
+      console.error = originalConsoleError; // Clean up: 콘솔 로그 원상 복구
     };
   }, []);
 
+  useEffect(() => {
+    if (isCameraAvailable) {
+      // 카메라가 있을 때만 카메라 관련 작업 수행
+      console.log("카메라가 연결되어 있습니다.");
+    } else {
+      console.log("카메라가 연결되어 있지 않습니다.");
+    }
+  }, [isCameraAvailable]);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
@@ -133,15 +212,19 @@ const EpubReader = ({ url, book, location, from }) => {
 
   const fetchBookmarks = async () => {
     try {
-      const isUploadBook = from === 'upload'; // 업로드 도서 여부
+      const isUploadBook = from === "upload"; // 업로드 도서 여부
       const upload_idx = isUploadBook ? book.upload_idx : null;
       console.log(book.upload_idx);
-
 
       const response = await axios.get(
         "http://localhost:3001/getBookPath/getUserBookmark",
         {
-          params: { book_idx: book.book_idx, mem_id: userInfo.mem_id, isUploadBook, upload_idx },
+          params: {
+            book_idx: book.book_idx,
+            mem_id: userInfo.mem_id,
+            isUploadBook,
+            upload_idx,
+          },
         }
       );
 
@@ -196,7 +279,7 @@ const EpubReader = ({ url, book, location, from }) => {
     const loadBookmarkAndNavigate = async () => {
       try {
         const mem_id = userInfo?.mem_id;
-        const isUploadBook = from === 'upload'; // 업로드 도서 여부
+        const isUploadBook = from === "upload"; // 업로드 도서 여부
         const book_idx = isUploadBook ? null : book?.book_idx;
         const upload_idx = isUploadBook ? book?.upload_idx : null;
 
@@ -206,11 +289,16 @@ const EpubReader = ({ url, book, location, from }) => {
         }
 
         // 'recent' 또는 'upload'에서 넘어온 경우에만 북마크와 폰트 크기 가져오기
-        if (location.state?.from === 'mylib' || location.state?.from === 'upload') {
-
-          const response = await axios.get('http://localhost:3001/getBookPath/getUserBookmark', {
-            params: { book_idx, mem_id, isUploadBook, upload_idx },
-          });
+        if (
+          location.state?.from === "mylib" ||
+          location.state?.from === "upload"
+        ) {
+          const response = await axios.get(
+            "http://localhost:3001/getBookPath/getUserBookmark",
+            {
+              params: { book_idx, mem_id, isUploadBook, upload_idx },
+            }
+          );
 
           const { bookmark, fontSize } = response.data;
 
@@ -227,7 +315,7 @@ const EpubReader = ({ url, book, location, from }) => {
             // 북마크 위치로 이동
             if (bookmark) {
               console.log("북마크 위치로 이동:", bookmark);
-              renditionRef.current.display(bookmark);  // DB에서 가져온 cfi로 이동
+              renditionRef.current.display(bookmark); // DB에서 가져온 cfi로 이동
             } else {
               // 북마크가 없으면 첫 페이지로 이동
               console.log("북마크가 없으므로 첫 페이지로 이동합니다.");
@@ -244,7 +332,8 @@ const EpubReader = ({ url, book, location, from }) => {
       }
     };
 
-    if (viewerRef.current && userInfo && book) {  // userInfo와 book이 로드된 후 실행
+    if (viewerRef.current && userInfo && book) {
+      // userInfo와 book이 로드된 후 실행
       setLoading(true);
       const bookInstance = ePub(url);
       bookRef.current = bookInstance;
@@ -285,7 +374,7 @@ const EpubReader = ({ url, book, location, from }) => {
         // cfi 값을 업데이트
         if (location && location.start) {
           setCfi(location.start.cfi);
-          console.log('현재 CFI 값:', location.start.cfi);
+          console.log("현재 CFI 값:", location.start.cfi);
         }
       };
 
@@ -330,15 +419,6 @@ const EpubReader = ({ url, book, location, from }) => {
             );
             setLoading(false);
 
-            // 페이지 이동 후에 canvas 사이즈와 위치만 업데이트
-            // if (EyeGazeRef.current) {
-            //   EyeGazeRef.current.resizeCanvas(); // canvas 크기만 조정
-            // }
-
-            // if (seesoRef.current) {
-            //   seesoRef.current.stopTracking();
-            //   seesoRef.current.startTracking(onGaze, onDebug);
-            // }
             // 페이지 이동 후 cfi 값 업데이트
             if (location && location.start) {
               setCfi(location.start.cfi);
@@ -466,7 +546,6 @@ const EpubReader = ({ url, book, location, from }) => {
       const { book_idx } = book;
       const fontsize = fontSize;
 
-
       // 상세 페이지로 네비게이션을 즉시 수행
       console.log("내 서재 페이지로 네비게이션 중...");
       navigate("/mylib", { state: { book } });
@@ -489,40 +568,50 @@ const EpubReader = ({ url, book, location, from }) => {
     }
   };
 
-  // 독서 종료
-  const handleReadingQuit = async () => {
-    if (userInfo && book) {
-      const mem_id = userInfo.mem_id;
-      const book_idx = book.book_idx;
-      const fontsize = fontSize;
-      const isUploadBook = from === 'upload'; // 업로드 도서 여부
-      const upload_idx = isUploadBook ? book.upload_idx : null;
-      const book_name = book.book_name;
+// 독서 종료
+const handleReadingQuit = async () => {
+  if (userInfo && book) {
+    const mem_id = userInfo.mem_id;
+    const book_idx = book.book_idx;
+    const fontsize = fontSize;
+    const isUploadBook = from === "upload"; // 업로드 도서 여부
+    const upload_idx = isUploadBook ? book.upload_idx : null;
+    const book_name = book.book_name;
 
-      console.log({ book_idx, mem_id, cfi, fontSize, isUploadBook, upload_idx });
+    console.log({
+      book_idx,
+      mem_id,
+      cfi,
+      fontSize,
+      isUploadBook,
+      upload_idx,
+    });
 
-      const currentLocation = renditionRef.current?.currentLocation();
-      if (currentLocation && currentLocation.start) {
-        const cfi = currentLocation.start.cfi;
-        try {
-          await axios.post("http://localhost:3001/getBookPath/endReading", {
-            mem_id,
-            book_idx,
-            cfi,
-            fontsize,
-            isUploadBook,
-            book_name,
-            upload_idx
-          });
-          console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
-
-        } catch (error) {
-          console.error("독서 중단 CFI 저장 중 오류:", error);
-        }
+    const currentLocation = renditionRef.current?.currentLocation();
+    if (currentLocation && currentLocation.start) {
+      const cfi = currentLocation.start.cfi;
+      try {
+        await axios.post("http://localhost:3001/getBookPath/endReading", {
+          mem_id,
+          book_idx,
+          cfi,
+          fontsize,
+          isUploadBook,
+          book_name,
+          upload_idx,
+        });
+        console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
+      } catch (error) {
+        console.error("독서 중단 CFI 저장 중 오류:", error);
       }
     }
-    navigate('/mylib', { state: { book } });
-  };
+  }
+  
+  setTimeout(() => {
+    navigate("/mylib", { state: { book } });
+  }, 1000); // 1000ms = 1초
+};
+
 
   // 현재 페이지 텍스트를 요약하는 함수
   const summarizeCurrentPage = async (isBookSignal = false) => {
@@ -759,26 +848,25 @@ const EpubReader = ({ url, book, location, from }) => {
       </ViewerWrapper>
 
       <Nav
-        control={() => { }}
-        onToggle={() => { }}
-        onLocation={() => { }}
+        control={() => {}}
+        onToggle={() => {}}
+        onLocation={() => {}}
         ref={null}
       />
 
       <Snackbar />
-      <EyeGaze
-        viewerRef={viewerRef}
-        onSaveGazeTime={(saveGazeTime) => {
-          saveGazeTimeRef.current = saveGazeTime;
-        }}
-        book={book} // book 객체 전달
-        bookText={currentBookText}
-        currentPage={currentPage}
-        cfi={cfi}
-      // onStopGazeTracking={(stopGazeTracking) => {
-      //   stopGazeTrackingRef.current = stopGazeTracking;
-      // }}
-      />
+      {isCameraAvailable && (
+        <EyeGaze
+          viewerRef={viewerRef}
+          onSaveGazeTime={(saveGazeTime) => {
+            saveGazeTimeRef.current = saveGazeTime;
+          }}
+          book={book} // book 객체 전달
+          bookText={currentBookText}
+          currentPage={currentPage}
+          cfi={cfi}
+        />
+      )}
     </div>
   );
 };
@@ -789,13 +877,12 @@ const Reader = () => {
 
   console.log("Reader 컴포넌트에서 전달된 book 객체:", book);
 
-
   if (!book) {
     console.error("Book object is undefined.");
     return <div>Error: Book data is missing.</div>;
   }
 
-  const isUploadBook = from === 'upload'; // 업로드된 책인지 확인
+  const isUploadBook = from === "upload"; // 업로드된 책인지 확인
   let epubUrl;
 
   if (isUploadBook) {

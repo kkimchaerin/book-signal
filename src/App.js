@@ -35,7 +35,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);  // 로그인 상태 관리
   const [user, setUser] = useState(null);  // 로그인한 사용자 정보 관리
   const [userInfo, setUserInfo] = useState(null); // check-session으로 가져오는 사용자 정보
-  
 
   // 로그아웃 처리
   const handleLogout = () => {
@@ -68,6 +67,45 @@ function App() {
         });
     }
   }, [isAuthenticated]);
+
+  // 전역 오류 무시 코드
+  useEffect(() => {
+    // 모든 window 에러를 무시하는 핸들러
+    const errorHandler = (event) => {
+      event.preventDefault(); // 모든 에러 기본 동작 차단
+      return true; // 에러를 브라우저에 표시하지 않음
+    };
+
+    // Promise rejection도 무시
+    const unhandledRejectionHandler = (event) => {
+      event.preventDefault(); // Promise 관련 에러 무시
+    };
+
+    // 모든 콘솔 에러를 무시
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      // 콘솔에서 에러 메시지 무시
+      return;
+    };
+
+    // 모든 경고도 무시 (옵션)
+    const originalConsoleWarn = console.warn;
+    console.warn = (...args) => {
+      return;
+    };
+
+    // 전역 이벤트 리스너 추가
+    window.addEventListener('error', errorHandler);
+    window.addEventListener('unhandledrejection', unhandledRejectionHandler);
+
+    return () => {
+      // Clean up: 원상 복구
+      window.removeEventListener('error', errorHandler);
+      window.removeEventListener('unhandledrejection', unhandledRejectionHandler);
+      console.error = originalConsoleError;
+      console.warn = originalConsoleWarn;
+    };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, user, setUser, handleLogout, userInfo }}>

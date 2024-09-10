@@ -22,10 +22,15 @@ const searchBooks = (req, res) => {
 
     bookDB.searchBooks(searchQuery)
         .then(results => {
-            if (results.length === 0) {
+            if (results.all.length === 0) {
                 return res.status(404).json({ message: '검색 결과가 없습니다.' });
             }
-            res.json(results);
+            // 전체, 도서, 장르로 나뉜 결과를 전달
+            res.json({
+                all: results.all,
+                books: results.books,
+                genres: results.genres
+            });
         })
         .catch(err => {
             console.error('도서 검색 중 오류 발생:', err);
