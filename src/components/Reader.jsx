@@ -38,20 +38,19 @@ const EpubReader = ({ url, book, location }) => {
         try {
           // `ResizeObserver`의 에러를 잡아냄
         } catch (e) {
-          if (e.message.includes('ResizeObserver')) {
-            console.warn('ResizeObserver 오류 무시됨:', e);
+          if (e.message.includes("ResizeObserver")) {
+            console.warn("ResizeObserver 오류 무시됨:", e);
           }
         }
       });
     };
-  
-    window.addEventListener('error', resizeObserverErrorHandler);
-  
-    return () => {
-      window.removeEventListener('error', resizeObserverErrorHandler);
-    };
-  }, []);  
 
+    window.addEventListener("error", resizeObserverErrorHandler);
+
+    return () => {
+      window.removeEventListener("error", resizeObserverErrorHandler);
+    };
+  }, []);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
@@ -83,10 +82,10 @@ const EpubReader = ({ url, book, location }) => {
   const [loading, setLoading] = useState(true);
   const [firstVisibleCfi, setFirstVisibleCfi] = useState(null);
   const [shouldSaveCfi, setShouldSaveCfi] = useState(true);
-  const [currentBookText, setCurrentBookText] = useState('');
+  const [currentBookText, setCurrentBookText] = useState("");
   const [userInfo, setUserInfo] = useState(null);
-  const [bookmarkMessage, setBookmarkMessage] = useState('');  // 추가된 부분
-  const [cfi, setCfi] = useState('');
+  const [bookmarkMessage, setBookmarkMessage] = useState(""); // 추가된 부분
+  const [cfi, setCfi] = useState("");
 
   // 폰트 크기 증가 함수
   const increaseFontSize = () => {
@@ -119,20 +118,18 @@ const EpubReader = ({ url, book, location }) => {
       // 테마를 적용하고, 재렌더링 강제
       renditionRef.current.themes.fontSize(`${fontSize}px`);
     }
-  }, [fontSize]);  // fontSize가 변경될 때마다 테마 적용
-
-
-
+  }, [fontSize]); // fontSize가 변경될 때마다 테마 적용
 
   useEffect(() => {
-    axios.get('http://localhost:3001/check-session', { withCredentials: true })
-      .then(response => {
+    axios
+      .get("http://localhost:3001/check-session", { withCredentials: true })
+      .then((response) => {
         setUserInfo(response.data.user);
       })
       .catch((error) => {
         if (error.response && error.response.status === 401) {
-          alert('로그인이 필요합니다.');
-          navigate('/login');
+          alert("로그인이 필요합니다.");
+          navigate("/login");
         } else {
           console.error("세션 정보 확인 중 오류 발생:", error);
         }
@@ -141,49 +138,55 @@ const EpubReader = ({ url, book, location }) => {
 
   const fetchBookmarks = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/getBookPath/getUserBookmark', {
-        params: { book_idx: book.book_idx, mem_id: userInfo.mem_id },
-      });
-      console.log('Fetched bookmark and font size:', response.data); // 로그에서 구조 확인
+      const response = await axios.get(
+        "http://localhost:3001/getBookPath/getUserBookmark",
+        {
+          params: { book_idx: book.book_idx, mem_id: userInfo.mem_id },
+        }
+      );
+      console.log("Fetched bookmark and font size:", response.data); // 로그에서 구조 확인
       return response.data; // 북마크와 폰트 크기 반환
     } catch (error) {
-      console.error('북마크를 가져오는 중 오류 발생:', error);
+      console.error("북마크를 가져오는 중 오류 발생:", error);
       return {};
     }
   };
-
 
   const handleBookmarkRemove = async (book_mark) => {
     const book_idx = book?.book_idx;
     try {
       // 서버에 북마크 삭제 요청 보내기
-      const response = await axios.post('http://localhost:3001/getBookPath/removeBookmark', {
-        book_idx,
-        mem_id: userInfo.mem_id,
-        book_mark
-      });
-
+      const response = await axios.post(
+        "http://localhost:3001/getBookPath/removeBookmark",
+        {
+          book_idx,
+          mem_id: userInfo.mem_id,
+          book_mark,
+        }
+      );
 
       if (response.status === 200) {
         // 북마크 삭제 후 상태 업데이트
-        const updatedBookmarks = bookmarks.filter((bookmark) => bookmark.book_mark !== book_mark);
+        const updatedBookmarks = bookmarks.filter(
+          (bookmark) => bookmark.book_mark !== book_mark
+        );
         setBookmarks(updatedBookmarks);
 
         // 로컬 스토리지 업데이트
         localStorage.setItem("bookmarks", JSON.stringify(updatedBookmarks));
 
         // 사용자에게 알림 메시지 표시
-        setBookmarkMessage('북마크가 삭제되었습니다.');
+        setBookmarkMessage("북마크가 삭제되었습니다.");
         setTimeout(() => {
-          setBookmarkMessage('');
+          setBookmarkMessage("");
         }, 2000);
       } else {
-        throw new Error('북마크 삭제에 실패했습니다.');
+        throw new Error("북마크 삭제에 실패했습니다.");
       }
     } catch (error) {
-      setBookmarkMessage('북마크 삭제 중 오류가 발생했습니다.');
+      setBookmarkMessage("북마크 삭제 중 오류가 발생했습니다.");
       setTimeout(() => {
-        setBookmarkMessage('');
+        setBookmarkMessage("");
       }, 2000);
     }
   };
@@ -200,10 +203,13 @@ const EpubReader = ({ url, book, location }) => {
         }
 
         // 'mylib'에서 넘어온 경우에만 북마크 가져오기
-        if (location.state?.from === 'mylib') {
-          const response = await axios.get('http://localhost:3001/getBookPath/getUserBookmark', {
-            params: { book_idx, mem_id },
-          });
+        if (location.state?.from === "mylib") {
+          const response = await axios.get(
+            "http://localhost:3001/getBookPath/getUserBookmark",
+            {
+              params: { book_idx, mem_id },
+            }
+          );
 
           const { bookmark, fontSize } = response.data;
 
@@ -211,7 +217,6 @@ const EpubReader = ({ url, book, location }) => {
           if (fontSize) {
             setFontSize(fontSize);
             console.log(fontSize);
-
           }
 
           if (bookmark) {
@@ -221,9 +226,10 @@ const EpubReader = ({ url, book, location }) => {
           }
         }
         // 북마크가 없거나 'mylib'에서 오지 않은 경우 첫 페이지로 이동
-        console.log("북마크가 없거나 mylib에서 오지 않았습니다. 첫 페이지로 이동합니다.");
+        console.log(
+          "북마크가 없거나 mylib에서 오지 않았습니다. 첫 페이지로 이동합니다."
+        );
         renditionRef.current.display();
-
       } catch (error) {
         console.error("북마크를 로드하는 중 오류 발생:", error);
       }
@@ -270,7 +276,7 @@ const EpubReader = ({ url, book, location }) => {
         // cfi 값을 업데이트
         if (location && location.start) {
           setCfi(location.start.cfi);
-          console.log('현재 CFI 값:', location.start.cfi);
+          console.log("현재 CFI 값:", location.start.cfi);
         }
       };
 
@@ -291,60 +297,65 @@ const EpubReader = ({ url, book, location }) => {
     }
   }, [url, dispatch, userInfo, location.state]);
 
-  const onPageMove = useCallback((type) => {
-    if (saveGazeTimeRef.current) {
-      saveGazeTimeRef.current();
-    }
-
-    setShouldSaveCfi(false);
-    if (renditionRef.current) {
-      setLoading(true);
-      const updateAfterMove = () => {
-        const location = renditionRef.current.currentLocation();
-        if (location) {
-          const page = location.start.displayed.page;
-          const total = location.start.displayed.total;
-
-          setCurrentPage(page || 1);
-          setTotalPages(total || 1);
-
-          dispatch(updateCurrentPage({ currentPage: page || 1, totalPages: total || 1 }));
-          setLoading(false);
-
-          // 페이지 이동 후에 canvas 사이즈와 위치만 업데이트
-          // if (EyeGazeRef.current) {
-          //   EyeGazeRef.current.resizeCanvas(); // canvas 크기만 조정
-          // }
-
-          // if (seesoRef.current) {
-          //   seesoRef.current.stopTracking();
-          //   seesoRef.current.startTracking(onGaze, onDebug);
-          // }
-          // 페이지 이동 후 cfi 값 업데이트
-          if (location && location.start) {
-            setCfi(location.start.cfi);
-            console.log('페이지 이동 후 CFI 값:', location.start.cfi);
-          }
-        }
-      };
-
-      renditionRef.current.off("relocated", updateAfterMove);
-      renditionRef.current.on("relocated", updateAfterMove);
-
-      if (type === "PREV") {
-        renditionRef.current.prev().then(() => {
-          logCurrentPageText();
-        });
-      } else if (type === "NEXT") {
-        renditionRef.current.next().then(() => {
-          logCurrentPageText();
-        });
+  const onPageMove = useCallback(
+    (type) => {
+      if (saveGazeTimeRef.current) {
+        saveGazeTimeRef.current();
       }
-    }
-  },
+
+      setShouldSaveCfi(false);
+      if (renditionRef.current) {
+        setLoading(true);
+        const updateAfterMove = () => {
+          const location = renditionRef.current.currentLocation();
+          if (location) {
+            const page = location.start.displayed.page;
+            const total = location.start.displayed.total;
+
+            setCurrentPage(page || 1);
+            setTotalPages(total || 1);
+
+            dispatch(
+              updateCurrentPage({
+                currentPage: page || 1,
+                totalPages: total || 1,
+              })
+            );
+            setLoading(false);
+
+            // 페이지 이동 후에 canvas 사이즈와 위치만 업데이트
+            // if (EyeGazeRef.current) {
+            //   EyeGazeRef.current.resizeCanvas(); // canvas 크기만 조정
+            // }
+
+            // if (seesoRef.current) {
+            //   seesoRef.current.stopTracking();
+            //   seesoRef.current.startTracking(onGaze, onDebug);
+            // }
+            // 페이지 이동 후 cfi 값 업데이트
+            if (location && location.start) {
+              setCfi(location.start.cfi);
+              console.log("페이지 이동 후 CFI 값:", location.start.cfi);
+            }
+          }
+        };
+
+        renditionRef.current.off("relocated", updateAfterMove);
+        renditionRef.current.on("relocated", updateAfterMove);
+
+        if (type === "PREV") {
+          renditionRef.current.prev().then(() => {
+            logCurrentPageText();
+          });
+        } else if (type === "NEXT") {
+          renditionRef.current.next().then(() => {
+            logCurrentPageText();
+          });
+        }
+      }
+    },
     [dispatch]
   );
-
 
   const logCurrentPageText = () => {
     if (renditionRef.current) {
@@ -366,10 +377,8 @@ const EpubReader = ({ url, book, location }) => {
 
             setPageTextArray(allVisibleTexts);
 
-
             const combinedText = allVisibleTexts.join(" ");
             setCurrentBookText(combinedText);
-
           });
 
           const textElements = iframeDoc.querySelectorAll(
@@ -389,7 +398,7 @@ const EpubReader = ({ url, book, location }) => {
     const currentLocation = renditionRef.current.currentLocation();
     if (currentLocation && currentLocation.start) {
       const cfi = currentLocation.start.cfi;
-      console.log('cfi!!!!!!!!!!!', cfi);
+      console.log("cfi!!!!!!!!!!!", cfi);
 
       const pageText = pageTextArray.join(" ");
       const newBookmarks = [...bookmarks, { cfi, pageText }];
@@ -443,6 +452,7 @@ const EpubReader = ({ url, book, location }) => {
   // 페이지 이동 후 api호출
   const handleReadingComplete = async () => {
     console.log("독서 완료 처리 시작");
+    summarizeCurrentPage(false); // 독서 완료 시는 3개 요약 생성
 
     if (userInfo && book) {
       const { mem_id } = userInfo;
@@ -473,15 +483,13 @@ const EpubReader = ({ url, book, location }) => {
     }
   };
 
-
   const handleReadingQuit = async () => {
     if (userInfo && book) {
       const mem_id = userInfo.mem_id;
       const book_idx = book.book_idx;
-      const fontsize = fontSize
+      const fontsize = fontSize;
 
-      console.log('독서종료', fontsize);
-
+      console.log("독서종료", fontsize);
 
       const currentLocation = renditionRef.current?.currentLocation();
       if (currentLocation && currentLocation.start) {
@@ -491,7 +499,7 @@ const EpubReader = ({ url, book, location }) => {
             mem_id,
             book_idx,
             cfi,
-            fontsize
+            fontsize,
           });
           console.log("독서 중단 CFI가 DB에 저장되었습니다.", cfi);
         } catch (error) {
@@ -499,9 +507,36 @@ const EpubReader = ({ url, book, location }) => {
         }
       }
     }
-    navigate('/detail', { state: { book } });
+    navigate("/detail", { state: { book } });
   };
 
+  // 현재 페이지 텍스트를 요약하는 함수
+  const summarizeCurrentPage = async (isBookSignal = false) => {
+    const pageText = pageTextArray.join(" ");
+    if (pageText) {
+      try {
+        const result = await handleSummarize(
+          userInfo.mem_id,
+          book.book_idx,
+          pageText,
+          isBookSignal
+        );
+
+        if (result.success) {
+          console.log("요약 성공:", result.summaries);
+        } else {
+          console.log("요약 실패:", result.message);
+        }
+      } catch (error) {
+        console.error("요약 중 오류:", error);
+      }
+    }
+  };
+
+  // BookSignal 버튼을 눌렀을 때 호출
+  const handleBookSignal = () => {
+    summarizeCurrentPage(true); // BookSignal 요청 시는 1개 요약 추가
+  };
 
   // TTS 관련 함수들
   const handleTTS = async () => {
@@ -550,7 +585,6 @@ const EpubReader = ({ url, book, location }) => {
                 });
               };
 
-
               console.log("재생 중");
               await new Promise((resolve) => {
                 audioRef.current.onended = () => {
@@ -579,9 +613,7 @@ const EpubReader = ({ url, book, location }) => {
         });
       }
     }
-  },
-    [rate]); // 배속이 변경될 때마다 실행
-
+  }, [rate]); // 배속이 변경될 때마다 실행
 
   // 오디오 소스가 변경될 때만 실행
   useEffect(() => {
@@ -605,11 +637,10 @@ const EpubReader = ({ url, book, location }) => {
       // 페이지 이동 후 TTS 재실행을 위해 isPlaying을 false로 설정 후 다시 true로 변경
       setIsPlaying(false); // 일시적으로 false로 설정하여 useEffect가 다시 트리거되도록 함
       setTimeout(() => {
-        setIsPlaying(true);  // 상태를 다시 true로 설정하여 TTS 재실행
+        setIsPlaying(true); // 상태를 다시 true로 설정하여 TTS 재실행
       }, 500);
     }
   };
-
 
   const stopTTS = () => {
     if (audioRef.current) {
@@ -672,20 +703,22 @@ const EpubReader = ({ url, book, location }) => {
           onVoiceChange={setGender}
           onBookmarkAdd={addBookmark}
           onReadingComplete={handleReadingComplete}
-          goToBookmark={goToBookmark}  // 전달
-          fetchBookmarks={fetchBookmarks}  // 전달
+          goToBookmark={goToBookmark} // 전달
+          fetchBookmarks={fetchBookmarks} // 전달
           onReadingQuit={handleReadingQuit}
           book={book}
           userInfo={userInfo} // userInfo를 추가
           onBookmarkRemove={handleBookmarkRemove}
           onFontSizeChange={onFontSizeChange} // 폰트 크기 변경 함수 전달
-          increaseFontSize={increaseFontSize}  // 전달
-          decreaseFontSize={decreaseFontSize}  // 전달
+          increaseFontSize={increaseFontSize} // 전달
+          decreaseFontSize={decreaseFontSize} // 전달
           initialFontSize={fontSize}
+          onSummarizePage={summarizeCurrentPage}
         />
 
         <div
-          ref={viewerRef} className="viewer"
+          ref={viewerRef}
+          className="viewer"
           style={{ width: "100%", height: "100%", border: "1px solid #ccc" }}
         />
 
@@ -700,7 +733,11 @@ const EpubReader = ({ url, book, location }) => {
         {/* 북마크 목록을 추가 */}
         <div className="bookmark-list">
           {bookmarks.map((bookmark, index) => (
-            <div key={index} className="bookmark-item" onClick={() => goToBookmark(bookmark.book_mark)}>
+            <div
+              key={index}
+              className="bookmark-item"
+              onClick={() => goToBookmark(bookmark.book_mark)}
+            >
               <p>{bookmark.book_text}</p>
             </div>
           ))}
@@ -708,9 +745,9 @@ const EpubReader = ({ url, book, location }) => {
       </ViewerWrapper>
 
       <Nav
-        control={() => { }}
-        onToggle={() => { }}
-        onLocation={() => { }}
+        control={() => {}}
+        onToggle={() => {}}
+        onLocation={() => {}}
         ref={null}
       />
 
@@ -724,9 +761,9 @@ const EpubReader = ({ url, book, location }) => {
         bookText={currentBookText}
         currentPage={currentPage}
         cfi={cfi}
-      // onStopGazeTracking={(stopGazeTracking) => {
-      //   stopGazeTrackingRef.current = stopGazeTracking;
-      // }}
+        // onStopGazeTracking={(stopGazeTracking) => {
+        //   stopGazeTrackingRef.current = stopGazeTracking;
+        // }}
       />
     </div>
   );

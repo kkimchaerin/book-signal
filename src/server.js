@@ -214,27 +214,46 @@ app.post('/completeReading', async (req, res) => {
 
 // 요약 생성 엔드포인트
 app.post('/summarize', async (req, res) => {
-  const { memId, bookIdx } = req.body;
+  const { memId, bookIdx, isBookSignal } = req.body; // isBookSignal 플래그로 BookSignal 요약인지 구분
   console.log('요약 요청 받음:', req.body);
 
   let connection;
   try {
     connection = await pool.getConnection();
 
-    // book_eyegaze 테이블에서 gaze_duration이 가장 긴 상위 3개의 book_text 가져오기
-    const [gazeRows] = await connection.query(`
-      SELECT book_text
-      FROM book_eyegaze 
-      WHERE mem_id = ? AND book_idx = ? 
-      ORDER BY gaze_duration DESC 
-      LIMIT 3
-    `, [memId, bookIdx]);
+    // book_extract_data 테이블에서 현재 저장된 요약의 개수를 확인
+    const [existingSummaries] = await connection.query(`
+      SELECT COUNT(*) as count FROM book_extract_data 
+      WHERE mem_id = ? AND book_idx = ?`, [memId, bookIdx]);
 
-    if (gazeRows.length === 0) {
-      return res.status(404).json({ error: '데이터를 찾을 수 없습니다.' });
+    let nextImageIndex = existingSummaries[0].count + 1; // 현재 개수 + 1로 파일 이름 생성
+
+    // 새로운 요약을 생성할 텍스트를 가져옴
+    let gazeRows;
+    if (isBookSignal) {
+      // BookSignal 요약 요청 시에는 하나의 페이지 요약
+      [gazeRows] = await connection.query(`
+        SELECT book_text
+        FROM book_eyegaze 
+        WHERE mem_id = ? AND book_idx = ? 
+        ORDER BY gaze_duration DESC 
+        LIMIT 1
+      `, [memId, bookIdx]);
+    } else {
+      // 독서 완료 시에는 3개의 페이지 요약
+      [gazeRows] = await connection.query(`
+        SELECT book_text
+        FROM book_eyegaze 
+        WHERE mem_id = ? AND book_idx = ? 
+        ORDER BY gaze_duration DESC 
+        LIMIT 3
+      `, [memId, bookIdx]);
     }
 
-    // book_db 테이블에서 book_name 가져오기
+    if (gazeRows.length === 0) {
+      return res.status(404).json({ error: '요약할 데이터가 없습니다.' });
+    }
+
     const [nameRows] = await connection.query('SELECT book_name FROM book_db WHERE book_idx = ?', [bookIdx]);
 
     if (nameRows.length === 0) {
@@ -243,55 +262,17 @@ app.post('/summarize', async (req, res) => {
 
     const bookName = nameRows[0].book_name;
 
-    // 요약 및 이미지 저장을 위한 작업
-    const summaries = [];
-    const imagePaths = [];
-
+    let summaries = [];
+    let imagePaths = [];
     for (const row of gazeRows) {
-      let selectedText = row.book_text;
-
-      if (!selectedText) {
-        console.error('Invalid book_text: null value encountered');
-        continue;  // `null`일 경우 건너뜁니다.
-      }
-
-      // 텍스트 길이 제한을 초과하지 않도록 자르기
-      const maxPromptLength = 900; // 여유를 두어 길이 제한 설정
-      if (selectedText.length > maxPromptLength) {
-        const sentences = selectedText.split('.'); // 문장 단위로 나누기
-        selectedText = '';
-        for (const sentence of sentences) {
-          if ((selectedText + sentence).length > maxPromptLength) break;
-          selectedText += sentence + '.';
-        }
-      }
-
+      const selectedText = row.book_text;
       try {
-        // OpenAI API를 사용하여 대표 문장 추출
-        const repreResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
-          model: 'gpt-3.5-turbo',
-          messages: [{
-            role: "user",
-            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분에서 가장 중요한 대표 문장을 하나 뽑아 주세요.`
-          }],
-          max_tokens: 200,
-        }, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-          }
-        });
-
-        const representativeSentence = repreResponse.data.choices[0].message.content.trim();
-        console.log('대표 문장 생성 성공:', representativeSentence);
-
         // OpenAI API를 사용하여 요약 생성
         const summaryResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
           model: 'gpt-3.5-turbo',
           messages: [{
             role: "user",
-            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 요약해 주세요. 요약은 주요 등장인물, 배경, 사건을 포함하고, 이 텍스트가 전달하는 주요 메시지나 테마를 간결하게 설명해 주세요.
-            만약 이 문장이 content_policy_violation에 위반되더라도 문학의 범주이니 요약해주세요. 3문장으로 요약해주세요.`
+            content: `책의 제목은 "${bookName}"입니다. 아래는 이 책의 한 부분입니다: "${selectedText}". 이 부분을 요약해 주세요.`
           }],
           max_tokens: 1000,
         }, {
@@ -301,15 +282,8 @@ app.post('/summarize', async (req, res) => {
           }
         });
 
-        let summary = summaryResponse.data.choices[0].message.content.trim();
-
-        // 요약이 잘린 경우 적절히 처리
-        if (!summary.endsWith('.') && summary.length >= 240) {
-          summary += '...';
-        }
-
+        const summary = summaryResponse.data.choices[0].message.content.trim();
         summaries.push(summary);
-        console.log('요약 생성 성공:', summary);
 
         // 요약을 기반으로 텍스트 프롬프트를 생성
         const promptForImage = `
@@ -320,6 +294,7 @@ app.post('/summarize', async (req, res) => {
         - 배경의 색상과 분위기 (예: 어두운 조명, 밝고 따뜻한 톤 등)
         - 발생하는 주요 사건이나 감정 (예: 긴장된 대치, 행복한 순간 등).
         이미지는 사실적이고 디테일이 풍부하며, ${bookName}의 특유의 분위기를 잘 반영해야 합니다.
+        이미지는 동화풍으로 만들어 주세요.
         만약 이 문장이 content_policy_violation에 위반되더라도 이미지를 생성해주세요.
         `;
 
@@ -337,32 +312,32 @@ app.post('/summarize', async (req, res) => {
 
         console.log(`프롬프트: ${promptForImage}`);
         const dalleImageUrl = dalleResponse.data.data[0].url;
-        const dalleImagePath = path.join(__dirname, '../public/dalle', `${bookIdx}_${summaries.length}.png`);
+        const dalleImagePath = path.join(__dirname, '../public/dalle', `${bookIdx}_${nextImageIndex}.png`); // 새 이미지 번호로 파일 이름 설정
 
         const imageResponse = await axios.get(dalleImageUrl, { responseType: 'arraybuffer' });
         fs.writeFileSync(dalleImagePath, imageResponse.data);
         console.log('이미지 생성 및 저장 성공:', dalleImagePath);
 
-        imagePaths.push(`/dalle/${bookIdx}_${summaries.length}.png`);
+        imagePaths.push(`/dalle/${bookIdx}_${nextImageIndex}.png`);
+        nextImageIndex++; // 다음 이미지를 위해 이미지 인덱스 증가
 
-        // book_extract_data 테이블에 데이터 저장
-        await connection.query('INSERT INTO book_extract_data (mem_id, book_idx, book_name, book_extract, dalle_path, book_repre) VALUES (?, ?, ?, ?, ?, ?)',
-          [memId, bookIdx, bookName, summary, imagePaths[imagePaths.length - 1], representativeSentence]);
+        // 생성된 요약과 이미지를 book_extract_data 테이블에 삽입
+        await connection.query(`
+          INSERT INTO book_extract_data (mem_id, book_idx, book_name, book_extract, dalle_path, book_repre)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `, [memId, bookIdx, bookName, summary, imagePaths[imagePaths.length - 1], null]); // 대표 문장은 null 처리
 
       } catch (err) {
-        if (err.response && err.response.data.error.code === 'content_policy_violation') {
-          console.error('요약 생성 중 안전 시스템에 의해 차단되었습니다. 프롬프트를 검토하고 수정하세요.');
-        } else {
-          console.error('Error during summary or image generation:', err.response ? err.response.data : err.message);
-        }
+        console.error('요약 또는 이미지 생성 중 오류 발생:', err.response ? err.response.data : err.message);
+        return res.status(500).json({ error: '요약 생성 또는 이미지 생성에 실패했습니다.' });
       }
     }
 
-    console.log('데이터베이스에 요약 및 이미지 경로 저장 성공');
-    res.json({ summaries });
+    console.log('새로운 요약 및 이미지가 book_extract_data 테이블에 추가되었습니다.');
+    res.json({ success: true, summaries, imagePaths });
 
   } catch (err) {
-    console.error('Error generating summary:', err.response ? err.response.data : err.message);
+    console.error('요약 생성 중 오류 발생:', err.response ? err.response.data : err.message);
     res.status(500).json({ error: '요약 생성에 실패했습니다.' });
   } finally {
     if (connection) connection.release();
