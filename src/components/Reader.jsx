@@ -34,17 +34,36 @@ const EpubReader = ({ url, book, location, from }) => {
 
   // ResizeObserver 오류 무시 코드 추가
   useEffect(() => {
-    const resizeObserverErrorHandler = (event) => {
-      if (event.message.includes("ResizeObserver")) {
+    // Window 에러 리스너를 통한 ResizeObserver 및 비디오 소스 에러 무시
+    const errorHandler = (event) => {
+      if (
+        event.message.includes("ResizeObserver") ||
+        event.message.includes("Could not start video source")
+      ) {
         event.preventDefault();
       }
     };
 
-    window.addEventListener("error", resizeObserverErrorHandler);
+    window.addEventListener("error", errorHandler);
+
+    // 콘솔 에러 무시
+    const originalConsoleError = console.error;
+    console.error = (message, ...args) => {
+      if (
+        message.includes("ResizeObserver loop completed with undelivered notifications.") ||
+        message.includes("Could not start video source")
+      ) {
+        return;
+      }
+      originalConsoleError(message, ...args);
+    };
+
     return () => {
-      window.removeEventListener("error", resizeObserverErrorHandler);
+      window.removeEventListener("error", errorHandler);
+      console.error = originalConsoleError; // Clean up: 콘솔 로그 원상 복구
     };
   }, []);
+
 
 
   const [isPlaying, setIsPlaying] = useState(false);
