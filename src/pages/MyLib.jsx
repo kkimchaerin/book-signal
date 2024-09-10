@@ -49,21 +49,26 @@ const MyLib = () => {
       });
   }, [navigate]);
 
+  // 업로드한 도서
   const handleBookClickWithUploadPath = async (book) => {
     try {
-      // book 객체 출력
-      console.log('book 객체:', book);
 
       // upload_idx를 사용하여 서버에 요청
       const response = await axios.post('http://localhost:3001/getBookPath/getUploadBookPath', {
         upload_idx: book.upload_idx,  // upload_idx 사용
       });
 
-      const bookPath = response.data.book_path || book.book_file_path; // 서버에서 경로를 못 가져오면 book_file_path 사용
-      console.log('bookPath:', bookPath);
+      let bookPath = response.data.book_path || book.book_file_path; // 서버에서 경로를 못 가져오면 book_file_path 사용
 
-      if (bookPath) {
-        navigate(`/reader`, { state: { book, bookPath } }); // bookPath를 넘겨줌
+      // 백슬래시(\)를 슬래시(/)로 변환하여 경로 수정
+      bookPath = bookPath.replace(/\\/g, '/');
+
+      // 확장자를 제거한 경로 생성
+      const bookPathWithoutExtension = bookPath.replace(/\.epub$/, '');
+
+      if (bookPathWithoutExtension) {
+        // 업로드에서 왔다는 정보도 함께 넘겨줌
+        navigate(`/reader`, { state: { book, bookPath: bookPathWithoutExtension, from: 'upload' } });
       } else {
         alertMessage('책 경로를 찾을 수 없습니다.', '❗');
       }
@@ -71,7 +76,6 @@ const MyLib = () => {
       console.error('책 경로를 가져오는 중 오류가 발생했습니다.', error);
     }
   };
-
 
 
   // 업로드 도서 탭에서 이 함수로 책 클릭 처리
@@ -84,7 +88,6 @@ const MyLib = () => {
       navigate(`/reader`, { state: { book, from: 'mylib' } });
     }
   };
-
 
 
   // 리뷰 존재 여부 확인 함수

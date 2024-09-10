@@ -109,7 +109,7 @@ const Header: React.FC<Props> = ({
   };
 
   const handleFinishReading = () => {
-    navigate('/detail', { state: { book } });
+    navigate('/mylib', { state: { book } });
     setShowFontSettings(!showFontSettings);
   };
 
@@ -126,8 +126,8 @@ const Header: React.FC<Props> = ({
       console.log("책 정보:", { book_idx }); // 책 인덱스 로그
 
       // 상세 페이지로 네비게이션
-      console.log("상세 페이지로 네비게이션 중...");
-      navigate("/detail", { state: { book } });
+      console.log("내 서재 페이지로 네비게이션 중...");
+      navigate("/mylib", { state: { book } });
 
       // 페이지 이동 후에 비동기로 데이터 저장 및 요약 생성 요청
       setTimeout(async () => {
@@ -162,8 +162,8 @@ const Header: React.FC<Props> = ({
 
   const handleReadingQuit = () => {
     console.log("독서 중단 처리"); // 함수 호출 시작 로그
-    console.log("상세 페이지로 네비게이션 중...", { book }); // 페이지 이동 로그
-    navigate("/detail", { state: { book } });
+    console.log("내 서재 페이지로 네비게이션 중...", { book }); // 페이지 이동 로그
+    navigate("/mylib", { state: { book } });
   };
 
   // 북마크 추가 함수

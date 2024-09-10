@@ -333,7 +333,7 @@ exports.getUploadBooks = async (mem_id) => {
 
     const updatedResults = rows.map(book => {
       book.book_cover = decodeURIComponent(book.book_cover);  // book_cover 디코딩
-      if (book.book_cover) {
+      if (book.book_cover!=null) {
         book.book_cover = `/images/${book.book_cover}`;  // book_cover가 존재하면 경로 추가
       } else {
         book.book_cover = '/images/default.jpg';  // 존재하지 않으면 기본 이미지 경로 설정

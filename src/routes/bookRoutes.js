@@ -48,34 +48,35 @@ router.get('/getBookmarks', async (req, res) => {
 
 // 최근 읽은 도서용 북마크
 router.get('/getUserBookmark', async (req, res) => {
-    const { book_idx, mem_id } = req.query;
+    const { book_idx, mem_id, isUploadBook, upload_idx } = req.query;
 
     try {
-        const { bookmark, fontSize } = await getUserBookmarkForBook(book_idx, mem_id);
+        const { bookmark, fontSize } = await getUserBookmarkForBook(book_idx, mem_id, isUploadBook === 'true', upload_idx);
         if (bookmark) {
             res.status(200).json({ bookmark, fontSize });
         } else {
             res.status(404).json({ message: '북마크가 존재하지 않습니다.', fontSize });
         }
     } catch (error) {
+        console.error("북마크를 가져오는 중 오류:", error);
         res.status(500).json({ error: '북마크를 가져오는 중 오류가 발생했습니다.' });
     }
 });
 
+
 // 독서 종료 API
 router.post('/endReading', async (req, res) => {
-    const { book_idx, mem_id, cfi, fontsize } = req.body;
-
-    console.log('routes', { book_idx, mem_id, cfi, fontsize }); // 요청 값 로그 출력
+    const { book_idx, mem_id, cfi, fontsize, isUploadBook, book_name, upload_idx } = req.body;
 
     try {
-        const result = await saveEndReading(book_idx, mem_id, cfi, fontsize);
+        const result = await saveEndReading(book_idx, mem_id, cfi, fontsize, isUploadBook, book_name, upload_idx);
         res.status(201).json(result);
     } catch (error) {
         console.error("API 호출 중 오류:", error); // API 에러 로그 추가
         res.status(500).json({ error: error.message });
     }
 });
+
 
 
 // 북마크 삭제 API
