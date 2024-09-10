@@ -227,20 +227,39 @@ exports.getBookmarks = async (book_idx, mem_id) => {
 
 
 // 특정 사용자와 책의 북마크를 가져오는 함수
-exports.getUserBookmarkForBook = async (book_idx, mem_id) => {
+exports.getUserBookmarkForBook = async (book_idx, mem_id, isUploadBook, upload_idx) => {
   try {
-    // 북마크 쿼리
-    const bookmarkSql = `
-      SELECT book_mark
-      FROM book_reading
-      WHERE book_idx = ? 
-        AND mem_id = ?
-        AND book_text IS NULL
-        AND book_mark LIKE 'epubcfi%'
-      ORDER BY book_latest DESC
-      LIMIT 1
-    `;
-    const [bookmarkResults] = await conn.query(bookmarkSql, [book_idx, mem_id]);
+    let bookmarkSql;
+    let bookmarkParams;
+
+    // 업로드 도서와 일반 도서에 따라 적절한 쿼리 설정
+    if (isUploadBook) {
+      bookmarkSql = `
+        SELECT book_mark 
+        FROM upload_reading 
+        WHERE upload_idx = ? 
+          AND mem_id = ? 
+          AND book_mark IS NOT NULL 
+        ORDER BY book_latest DESC 
+        LIMIT 1
+      `;
+      bookmarkParams = [upload_idx, mem_id];
+    } else {
+      bookmarkSql = `
+        SELECT book_mark 
+        FROM book_reading 
+        WHERE book_idx = ? 
+          AND mem_id = ? 
+          AND book_text IS NULL 
+          AND book_mark LIKE 'epubcfi%' 
+        ORDER BY book_latest DESC 
+        LIMIT 1
+      `;
+      bookmarkParams = [book_idx, mem_id];
+    }
+
+    // 쿼리 실행
+    const [bookmarkResults] = await conn.query(bookmarkSql, bookmarkParams);
     const bookmark = bookmarkResults.length > 0 ? bookmarkResults[0].book_mark : null;
 
     // 폰트 크기 쿼리
@@ -252,7 +271,7 @@ exports.getUserBookmarkForBook = async (book_idx, mem_id) => {
     const [fontSizeResults] = await conn.query(fontSizeSql, [mem_id]);
     const fontSize = fontSizeResults.length > 0 ? fontSizeResults[0].font_size : null;
 
-    // 북마크와 폰트 크기를 함께 반환
+    // 북마크와 폰트 크기를 반환
     return { bookmark, fontSize };
   } catch (err) {
     console.error('북마크 또는 폰트 크기를 가져오는 중 오류 발생:', err);
@@ -260,46 +279,70 @@ exports.getUserBookmarkForBook = async (book_idx, mem_id) => {
   }
 };
 
-
 // 독서 종료 시 북마크 저장 함수
-exports.saveEndReading = async (book_idx, mem_id, cfi, fontsize) => {
-
+exports.saveEndReading = async (book_idx, mem_id, cfi, fontsize, isUploadBook, book_name, upload_idx) => {
   try {
-    const getBookNameSql = `
-      SELECT book_name 
-      FROM book_reading 
-      WHERE book_idx = ?
-      LIMIT 1
-    `;
-    const [results] = await conn.query(getBookNameSql, [book_idx]);
+    if (isUploadBook) {
+      // 업로드된 도서일 경우 upload_reading 테이블에 북마크(cfi) 저장
+      const saveUploadBookmarkSql = `
+        INSERT INTO upload_reading (book_name, upload_idx, mem_id, book_mark, book_latest)
+        VALUES (?, ?, ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE 
+          book_mark = VALUES(book_mark), 
+          book_latest = NOW()
+      `;
+      const [uploadBookmarkResult] = await conn.query(saveUploadBookmarkSql, [book_name, upload_idx, mem_id, cfi]);
 
-    if (results.length === 0) {
-      throw new Error('해당 book_idx에 대한 책을 찾을 수 없습니다.');
-    }
+      if (uploadBookmarkResult.affectedRows === 0) {
+        throw new Error('업로드된 도서의 북마크 저장에 실패했습니다.');
+      }
+    } else {
+      // 일반 도서일 경우 book_reading 테이블에 북마크 저장
+      const getBookNameSql = `
+        SELECT book_name 
+        FROM book_db 
+        WHERE book_idx = ?
+        LIMIT 1
+      `;
+      const [results] = await conn.query(getBookNameSql, [book_idx]);
 
-    const book_name = results[0].book_name;
+      if (results.length === 0) {
+        throw new Error('해당 book_idx에 대한 책을 찾을 수 없습니다.');
+      }
+      const book_name = results[0].book_name;
 
-    const saveBookmarkSql = `
-      INSERT INTO book_reading (book_idx, mem_id, book_mark, book_name, book_latest)
-      VALUES (?, ?, ?, ?, NOW())
-    `;
-    const [result] = await conn.query(saveBookmarkSql, [book_idx, mem_id, cfi, book_name]);
-
-    // 폰트 크기를 setting 테이블에 저장하는 쿼리 추가
-    const saveFontSizeSql = `
+      const saveFontSizeSql = `
         UPDATE setting
         SET font_size = ?
         WHERE mem_id = ?
       `;
+      const [fontSizeResult] = await conn.query(saveFontSizeSql, [fontsize, mem_id]);
 
-    await conn.query(saveFontSizeSql, [fontsize, mem_id]);
+      if (fontSizeResult.affectedRows === 0) {
+        throw new Error('폰트 크기 업데이트에 실패했습니다.');
+      }
 
-    return { message: '북마크가 저장되었습니다.', bookmarkId: result.insertId };
+      const saveBookmarkSql = `
+        INSERT INTO book_reading (book_name, book_idx, mem_id, book_mark, book_latest)
+        VALUES (?, ?, ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE 
+          book_mark = VALUES(book_mark), 
+          book_latest = NOW()
+      `;
+      const [bookmarkResult] = await conn.query(saveBookmarkSql, [book_name, book_idx, mem_id, cfi]);
+
+      if (bookmarkResult.affectedRows === 0) {
+        throw new Error('북마크 저장에 실패했습니다.');
+      }
+    }
+
+    return { message: '북마크와 폰트 크기가 성공적으로 저장되었습니다.' };
   } catch (err) {
-    console.error('독서 종료 중 북마크 저장 오류 발생:', err);
-    throw new Error('독서 종료 중 북마크 저장에 실패했습니다.');
+    throw new Error('독서 종료 중 오류가 발생하여 저장에 실패했습니다.');
   }
 };
+
+
 
 // 북마크 삭제 함수
 exports.removeBookmark = async (book_idx, mem_id, book_mark) => {
@@ -346,3 +389,26 @@ exports.removeEyegazeBookmark = async (book_idx, mem_id) => {
     throw new Error('eyegaze 북마크 삭제에 실패했습니다.');
   }
 };
+
+// 업로드 책 경로 가져오기 함수 수정
+exports.getBookUploadPath = async (upload_idx) => {
+  try {
+    // book_upload 테이블에서 book_path 가져오기
+    const sql = `
+      SELECT *
+      FROM book_upload 
+      WHERE upload_idx = ?
+    `;
+    const [results] = await conn.query(sql, [upload_idx]);
+    const bookPath = results.length > 0 ? results[0].book_file_path : null;
+
+    console.log(bookPath);
+
+    // book_path 반환
+    return bookPath;
+  } catch (err) {
+    console.error('업로드된 책의 경로를 가져오는 중 오류 발생:', err);
+    throw new Error('업로드된 책의 경로를 가져오는 중 오류가 발생했습니다.');
+  }
+};
+
