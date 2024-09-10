@@ -11,6 +11,7 @@ const Login = () => { // 'async' 키워드를 제거
   const { setIsAuthenticated, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
+
   // 비동기 로그인 함수
   const login = async (e) => {
     e.preventDefault(); // 폼 제출 기본 동작 방지
@@ -68,6 +69,7 @@ const Login = () => { // 'async' 키워드를 제거
               type='text'
               id='memId'
               name='memId'
+              className='login-input-field'
               placeholder='아이디'
               value={memId}
               onChange={(e) => setMemId(e.target.value)}
@@ -79,6 +81,7 @@ const Login = () => { // 'async' 키워드를 제거
               type='password'
               id='memPw'
               name='memPw'
+              className='login-password-field'
               placeholder='비밀번호'
               value={memPw}
               onChange={(e) => setMemPw(e.target.value)}

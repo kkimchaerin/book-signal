@@ -9,6 +9,7 @@ const FindPw = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [showErrorPopup, setShowErrorPopup] = useState(false); // 오류 팝업 표시 여부
   const navigate = useNavigate();
+  
 
   const handleFindPw = async (e) => {
     e.preventDefault();
