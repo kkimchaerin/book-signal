@@ -163,12 +163,6 @@ const EyeGaze = ({ viewerRef, onSaveGazeTime, bookText, book, currentPage, cfi }
               }, 1000);
             }
           }
-
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = '#FF0000';
-          ctx.beginPath();
-          ctx.arc(x, y, 10, 0, Math.PI * 2, true);
-          ctx.fill();
       }
   }
 }

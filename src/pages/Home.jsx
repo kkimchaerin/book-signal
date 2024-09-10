@@ -71,6 +71,7 @@ const Home = () => {
         })
         .catch((error) => {
           console.error("추천 도서 가져오기 오류:", error);
+          setRecommendedBooks([]); // 오류 발생 시 빈 배열로 설정
         });
     }
   }, [userId]);
@@ -183,7 +184,7 @@ const Home = () => {
       <br />
 
       {/* 추천시그널 - 로그인한 경우에만 표시 */}
-      {isAuthenticated && userInfo && recommendedBooks.length > 0 && (
+      {isAuthenticated && userInfo && (
         <>
           <h2 className='main-title'>
             {`${userInfo.mem_nick} 님에게 보내는`} 추천 시그널
@@ -191,27 +192,33 @@ const Home = () => {
           <br />
           <div className="bg-[#FFEEE4] h-auto pt-3 pb-5 rounded-xl">
             <br />
-            <div className='flex justify-center gap-4 max-w-5xl mx-auto'>
-              {recommendedBooks.map((book, index) => (
-                <div
-                  key={index}
-                  className="relative flex flex-col items-center hover:transform hover:-translate-y-2 transition-transform duration-300"
-                  style={{ width: '380px' }}
-                  onClick={() => handleBookClick(book)}
-                >
-                  <img
-                    src={book.book_cover}
-                    alt={`${book.book_name} Cover`}
-                    className="z-20 rounded-lg shadow-lg"
-                    style={{ width: '230px', height: '310px' }}
-                  />
-                  <div className="opacity-75 relative z-10 -mt-7 w-[300px] h-auto min-h-44 max-h-48 bg-white p-4 rounded-lg shadow-lg text-center break-words">
-                    <p className="font-semibold text-lg pt-6 pb-2">{book.book_name}</p>
-                    <p className="text-sm text-gray-600 break-words">{book.book_writer}</p>
+            {recommendedBooks.length > 0 ? (
+              <div className='flex justify-center gap-4 max-w-5xl mx-auto'>
+                {recommendedBooks.map((book, index) => (
+                  <div
+                    key={index}
+                    className="relative flex flex-col items-center hover:transform hover:-translate-y-2 transition-transform duration-300"
+                    style={{ width: '380px' }}
+                    onClick={() => handleBookClick(book)}
+                  >
+                    <img
+                      src={book.book_cover}
+                      alt={`${book.book_name} Cover`}
+                      className="z-20 rounded-lg shadow-lg"
+                      style={{ width: '230px', height: '310px' }}
+                    />
+                    <div className="opacity-75 relative z-10 -mt-7 w-[300px] h-auto min-h-44 max-h-48 bg-white p-4 rounded-lg shadow-lg text-center break-words">
+                      <p className="font-semibold text-lg pt-6 pb-2">{book.book_name}</p>
+                      <p className="text-sm text-gray-600 break-words">{book.book_writer}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500">
+                읽은 책에 대한 정보가 없어 당신의 취향을 모르겠어요. 책을 더 읽어주세요!
+              </div>
+            )}
             <br />
           </div>
         </>

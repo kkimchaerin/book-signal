@@ -34,20 +34,13 @@ const EpubReader = ({ url, book, location, from }) => {
 
   // ResizeObserver 오류 무시 코드 추가
   useEffect(() => {
-    const resizeObserverErrorHandler = () => {
-      requestAnimationFrame(() => {
-        try {
-          // `ResizeObserver`의 에러를 잡아냄
-        } catch (e) {
-          if (e.message.includes("ResizeObserver")) {
-            console.warn("ResizeObserver 오류 무시됨:", e);
-          }
-        }
-      });
+    const resizeObserverErrorHandler = (event) => {
+      if (event.message.includes("ResizeObserver")) {
+        event.preventDefault();
+      }
     };
 
     window.addEventListener("error", resizeObserverErrorHandler);
-
     return () => {
       window.removeEventListener("error", resizeObserverErrorHandler);
     };
