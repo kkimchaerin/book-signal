@@ -27,10 +27,49 @@ const MyLib = () => {
   const [reviewStatus, setReviewStatus] = useState({}); // 각 책의 리뷰 여부를 저장하는 상태
   const [uploadedBooks, setUploadedBooks] = useState([]); // 업로드한 도서 상태
 
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // 업로드 모달 상태
+  const [file, setFile] = useState(null); // 선택한 파일 상태
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);  // 선택한 파일을 상태에 저장
+    console.log('거');
+    
+  };
+
+  const handleFileUpload = async () => {
+    console.log('지');
+    
+    if (!file) {
+      alert('파일을 선택해주세요');
+      return;
+    }
+
+    const formData = new FormData();  // FormData 생성
+    formData.append('file', file);  // 선택한 파일을 추가
+
+    try {
+      // 서버로 파일 전송
+      const response = await axios.post('http://localhost:3001/upload-epub', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',  // 멀티파트 데이터로 전송
+        },
+        withCredentials: true,  // 세션 정보 포함
+      });
+
+      // 서버로부터 응답을 받았을 때
+      alert(response.data.message);  // 성공 메시지 표시
+      console.log('같');
+      
+      setIsUploadModalOpen(false);  // 업로드 완료 후 모달 닫기
+    } catch (error) {
+      // 파일 업로드 실패 시 에러 처리
+      console.error('파일 업로드 실패:', error);
+      alert('파일 업로드에 실패했습니다.');
+    }
+  };
 
 
   const navigate = useNavigate();
-
 
   useEffect(() => {
     // 서버에서 세션 정보를 가져옴
@@ -386,7 +425,7 @@ const MyLib = () => {
       {activeTab === 'upload' && (
         <button
           className="upload-button"
-          onClick={() => navigate('/uploadepub')}
+          onClick={() => setIsUploadModalOpen(true)}
         >
           업로드
         </button>
@@ -405,6 +444,7 @@ const MyLib = () => {
       <Modal
         isOpen={isSignalOpen}
         onClose={() => setSignalOpen(false)}
+        className={"signal-modal"}
         backgroundImage={signalBackground}
         onDownload={handleDownload}
       >
@@ -412,6 +452,16 @@ const MyLib = () => {
         <p>{signalText}</p>
         <p>{signalSumm}</p>
 
+      </Modal>
+
+      <Modal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)} // 모달 닫기
+        className="upload-modal"
+      >
+        <h2>EPUB 파일 업로드</h2>
+        <input type="file" onChange={handleFileChange} />
+        <button onClick={handleFileUpload}> 업로드</button>
       </Modal>
     </div>
   );
