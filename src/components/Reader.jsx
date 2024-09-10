@@ -52,7 +52,6 @@ const EpubReader = ({ url, book, location, from }) => {
       window.removeEventListener("error", resizeObserverErrorHandler);
     };
   }, []);
-  }, []);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
@@ -211,15 +210,6 @@ const EpubReader = ({ url, book, location, from }) => {
           console.warn("사용자 정보 또는 책 정보가 없습니다.");
           return;
         }
-
-        // 'mylib'에서 넘어온 경우에만 북마크 가져오기
-        if (location.state?.from === "mylib") {
-          const response = await axios.get(
-            "http://localhost:3001/getBookPath/getUserBookmark",
-            {
-              params: { book_idx, mem_id },
-            }
-          );
         const response = await fetchBookmarks();
 
         const { bookmark, fontSize } = response;
@@ -237,17 +227,6 @@ const EpubReader = ({ url, book, location, from }) => {
           console.log("북마크가 없으므로 첫 페이지로 이동합니다.");
           renditionRef.current.display();
         }
-          if (bookmark) {
-            console.log("북마크 위치로 이동:", bookmark);
-            renditionRef.current.display(bookmark); // 북마크 위치로 이동
-            return; // 북마크로 이동 후 return
-          }
-        }
-        // 북마크가 없거나 'mylib'에서 오지 않은 경우 첫 페이지로 이동
-        console.log(
-          "북마크가 없거나 mylib에서 오지 않았습니다. 첫 페이지로 이동합니다."
-        );
-        renditionRef.current.display();
       } catch (error) {
         console.error("북마크를 로드하는 중 오류 발생:", error);
       }
@@ -294,7 +273,7 @@ const EpubReader = ({ url, book, location, from }) => {
         // cfi 값을 업데이트
         if (location && location.start) {
           setCfi(location.start.cfi);
-          console.log("현재 CFI 값:", location.start.cfi);
+          console.log('현재 CFI 값:', location.start.cfi);
         }
       };
 
@@ -311,7 +290,7 @@ const EpubReader = ({ url, book, location, from }) => {
         rendition.off("relocated", updatePageInfo);
       };
     }
-  }, [url, dispatch, userInfo, book, location.state]);  // userInfo와 book을 의존성 배열에 추가
+  }, [url, dispatch, userInfo, book, location.state]);
 
 
   const onPageMove = useCallback(
@@ -825,5 +804,3 @@ const Reader = () => {
 
 
 export default Reader;
-
-
