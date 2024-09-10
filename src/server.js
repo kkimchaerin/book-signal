@@ -52,6 +52,10 @@ app.use(sessionMiddleware);
 // 정적 파일 제공을 위한 경로 설정
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
+// 정적 파일 제공을 위한 경로 설정
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+
 // Multer 설정 (파일을 임시 이름으로 서버의 'uploads' 폴더에 저장)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -80,7 +84,7 @@ app.post('/upload-epub', upload.single('file'), (req, res) => {
 
   // EPUB 파일을 파싱
   const epub = new EPub(filePath, "/imagewebroot/", "/articlewebroot/");
-  
+
   epub.on("error", (err) => {
     console.error('EPUB 처리 중 오류:', err);
     return res.status(500).json({ error: 'EPUB 처리 중 오류가 발생했습니다.' });
@@ -94,9 +98,10 @@ app.post('/upload-epub', upload.single('file'), (req, res) => {
     const memId = req.session.user.mem_id; // 세션에서 사용자 ID 가져오기
 
     // 책 제목을 파일명으로 사용할 수 있도록 특수문자와 공백 제거
-    const safeBookName = bookName.replace(/[^a-zA-Z0-9가-힣]/g, '_'); // 특수문자는 '_'로 치환
+    const safeBookName = bookName.replace(/[^a-zA-Z0-9가-힣]/g, ''); // 특수문자는 '_'로 치환
     const newFileName = `${safeBookName}${path.extname(req.file.originalname)}`;
     const newFilePath = path.join('public/uploads', newFileName);
+    
 
     // 파일명을 책 제목으로 변경
     fs.rename(filePath, newFilePath, async (err) => {
@@ -111,7 +116,7 @@ app.post('/upload-epub', upload.single('file'), (req, res) => {
         connection = await pool.getConnection();
         await connection.query(
           'INSERT INTO book_upload (mem_id, book_name, book_writer, book_file_path) VALUES (?, ?, ?, ?)',
-          [memId, bookName, bookAuthor, newFilePath]
+          [memId, bookName, bookAuthor, newFileName]
         );
         connection.release();
 
@@ -178,7 +183,7 @@ app.post('/tts', async (req, res) => {
 // 독서 완료 API 엔드포인트
 app.post('/completeReading', async (req, res) => {
   const { memId, bookIdx, bookName } = req.body;
-  
+
   let connection;
   try {
     connection = await pool.getConnection();

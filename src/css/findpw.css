@@ -27,9 +27,8 @@
     align-items: center;
 }
 
+/* 타이틀 컨테이너 */
 .title-container {
-    margin-top: 30px;
-    cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -79,13 +78,13 @@
 }
 
 .input-label {
-    margin-bottom: 5px;
+    margin-left: 5px;
+    min-width: 60px; 
     font-size: 1rem;
 }
 
 .input-field {
     width: 100%;
-    padding: 15px;
     background-color: #f5f5f5;
     border: none;
     border-radius: 10px;

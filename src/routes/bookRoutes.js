@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { getBookPath, saveBookmark, getBookmarks, saveEndReading, getUserBookmarkForBook, removeBookmark, removeEyegazeBookmark } = require('../models/bookDB');
+const { getBookPath, saveBookmark, getBookmarks, saveEndReading,
+    getUserBookmarkForBook, removeBookmark, removeEyegazeBookmark, getBookUploadPath } = require('../models/bookDB');
 
 
 router.post('/', async (req, res) => {
@@ -46,19 +47,18 @@ router.get('/getBookmarks', async (req, res) => {
 
 
 // 최근 읽은 도서용 북마크
-// 최근 읽은 도서용 북마크
 router.get('/getUserBookmark', async (req, res) => {
-    const { book_idx, mem_id } = req.query;
+    const { book_idx, mem_id, isUploadBook, upload_idx } = req.query;
 
     try {
-        const { bookmark, fontSize } = await getUserBookmarkForBook(book_idx, mem_id);
-
+        const { bookmark, fontSize } = await getUserBookmarkForBook(book_idx, mem_id, isUploadBook === 'true', upload_idx);
         if (bookmark) {
             res.status(200).json({ bookmark, fontSize });
         } else {
             res.status(404).json({ message: '북마크가 존재하지 않습니다.', fontSize });
         }
     } catch (error) {
+        console.error("북마크를 가져오는 중 오류:", error);
         res.status(500).json({ error: '북마크를 가져오는 중 오류가 발생했습니다.' });
     }
 });
@@ -66,15 +66,18 @@ router.get('/getUserBookmark', async (req, res) => {
 
 // 독서 종료 API
 router.post('/endReading', async (req, res) => {
-    const { book_idx, mem_id, cfi, fontsize } = req.body;
+    const { book_idx, mem_id, cfi, fontsize, isUploadBook, book_name, upload_idx } = req.body;
 
     try {
-        const result = await saveEndReading(book_idx, mem_id, cfi, fontsize);
+        const result = await saveEndReading(book_idx, mem_id, cfi, fontsize, isUploadBook, book_name, upload_idx);
         res.status(201).json(result);
     } catch (error) {
+        console.error("API 호출 중 오류:", error); // API 에러 로그 추가
         res.status(500).json({ error: error.message });
     }
-})
+});
+
+
 
 // 북마크 삭제 API
 router.post('/removeBookmark', async (req, res) => {
@@ -101,5 +104,23 @@ router.post('/removeEyegazeBookmark', async (req, res) => {
         res.status(500).json({ error: 'eyegaze 북마크 삭제에 실패했습니다.' });
     }
 });
+
+// 업로드한 도서 불러오기
+router.post('/getUploadBookPath', async (req, res) => {
+    const { upload_idx } = req.body;
+
+    try {
+        const bookPath = await getBookUploadPath(upload_idx);
+
+        if (!bookPath) {
+            return res.status(404).json({ error: 'Book path not found' });
+        }
+        res.status(200).json({ book_path: bookPath });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
 
 module.exports = router;

@@ -3,7 +3,7 @@ import '../css/modal.css';
 import { FaArrowDown } from "react-icons/fa6";
 import { RxCross2 } from "react-icons/rx";
 
-const Modal = ({ isOpen, onClose, onDownload, backgroundImage, children }) => {
+const Modal = ({ isOpen, onClose, onDownload, backgroundImage, children, className }) => {
   if (!isOpen) return null;
 
   // children을 배열로 취급합니다.
@@ -13,9 +13,9 @@ const Modal = ({ isOpen, onClose, onDownload, backgroundImage, children }) => {
   const title = childrenArray[0]; // h2 태그
   const text = childrenArray[1]; // 첫 번째 p 태그
   const summ = childrenArray[2]; // 두 번째 p 태그 (하단으로 이동할 내용)
-  
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className={`modal-overlay ${className}`} onClick={onClose}>
       <div className='modal-polaroid'>
         <div
           className="modal-content"
@@ -29,7 +29,9 @@ const Modal = ({ isOpen, onClose, onDownload, backgroundImage, children }) => {
             alignItems: 'center'
           }}
         >
-          <button className="modal-download" onClick={onDownload}><FaArrowDown /></button>
+          {className !== 'upload-modal' && (
+            <button className="modal-download" onClick={onDownload}><FaArrowDown /></button>
+          )}
           <button className="modal-close" onClick={onClose}><RxCross2 /></button>
           <div className="modal-signal">
             <div className='modal-title'>{title}</div>

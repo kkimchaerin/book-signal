@@ -11,7 +11,6 @@ const FindId = () => {
   const [showPopup, setShowPopup] = useState(false); // 팝업 표시 여부
   const [showErrorPopup, setShowErrorPopup] = useState(false); // 오류 팝업 표시 여부
   const [errorMessage, setErrorMessage] = useState(''); // 오류 메시지 저장
-
   const navigate = useNavigate();
 
   const FindId = async (e) => {

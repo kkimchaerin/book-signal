@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Wrapper from 'components/header/Wrapper';
 import Layout, { AutoLayout } from 'components/header/Layout';
@@ -15,6 +15,7 @@ const Header: React.FC<Props> = ({
   gender,
   onRateChange,
   onVoiceChange,
+  onSummarizePage,
   onTTSToggle,
   onTTSPause,
   onTTSStop,
@@ -43,6 +44,12 @@ const Header: React.FC<Props> = ({
 
   const navigate = useNavigate();
 
+  // 폰트 크기 상태를 초기화할 때 useEffect 추가
+  useEffect(() => {
+    setFontSize(initialFontSize ?? 16);  // initialFontSize가 변경될 때 fontSize를 업데이트
+  }, [initialFontSize]);  // 의존성 배열에 initialFontSize를 추가
+
+
   // 폰트 크기 증가 함수
   const increaseFontSize = () => {
     if (fontSize < 32) {
@@ -54,6 +61,7 @@ const Header: React.FC<Props> = ({
     }
   };
 
+  // 폰트 크기 감소 함수
   const decreaseFontSize = () => {
     if (fontSize > 12) {
       setFontSize((prev: number) => {  // 'prev'에 'number' 타입 지정
@@ -63,7 +71,6 @@ const Header: React.FC<Props> = ({
       });
     }
   };
-
 
   // 슬라이더 값 변경 함수
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +110,7 @@ const Header: React.FC<Props> = ({
   };
 
   const handleFinishReading = () => {
-    navigate('/detail', { state: { book } });
+    navigate('/mylib', { state: { book } });
     setShowFontSettings(!showFontSettings);
   };
 
@@ -120,8 +127,8 @@ const Header: React.FC<Props> = ({
       console.log("책 정보:", { book_idx }); // 책 인덱스 로그
 
       // 상세 페이지로 네비게이션
-      console.log("상세 페이지로 네비게이션 중...");
-      navigate("/detail", { state: { book } });
+      console.log("내 서재 페이지로 네비게이션 중...");
+      navigate("/mylib", { state: { book } });
 
       // 페이지 이동 후에 비동기로 데이터 저장 및 요약 생성 요청
       setTimeout(async () => {
@@ -153,11 +160,17 @@ const Header: React.FC<Props> = ({
     }
   };
 
+    // 요약 요청 함수
+    const handleBookSignalClick = async () => {
+      if (onSummarizePage) {
+        await onSummarizePage(); // 페이지 요약 함수 호출
+      }
+    };
 
   const handleReadingQuit = () => {
     console.log("독서 중단 처리"); // 함수 호출 시작 로그
-    console.log("상세 페이지로 네비게이션 중...", { book }); // 페이지 이동 로그
-    navigate("/detail", { state: { book } });
+    console.log("내 서재 페이지로 네비게이션 중...", { book }); // 페이지 이동 로그
+    navigate("/mylib", { state: { book } });
   };
 
   // 북마크 추가 함수
@@ -250,6 +263,7 @@ const Header: React.FC<Props> = ({
             <ControlBtn message="Font Settings" onClick={handleFontClick} />
             <ControlBtn message="독서 완료" onClick={handleReadingComplete} />
             <ControlBtn message="독서 종료" onClick={onReadingQuit} />
+            <ControlBtn message="BookSignal" onClick={handleBookSignalClick} /> 
           </div>
         </AutoLayout>
       </Layout>
@@ -322,7 +336,7 @@ const Header: React.FC<Props> = ({
             <label htmlFor="font-size-slider">Font Size</label>
             <br />
             <div className="font-size-control">
-              <p className='current-font'>{fontSize}</p> {/* 전달받은 fontSize 표시 */}
+              <p className='current-font'>{fontSize}</p> {/* 현재 선택된 폰트 크기 표시 */}
               <button className="font-minus" onClick={decreaseFontSize} disabled={fontSize <= 12}>-</button>
               <input
                 type="range"
@@ -338,7 +352,6 @@ const Header: React.FC<Props> = ({
           </div>
         </div>
       </TTSWrapper>
-
     </Wrapper>
   );
 };
@@ -367,6 +380,7 @@ interface Props {
   onBookmarkRemove?: (book_mark: string) => void;
   onFontSizeChange?: (action: 'increase' | 'decrease') => void;
   initialFontSize?: number;
+  onSummarizePage?: () => void;
 }
 
 export default Header;

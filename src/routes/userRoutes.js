@@ -86,6 +86,13 @@ router.get('/completed-books', userController.getCompletedBooks);
 // 시그널 도서 가져오기
 router.get('/signal-books', userController.getSignalBooks);
 
+// 사용자가 업로드한 도서 가져오기
+router.get('/upload-books', userController.getUploadBooks);
+
+// 사용자가 업로드한 도서 독서 종료 클릭 시 cfi 저장
+
+// 사용자가 업로드한 도서에서 book_mark 존재 시 해당 cfi로 이동
+
 // 독서 기록을 추가하는 라우트
 router.post('/addReadingRecord', userController.addReadingRecord);
 

@@ -321,3 +321,32 @@ exports.getSignalBooks = async (mem_id) => {
     throw new Error('북 시그널 도서를 가져오는 중 오류가 발생했습니다.');
   }
 };
+
+// 업로드한 도서를 가져오는 함수
+exports.getUploadBooks = async (mem_id) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT *
+      FROM book_upload
+      WHERE mem_id = ?;
+    `, [mem_id]);
+
+    const updatedResults = rows.map(book => {
+      // null이나 undefined 또는 빈 문자열일 경우 기본 이미지 경로 설정
+      if (!book.book_cover) {
+        book.book_cover = '/images/default.png';
+      } else {
+        book.book_cover = `/images/${book.book_cover}`;  // book_cover가 존재하면 경로 추가
+      }
+      return book;
+    });
+
+    return updatedResults;
+  } catch (err) {
+    console.error('업로드한 도서 가져오기 에러:', err);
+    throw new Error('업로드한 도서를 가져오는 중 오류가 발생했습니다.');
+  }
+};
+
+
+
