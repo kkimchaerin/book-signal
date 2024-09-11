@@ -46,8 +46,8 @@
 }
 
 .signal-modal .modal-signal {
-  font-family: 'SF_HambakSnow';
-  background-color: rgba(225, 225, 225, 0.75);
+  font-family: 'KimjungchulMyungjo-Bold';
+  background-color: rgba(225, 225, 225, 0.5);
   width: 300px;
   min-height: 200px;
   padding: 20px;
@@ -59,11 +59,10 @@
 
 .signal-modal .modal-summ {
   position: absolute;
-  top: 600px;
-  max-width: 480px;
+  top: 610px;
+  max-width: 450px;
   padding: 20px;
   font-size: 16px;
-  font-family: 'BookkMyungjo-Bd';
   text-align: center;
 }
 
@@ -132,13 +131,23 @@
   background-color: #e04b2f;
 }
 
-/* 폰트 설정 */
-@font-face {
-  font-family: 'BookkMyungjo-Bd';
-  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkMyungjo-Bd.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
+/* Summary 스타일 */
+.modal-summ {
+  margin-top: 50px;
+  font-family: 'Pretendard-Regular';
+  text-align: center;
 }
+
+.upload-modal .modal-summ button {
+  background-color: #F57E53;
+  margin-bottom: 40px;
+  width: 90px;
+  height: 30px;
+  font-family: 'Pretendard', sans-serif ;
+  color: white;
+  border-radius: 10%;
+}
+
 
 @font-face {
   font-family: 'Pretendard-Regular';
@@ -152,21 +161,4 @@
   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/KimjungchulMyungjo-Bold.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
-}
-
-/* Summary 스타일 */
-.modal-summ {
-  margin-top: 50px;
-  font-family: 'BookkMyungjo-Bd';
-  text-align: center;
-}
-
-.upload-modal .modal-summ button {
-  background-color: #F57E53;
-  margin-bottom: 40px;
-  width: 90px;
-  height: 30px;
-  font-family: 'Pretendard', sans-serif ;
-  color: white;
-  border-radius: 10%;
 }
