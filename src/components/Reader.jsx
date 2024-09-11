@@ -64,8 +64,6 @@ const EpubReader = ({ url, book, location, from }) => {
     };
   }, []);
 
-
-
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1);
   const [gender, setGender] = useState("MALE");
@@ -154,18 +152,29 @@ const EpubReader = ({ url, book, location, from }) => {
     try {
       const isUploadBook = from === 'upload'; // 업로드 도서 여부
       const upload_idx = isUploadBook ? book.upload_idx : null;
-      console.log(book.upload_idx);
 
-
-      const response = await axios.get(
+      // 첫 번째 API: getUserBookmark로 북마크와 폰트 크기 가져오기 (Header로 보내지 않음)
+      const userBookmarkResponse = await axios.get(
         "http://localhost:3001/getBookPath/getUserBookmark",
         {
           params: { book_idx: book.book_idx, mem_id: userInfo.mem_id, isUploadBook, upload_idx },
         }
       );
 
-      console.log("API 응답:", response.data); // API 응답 값 확인
-      return response.data; // 북마크와 폰트 크기를 반환
+      console.log("getUserBookmark API 응답:", userBookmarkResponse.data);
+
+      // 두 번째 API: getBookmarks로 수동 북마크 가져오기 (Header로 보내기)
+      const bookmarkListResponse = await axios.get(
+        "http://localhost:3001/getBookPath/getBookmarks",
+        {
+          params: { book_idx: book.book_idx, mem_id: userInfo.mem_id }
+        }
+      );
+
+      console.log("getBookmarks API 응답:", bookmarkListResponse.data);
+
+      // 두 번째 API 결과만 반환하여 Header에 전달
+      return bookmarkListResponse.data; // 수동 북마크만 반환
     } catch (error) {
       console.error("북마크를 가져오는 중 오류 발생:", error);
       return {};
@@ -805,9 +814,6 @@ const EpubReader = ({ url, book, location, from }) => {
 const Reader = () => {
   const location = useLocation();
   const { bookPath, book, from } = location.state || {};
-
-  console.log("Reader 컴포넌트에서 전달된 book 객체:", book);
-
 
   if (!book) {
     console.error("Book object is undefined.");
