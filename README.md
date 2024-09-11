@@ -13,7 +13,7 @@
   <img src = https://github.com/user-attachments/assets/17e392ed-9c30-4793-ba96-4f4fe2ee3096 width = '200px' hight = '200px' /> <br>
 - **TTS(텍스트 음성 변환) 기능**: 텍스트를 음성으로 변환하여 사용자가 오디오로 도서를 감상할 수 있는 기능을 제공<br>
   <img src = https://github.com/user-attachments/assets/acdede98-37b9-4292-a7f7-df32a902a241 width = '200px' hight = '200px'/> <br>
-- **사용자 맞춤형 UI/UX**: 다크모드, 글자 크기 및 글자체 변경 등 사용자의 편의성을 고려한 다양한 옵션을 제공 <br>
+- **사용자 맞춤형 UI/UX**: 글자 크기 및 글자체 변경 등 사용자의 편의성을 고려한 다양한 옵션을 제공 <br>
   <img src =https://github.com/user-attachments/assets/56eb8ad6-468d-41cf-873a-eb12f1bc7097 width= '200px' hight = '200px'/> <br>
 
 
