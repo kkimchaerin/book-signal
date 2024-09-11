@@ -161,8 +161,6 @@ const EpubReader = ({ url, book, location, from }) => {
         }
       );
 
-      console.log("getUserBookmark API 응답:", userBookmarkResponse.data);
-
       // 두 번째 API: getBookmarks로 수동 북마크 가져오기 (Header로 보내기)
       const bookmarkListResponse = await axios.get(
         "http://localhost:3001/getBookPath/getBookmarks",
@@ -170,8 +168,6 @@ const EpubReader = ({ url, book, location, from }) => {
           params: { book_idx: book.book_idx, mem_id: userInfo.mem_id }
         }
       );
-
-      console.log("getBookmarks API 응답:", bookmarkListResponse.data);
 
       // 두 번째 API 결과만 반환하여 Header에 전달
       return bookmarkListResponse.data; // 수동 북마크만 반환

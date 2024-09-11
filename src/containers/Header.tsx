@@ -261,9 +261,9 @@ const Header: React.FC<Props> = ({
             <ControlBtn message="Sound" onClick={handleSoundClick} />
             <ControlBtn message="Bookmark" onClick={handleBookmarkToggle} />
             <ControlBtn message="Font Settings" onClick={handleFontClick} />
-            <ControlBtn message="독서 완료" onClick={handleReadingComplete} />
-            <ControlBtn message="독서 종료" onClick={onReadingQuit} />
             <ControlBtn message="BookSignal" onClick={handleBookSignalClick} /> 
+            <ControlBtn message="독서 종료" onClick={onReadingQuit} />
+            <ControlBtn message="독서 완료" onClick={handleReadingComplete} />
           </div>
         </AutoLayout>
       </Layout>
