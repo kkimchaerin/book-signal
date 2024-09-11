@@ -177,49 +177,21 @@
     margin-top: 10px;
 }
 
-@font-face {
-    font-family: 'BookkMyungjo-Bd';
-    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkMyungjo-Bd.woff2') format('woff2');
-    font-weight: 700;
-    font-style: normal;
-}
-
-.signalName {
-    font-family: 'BookkMyungjo-Bd';
-    font-size: 24px;
+.signalName{
+    font-family: 'KimjungchulMyungjo-Bold';
+    font-size: 26px;
     -webkit-text-stroke: 0.1px grey;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
-
-.signalRepre {
-    font-family: 'BookkMyungjo-Bd';
+.signalSumm {
+    font-family: 'KimjungchulMyungjo-Bold';
     font-size: 20px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.upload-button {
-    position: fixed;
-    left: 50%;
-    /* 화면의 가로 방향 중앙에 위치 */
-    bottom: 80px;
-    /* 화면의 하단에서 위로 40px */
-    transform: translateX(-50%);
-    /* 버튼을 가로 중앙으로 맞추기 위한 변환 */
-    width: 100px;
-    height: 60px;
-    background-color: #F57E53;
-    border-radius: 10%;
-    color: white;
-    font-size: 24px;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-}
-
-.upload-button:hover {
-    background-color: white;
-    color: #e04b2f;
+@font-face {
+    font-family: 'KimjungchulMyungjo-Bold';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/KimjungchulMyungjo-Bold.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
 }
