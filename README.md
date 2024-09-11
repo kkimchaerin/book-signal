@@ -9,9 +9,13 @@
 ## 주요 기능
 - **Eye-tracking 분석**: 웹 카메라를 통해 사용자의 시선을 실시간으로 추적하여 독서 집중도를 분석하고, 사용자가 집중한 페이지를 식별
 - **중요 내용 추출 및 이미지 생성**: 집중한 페이지에서 중요한 내용을 추출하고, GPT API와 GPT DALL-E를 사용해 이미지로 시각화하여 제공.
-- **자동 북마크 기능**: 사용자가 마지막으로 읽은 위치를 자동으로 저장하여 다음에 이어 읽을 수 있도록 지원
-- **TTS(텍스트 음성 변환) 기능**: 텍스트를 음성으로 변환하여 사용자가 오디오로 도서를 감상할 수 있는 기능을 제공
-- **사용자 맞춤형 UI/UX**: 다크모드, 글자 크기 및 글자체 변경 등 사용자의 편의성을 고려한 다양한 옵션을 제공
+- **자동 북마크 기능**: 사용자가 마지막으로 읽은 위치를 자동으로 저장하여 다음에 이어 읽을 수 있도록 지원<br>
+  <img src = https://github.com/user-attachments/assets/17e392ed-9c30-4793-ba96-4f4fe2ee3096 width = '200px' hight = '200px' /> <br>
+- **TTS(텍스트 음성 변환) 기능**: 텍스트를 음성으로 변환하여 사용자가 오디오로 도서를 감상할 수 있는 기능을 제공<br>
+  <img src = https://github.com/user-attachments/assets/acdede98-37b9-4292-a7f7-df32a902a241 width = '200px' hight = '200px'/> <br>
+- **사용자 맞춤형 UI/UX**: 다크모드, 글자 크기 및 글자체 변경 등 사용자의 편의성을 고려한 다양한 옵션을 제공 <br>
+  <img src =https://github.com/user-attachments/assets/56eb8ad6-468d-41cf-873a-eb12f1bc7097 width= '200px' hight = '200px'/> <br>
+
 
 ## ⚙ 개발 환경
 <img src = 'https://github.com/user-attachments/assets/63b6d045-e3cd-4fe7-9838-428941d94212' width= '500px' hight = '300px'/> <br>
