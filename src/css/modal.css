@@ -53,8 +53,8 @@
 
 
 .modal-signal {
-  font-family: 'SF_HambakSnow';
-  background-color: rgba(225, 225, 225, 0.75);
+  font-family: 'KimjungchulMyungjo-Bold';
+  background-color: rgba(225, 225, 225, 0.5);
   /* 텍스트 배경을 반투명 흰색으로 설정 */
   width: 300px;
   height: auto;
@@ -62,7 +62,7 @@
   padding: 20px;
   border-radius: 8px;
   color: white;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   text-align: center;
   justify-content: center;
   align-items: center;
@@ -71,13 +71,13 @@
 .modal-summ {
   position: absolute;
   top: 600px; /* .modal-content 밑 50px */
-  max-width: 480px;
+  max-width: 450px;
   padding: 20px;
   max-height: 300;
   text-align: center;
   font-size: 16px;
-  margin-top: 50px; /* 상단에 약간의 여백 추가 */
-  font-family: 'BookkMyungjo-Bd';
+  margin-top: 60px; /* 상단에 약간의 여백 추가 */
+  font-family: 'Pretendard-Regular';
 }
 
 .modal-download,
@@ -102,32 +102,23 @@
   right: -25px;
 }
 
-@font-face {
-  font-family: 'BookkMyungjo-Bd';
-  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkMyungjo-Bd.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-}
-
-
-
-@font-face {
-  font-family: 'BookkMyungjo-Bd';
-  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkMyungjo-Bd.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-}
-
-
 
 .summary {
   margin-top: 50px;
   /* 상단에 약간의 여백 추가 */
 }
 
+
 @font-face {
-  font-family: 'SF_HambakSnow';
-  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2106@1.1/SF_HambakSnow.woff') format('woff');
-  font-weight: normal;
+  font-family: 'Pretendard-Regular';
+  src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'KimjungchulMyungjo-Bold';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/KimjungchulMyungjo-Bold.woff2') format('woff2');
+  font-weight: 400;
   font-style: normal;
 }
